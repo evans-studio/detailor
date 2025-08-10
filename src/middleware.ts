@@ -10,6 +10,8 @@ function isPublicPath(pathname: string) {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  // Always allow API routes; API handlers perform their own auth via tokens/cookies
+  if (pathname.startsWith('/api')) return NextResponse.next();
   if (isPublicPath(pathname)) return NextResponse.next();
 
   const cookieToken = req.cookies.get('sb-access-token')?.value;
@@ -21,10 +23,7 @@ export async function middleware(req: NextRequest) {
     url.pathname = '/signin';
     return NextResponse.redirect(url);
   }
-  // Role-based simple guard via path hints
-  if (pathname.startsWith('/customer') && req.headers.get('x-role') === 'admin') {
-    return NextResponse.next();
-  }
+  // Let page-level RoleGuard enforce fine-grained access; middleware only ensures presence of token.
   return NextResponse.next();
 }
 

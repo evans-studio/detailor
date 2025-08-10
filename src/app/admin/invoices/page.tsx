@@ -1,0 +1,47 @@
+"use client";
+import * as React from 'react';
+import { DashboardShell } from '@/components/layout/DashboardShell';
+import { RoleGuard } from '@/components/RoleGuard';
+import { DataTable } from '@/components/DataTable';
+import Link from 'next/link';
+import { useQuery, fetchInvoices } from '@/lib/data';
+
+type Invoice = { id: string; number: string; total: number; paid_amount: number; balance: number; created_at: string; booking_id?: string | null };
+
+export default function AdminInvoicesPage() {
+  const [q, setQ] = React.useState('');
+  const { data: invoicesData, reload } = useQuery('invoices', fetchInvoices);
+  const invoices = (invoicesData || []) as Invoice[];
+  function StatusBadge({ row }: { row: Invoice }) {
+    const paid = Number(row.paid_amount) >= Number(row.total);
+    return <span className={`rounded-[var(--radius-full)] px-2 py-0.5 text-[var(--font-size-xs)] ${paid ? 'bg-[var(--color-success)] text-[var(--color-success-foreground)]' : 'bg-[var(--color-warning)] text-[var(--color-warning-foreground)]'}`}>{paid ? 'Paid' : 'Unpaid'}</span>;
+  }
+  const filtered = React.useMemo(() => {
+    if (!q) return invoices;
+    return invoices.filter((i) => i.number.toLowerCase().includes(q.toLowerCase()));
+  }, [invoices, q]);
+  return (
+    <DashboardShell role="admin" tenantName="DetailFlow">
+      <RoleGuard allowed={["admin","staff"]}>
+        <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Invoices</h1>
+        <DataTable
+          data={filtered}
+          columns={[
+            { key: 'number', header: 'Number', sortable: true, render: (row) => <Link href={`/admin/invoices/${(row as Invoice).id}`}>{(row as Invoice).number}</Link> },
+            { key: 'created_at', header: 'Date', sortable: true, render: (row) => new Date((row as Invoice).created_at).toLocaleDateString() },
+            { key: 'total', header: 'Total', sortable: true, render: (row) => `£${((row as Invoice).total ?? 0).toFixed(2)}` },
+            { key: 'paid_amount', header: 'Paid', sortable: true, render: (row) => `£${((row as Invoice).paid_amount ?? 0).toFixed(2)}` },
+            { key: 'balance', header: 'Balance', sortable: true, render: (row) => `£${((row as Invoice).balance ?? 0).toFixed(2)}` },
+            { key: 'id', header: 'Status', render: (row) => <StatusBadge row={row as Invoice} /> },
+          ]}
+          searchPlaceholder="Search invoice number"
+          onSearch={setQ}
+          enableExport
+          exportFilename="invoices.csv"
+        />
+      </RoleGuard>
+    </DashboardShell>
+  );
+}
+
+

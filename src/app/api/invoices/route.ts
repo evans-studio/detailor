@@ -17,27 +17,42 @@ export async function GET(req: Request) {
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
+    const url = new URL(req.url);
+    const bookingId = url.searchParams.get('booking_id') || undefined;
     if (!profile) throw new Error('No profile');
     let data;
     let error;
     if (['staff','admin'].includes(profile.role)) {
-      const resp = await admin.from('invoices').select('*').eq('tenant_id', profile.tenant_id).order('created_at', { ascending: false });
+      let query = admin.from('invoices').select('*').eq('tenant_id', profile.tenant_id);
+      if (bookingId) query = query.eq('booking_id', bookingId);
+      const resp = await query.order('created_at', { ascending: false });
       data = resp.data; error = resp.error as unknown as Error | null;
     } else {
       // Customer self-scope: filter invoices by booking.customer_id
       const { data: selfCust } = await admin.from('customers').select('id').eq('auth_user_id', user.id).single();
       if (!selfCust) return NextResponse.json({ ok: true, invoices: [] });
-      const resp = await admin
-        .from('invoices')
-        .select('*, bookings!inner(customer_id)')
-        .eq('bookings.customer_id', selfCust.id)
-        .order('created_at', { ascending: false });
-      // Strip the joined bookings field before returning
-      data = (resp.data || []).map((row: { bookings?: unknown } & Record<string, unknown>) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { bookings, ...rest } = row; return rest;
-      }) as unknown[];
-      error = resp.error as unknown as Error | null;
+      if (bookingId) {
+        const resp = await admin
+          .from('invoices')
+          .select('*, bookings!inner(customer_id)')
+          .eq('bookings.customer_id', selfCust.id)
+          .eq('booking_id', bookingId)
+          .order('created_at', { ascending: false });
+        data = (resp.data || []).map((row: { bookings?: unknown } & Record<string, unknown>) => {
+          const { bookings, ...rest } = row; return rest;
+        }) as unknown[];
+        error = resp.error as unknown as Error | null;
+      } else {
+        const resp = await admin
+          .from('invoices')
+          .select('*, bookings!inner(customer_id)')
+          .eq('bookings.customer_id', selfCust.id)
+          .order('created_at', { ascending: false });
+        data = (resp.data || []).map((row: { bookings?: unknown } & Record<string, unknown>) => {
+          const { bookings, ...rest } = row; return rest;
+        }) as unknown[];
+        error = resp.error as unknown as Error | null;
+      }
     }
     if (error) throw error;
     return NextResponse.json({ ok: true, invoices: data });

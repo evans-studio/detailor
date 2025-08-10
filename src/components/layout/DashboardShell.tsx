@@ -3,13 +3,29 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getNavForRole, type UserRole } from '@/config/navConfig';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 import { IconButton } from '@/ui/icon-button';
 import { NotificationsProvider } from '@/lib/notifications';
+import { MobileBottomNav } from '@/components/MobileBottomNav';
 
-export function DashboardShell({ role = 'admin', tenantName = 'DetailFlow', children }: { role?: UserRole; tenantName?: string; children: React.ReactNode }) {
+export function DashboardShell({ role, tenantName = 'DetailFlow', children }: { role?: UserRole; tenantName?: string; children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false); // mobile drawer
-  const items = getNavForRole(role);
+  const [resolvedRole, setResolvedRole] = React.useState<UserRole | null>(role ?? null);
+  React.useEffect(() => {
+    if (role) { setResolvedRole(role); return; }
+    (async () => {
+      try {
+        const res = await fetch('/api/profiles/me');
+        const json = await res.json();
+        const r = (json?.profile?.role as UserRole | undefined) ?? 'admin';
+        setResolvedRole(r);
+      } catch {
+        setResolvedRole('admin');
+      }
+    })();
+  }, [role]);
+  const items = getNavForRole(resolvedRole ?? 'admin');
   return (
     <div className="min-h-screen grid grid-rows-[auto_1fr] bg-[var(--color-bg)] text-[var(--color-text)]">
       <Header onMenu={() => setOpen((o) => !o)} tenantName={tenantName} />
@@ -28,10 +44,13 @@ export function DashboardShell({ role = 'admin', tenantName = 'DetailFlow', chil
             })}
           </nav>
         </aside>
-        <main className="p-4">
-          <NotificationsProvider>{children}</NotificationsProvider>
+        <main className="p-4 pb-20 md:pb-4">
+          <NotificationsProvider>
+            {resolvedRole ? children : <LoadingSkeleton rows={6} />}
+          </NotificationsProvider>
         </main>
       </div>
+      <MobileBottomNav role={resolvedRole === 'customer' ? 'customer' : 'admin'} />
     </div>
   );
 }
