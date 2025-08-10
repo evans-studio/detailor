@@ -1,0 +1,49 @@
+{
+  "name": "Luxury",
+  "brand": {
+    "primary": "#1C1E21",
+    "primary-foreground": "#FFFFFF",
+    "secondary": "#D4AF37",
+    "secondary-foreground": "#1A1A1A"
+  },
+  "neutrals": {
+    "bg": "#FAFAF8",
+    "surface": "#FFFFFF",
+    "border": "#E6E1D9",
+    "muted": "#F3EFE7",
+    "muted-foreground": "#68635B"
+  },
+  "text": {
+    "text": "#1A1A1A",
+    "text-muted": "#68635B",
+    "inverse-text": "#F8F8F8"
+  },
+  "status": {
+    "success": "#178F4B",
+    "success-foreground": "#FFFFFF",
+    "warning": "#E0B64B",
+    "warning-foreground": "#1A1A1A",
+    "error": "#B22222",
+    "error-foreground": "#FFFFFF",
+    "info": "#1C6BA8",
+    "info-foreground": "#FFFFFF"
+  },
+  "states": {
+    "focus-ring": "#6B7280",
+    "selection": "#E9F0FF",
+    "hover-surface": "#F7F6F2"
+  },
+  "dark": {
+    "bg": "#121212",
+    "surface": "#191919",
+    "border": "#2A2A2A",
+    "muted": "#222222",
+    "muted-foreground": "#A3A3A3",
+    "text": "#F5F5F5",
+    "text-muted": "#B0B0B0",
+    "inverse-text": "#1A1A1A",
+    "hover-surface": "#1F1F1F"
+  }
+}
+
+
