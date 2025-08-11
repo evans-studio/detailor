@@ -4,6 +4,7 @@ import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { Select } from '@/ui/select';
 import { useNotifications } from '@/lib/notifications';
+import { z } from 'zod';
 
 type Step = 'business' | 'service' | 'availability' | 'branding' | 'complete';
 
@@ -30,12 +31,21 @@ export default function OnboardingPage() {
     currency: 'GBP'
   });
 
-  // Service Info
+  // Service Info (System Bible compliant types)
   const [serviceForm, setServiceForm] = React.useState({
     name: '',
-    duration_hours: 2,
-    base_price: 50,
-    description: ''
+    description: '',
+    category: '',
+    base_price: 50, // pounds
+    base_duration_min: 60, // minutes
+  });
+
+  const serviceSchema = z.object({
+    name: z.string().min(1, 'Service name required'),
+    description: z.string().optional(),
+    category: z.string().optional(),
+    base_price: z.coerce.number().min(0, 'Price cannot be negative').multipleOf(0.01, 'Price must be a valid amount'),
+    base_duration_min: z.coerce.number().int('Duration must be whole minutes').min(15, 'Minimum is 15 minutes').multipleOf(15, 'Use 15-minute increments'),
   });
 
   // Availability Info
@@ -81,17 +91,19 @@ export default function OnboardingPage() {
           break;
 
         case 'service':
-          // Create first service
+          // Validate and create first service (System Bible compliant)
+          const validated = serviceSchema.parse(serviceForm);
           const serviceRes = await fetch('/api/admin/services', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              name: serviceForm.name,
-              duration_minutes: serviceForm.duration_hours * 60,
-              base_price_pence: serviceForm.base_price * 100,
-              description: serviceForm.description,
-              is_active: true
-            })
+              name: validated.name,
+              description: validated.description,
+              category: validated.category,
+              base_price: validated.base_price,
+              base_duration_min: validated.base_duration_min,
+              visible: true,
+            }),
           });
           const serviceData = await serviceRes.json();
           if (!serviceData.ok) throw new Error(serviceData.error);
@@ -364,7 +376,7 @@ export default function OnboardingPage() {
               </label>
               <Input 
                 placeholder="e.g., Premium Car Detail" 
-                value={serviceForm.name} 
+                value={serviceForm.name}
                 onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} 
                 required
               />
@@ -376,7 +388,7 @@ export default function OnboardingPage() {
               </label>
               <Input 
                 placeholder="Brief description of what's included" 
-                value={serviceForm.description} 
+                value={serviceForm.description}
                 onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })} 
               />
             </div>
@@ -384,30 +396,31 @@ export default function OnboardingPage() {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
-                  Duration (hours) *
+                  Price (£)
+                  <span className="ml-1 text-[var(--font-size-xs)] text-[var(--color-text-muted)]">Enter amount without currency symbol</span>
                 </label>
-                <Select
-                  options={[
-                    { label: '1 hour', value: '1' },
-                    { label: '1.5 hours', value: '1.5' },
-                    { label: '2 hours', value: '2' },
-                    { label: '2.5 hours', value: '2.5' },
-                    { label: '3 hours', value: '3' },
-                    { label: '4 hours', value: '4' }
-                  ]}
-                  value={serviceForm.duration_hours.toString()}
-                  onValueChange={(v) => setServiceForm({ ...serviceForm, duration_hours: parseFloat(v) })}
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={serviceForm.base_price}
+                  onChange={(e) => setServiceForm({ ...serviceForm, base_price: e.target.value === '' ? 0 : Number(e.target.value) })}
+                  required
                 />
               </div>
               <div>
                 <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
-                  Base Price (£) *
+                  Duration (minutes)
+                  <span className="ml-1 text-[var(--font-size-xs)] text-[var(--color-text-muted)]">In 15-minute increments (60, 75, 90, ...)</span>
                 </label>
-                <Input 
-                  type="number" 
-                  placeholder="50" 
-                  value={serviceForm.base_price} 
-                  onChange={(e) => setServiceForm({ ...serviceForm, base_price: parseFloat(e.target.value) || 0 })} 
+                <Input
+                  type="number"
+                  step="15"
+                  min="15"
+                  placeholder="60"
+                  value={serviceForm.base_duration_min}
+                  onChange={(e) => setServiceForm({ ...serviceForm, base_duration_min: e.target.value === '' ? 15 : Math.max(0, Number(e.target.value)) })}
                   required
                 />
               </div>
@@ -419,9 +432,15 @@ export default function OnboardingPage() {
               <Button intent="ghost" onClick={() => setCurrentStep('business')}>
                 Back
               </Button>
-              <Button 
-                onClick={() => handleSubmit('service')} 
-                disabled={submitting || !serviceForm.name || serviceForm.base_price <= 0}
+              <Button
+                onClick={() => handleSubmit('service')}
+                disabled={
+                  submitting ||
+                  !serviceForm.name ||
+                  serviceForm.base_price < 0 ||
+                  serviceForm.base_duration_min < 15 ||
+                  serviceForm.base_duration_min % 15 !== 0
+                }
               >
                 {submitting ? 'Creating service...' : 'Continue'}
               </Button>
