@@ -80,6 +80,40 @@ export function WelcomeHandoff({ email }: { email: string | null }) {
       </div>
       {error ? <div className="text-[var(--color-error)] text-sm">{error}</div> : null}
       <button type="submit" className="rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 py-2 text-[var(--color-primary-foreground)]">Create account & continue</button>
+      <button
+        type="button"
+        onClick={async () => {
+          if (!email) { setError('Missing email from checkout session'); return; }
+          // Bootstrap Supabase user from Stripe session and set cookie
+          try {
+            const sid = new URLSearchParams(window.location.search).get('session_id');
+            const boot = await fetch('/api/session/bootstrap', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ session_id: sid })
+            });
+            const bj = await boot.json();
+            if (!bj.ok) { setError(bj.error || 'Failed to initialize session'); return; }
+            if (bj.access_token) {
+              await fetch('/api/session/set', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ access_token: bj.access_token })
+              });
+              window.location.href = '/onboarding';
+              return;
+            }
+            // If user exists, prompt to sign in or set password via normal flow
+            setError('Account exists. Please sign in to continue.');
+          } catch (e) {
+            setError((e as Error).message);
+          }
+        }}
+        className="rounded-[var(--radius-md)] bg-[var(--color-surface)] border border-[var(--color-border)] px-4 py-2"
+      >
+        I already have an account
+      </button>
       <div className="text-center text-sm">
         Already have an account? <a className="underline" href="/signin">Sign in</a>
       </div>
