@@ -39,10 +39,16 @@ export function WelcomeHandoff({ email }: { email: string | null }) {
   if (loading) return null;
 
   if (session) {
+    React.useEffect(() => { void persistSession(); }, []);
     return (
       <div className="grid gap-3">
         <div className="text-[var(--color-text-muted)]">You are signed in.</div>
-        <a href="/onboarding" className="inline-block rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 py-2 text-[var(--color-primary-foreground)] text-center">Start Onboarding</a>
+        <button
+          onClick={async () => { await persistSession(); window.location.href = '/onboarding'; }}
+          className="inline-block rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 py-2 text-[var(--color-primary-foreground)] text-center"
+        >
+          Start Onboarding
+        </button>
       </div>
     );
   }
