@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     const userEmail = user?.email as string | undefined;
     if (!userEmail) throw new Error('Authenticated user email is required');
 
-    const existing = await admin.from('tenants').select('id').eq('email', userEmail).maybeSingle();
+    const existing = await admin.from('tenants').select('id').eq('contact_email', userEmail).maybeSingle();
     let tenantId: string | undefined = existing.data?.id as string | undefined;
     if (tenantId) {
       const { error: updErr } = await admin
@@ -39,14 +39,13 @@ export async function POST(req: Request) {
     } else {
       const ins = await admin
         .from('tenants')
-        .insert({
+        .upsert({
           legal_name: parsed.legal_name,
           trading_name: parsed.trading_name ?? parsed.legal_name,
-          contact_email: parsed.contact_email,
-          email: userEmail,
+          contact_email: userEmail,
           status: 'active',
           is_demo: false,
-        })
+        }, { onConflict: 'contact_email' })
         .select('id')
         .single();
       if (ins.error || !ins.data) throw ins.error ?? new Error('Tenant creation failed');

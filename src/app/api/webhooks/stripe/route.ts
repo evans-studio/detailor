@@ -80,13 +80,13 @@ export async function POST(req: Request) {
       const plan = planFromPriceId(priceId);
       const flags = featureFlagsForPlan(plan);
       // Upsert tenant
-      const { data: existingTenant } = await admin.from('tenants').select('id').eq('email', email).maybeSingle();
-      const tenantPayload: { plan: 'starter'|'pro'|'enterprise'; feature_flags: Record<string, unknown>; status: string; is_demo: boolean; email: string } = { plan, feature_flags: flags as Record<string, unknown>, status: 'active', is_demo: false, email };
+      const { data: existingTenant } = await admin.from('tenants').select('id').eq('contact_email', email).maybeSingle();
+      const tenantPayload: { plan: 'starter'|'pro'|'enterprise'; feature_flags: Record<string, unknown>; status: string; is_demo: boolean; contact_email: string } = { plan, feature_flags: flags as Record<string, unknown>, status: 'active', is_demo: false, contact_email: email };
       let tenantId = existingTenant?.id as string | undefined;
       if (tenantId) {
         await admin.from('tenants').update(tenantPayload).eq('id', tenantId);
       } else {
-        const ins = await admin.from('tenants').insert(tenantPayload).select('id').single();
+        const ins = await admin.from('tenants').upsert(tenantPayload, { onConflict: 'contact_email' }).select('id').single();
         tenantId = ins.data?.id as string | undefined;
       }
       // Upsert subscription
