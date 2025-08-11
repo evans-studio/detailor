@@ -91,6 +91,38 @@ export async function POST(req: Request) {
         await admin.from('templates').insert([{ tenant_id: tenantId, key: 'booking.confirmation', channel: 'email', active: true }]);
       }
     }
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const appInvoiceId = (session.metadata as Record<string, string> | null | undefined)?.['app_invoice_id'];
+      if (appInvoiceId && session.payment_status === 'paid') {
+        // Apply payment to our invoice and ledger
+        const invRes = await admin.from('invoices').select('id, tenant_id, booking_id, total, paid_amount, balance').eq('id', appInvoiceId).maybeSingle();
+        const inv = invRes.data as { id: string; tenant_id: string; booking_id?: string | null; total: number; paid_amount: number; balance: number } | null;
+        if (inv) {
+          const paidNow = Number(session.amount_total ? session.amount_total / 100 : inv.balance);
+          const newPaid = Number(inv.paid_amount || 0) + paidNow;
+          const newBalance = Math.max(0, Number(inv.total || 0) - newPaid);
+          await admin
+            .from('invoices')
+            .update({ paid_amount: newPaid, balance: newBalance })
+            .eq('id', inv.id)
+            .eq('tenant_id', inv.tenant_id);
+          await admin.from('payments').insert({
+            tenant_id: inv.tenant_id,
+            booking_id: inv.booking_id ?? null,
+            invoice_id: inv.id,
+            provider: 'stripe',
+            amount: paidNow,
+            currency: 'GBP',
+            external_txn_id: session.payment_intent as string,
+            status: 'succeeded',
+          });
+          if (inv.booking_id) {
+            await admin.from('bookings').update({ payment_status: 'paid' }).eq('id', inv.booking_id).eq('tenant_id', inv.tenant_id);
+          }
+        }
+      }
+    }
     if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
       const sub = event.data.object as Stripe.Subscription;
       const priceId = (sub.items.data[0]?.price?.id as string) || null;

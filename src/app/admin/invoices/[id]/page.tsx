@@ -73,6 +73,20 @@ export default function AdminInvoiceDetailPage() {
                 {markPaid.isPending ? 'Marking…' : 'Mark as Paid (Demo)'}
               </button>
             ) : null}
+            {Number(invoice.balance) > 0 ? (
+              <a
+                className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 py-1 hover:bg-[var(--color-hover-surface)] w-full md:w-auto text-center"
+                href="#"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  const res = await fetch('/api/payments/checkout-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invoice_id: invoice.id }) });
+                  const json = await res.json();
+                  if (json?.url) window.open(json.url as string, '_blank');
+                }}
+              >
+                Create Checkout Link
+              </a>
+            ) : null}
           </div>
         )}
       </RoleGuard>

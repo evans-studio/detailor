@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { api } from '@/lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 import Link from 'next/link';
@@ -16,13 +17,20 @@ type Booking = {
 };
 
 export default function MyBookingsPage() {
-  const [bookings, setBookings] = React.useState<Booking[]>([]);
-  React.useEffect(() => {
-    (async () => {
-      const data = await api<{ ok: boolean; bookings: Booking[] }>(`/api/bookings`);
-      setBookings(data.bookings || []);
-    })();
-  }, []);
+  const queryClient = useQueryClient();
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['bookings', { scope: 'me' }],
+    queryFn: async (): Promise<Booking[]> => (await api<{ ok: boolean; bookings: Booking[] }>(`/api/bookings`)).bookings || [],
+  });
+  const cancelMutation = useMutation({
+    mutationFn: async (bookingId: string) => {
+      await fetch(`/api/bookings/${bookingId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'cancelled' }) });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+  });
   return (
     <DashboardShell role="customer" tenantName="DetailFlow">
       <div className="flex items-center justify-between mb-3">
@@ -46,7 +54,7 @@ export default function MyBookingsPage() {
               <div className="flex gap-2">
                 <Link href={`/bookings/${b.id}`}><Button intent="ghost">Details</Button></Link>
                 <Button intent="secondary" disabled>Reschedule</Button>
-                <Button intent="destructive" disabled>Cancel</Button>
+                <Button intent="destructive" onClick={() => cancelMutation.mutate(b.id)} disabled={cancelMutation.isPending}>Cancel</Button>
               </div>
             </div>
           ))}

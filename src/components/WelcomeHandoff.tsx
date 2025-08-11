@@ -18,11 +18,12 @@ export function WelcomeHandoff({ email }: { email: string | null }) {
     })();
   }, [supabase]);
 
-  async function persistSession() {
-    const token = (await supabase.auth.getSession()).data.session?.access_token;
+  const persistSession = React.useCallback(async () => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
     if (!token) return;
     await fetch('/api/session/set', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ access_token: token }) });
-  }
+  }, [supabase]);
 
   async function createAccount(e: React.FormEvent) {
     e.preventDefault();

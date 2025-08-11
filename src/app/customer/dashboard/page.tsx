@@ -5,18 +5,35 @@ import { api } from '@/lib/api';
 import { Button } from '@/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/ui/badge';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 type Booking = { id: string; start_at: string; status: string; payment_status: string; price_breakdown?: { total?: number } };
 
 export default function CustomerHome() {
-  const [nextBooking, setNextBooking] = React.useState<Booking | null>(null);
-  React.useEffect(() => {
-    (async () => {
+  const queryClient = useQueryClient();
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['bookings', { scope: 'customer-home' }],
+    queryFn: async (): Promise<Booking[]> => {
       const list = await api<{ ok: boolean; bookings: Booking[] }>(`/api/bookings`);
-      const upcoming = list.bookings.filter((b) => new Date(b.start_at).getTime() > Date.now()).sort((a,b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime());
-      setNextBooking(upcoming[0] || null);
-    })();
-  }, []);
+      return list.bookings || [];
+    },
+  });
+  const nextBooking = React.useMemo(() => (
+    bookings
+      .filter((b) => new Date(b.start_at).getTime() > Date.now())
+      .sort((a, b) => new Date(a.start_at).getTime() - new Date(b.start_at).getTime())[0] || null
+  ), [bookings]);
+
+  const cancelMutation = useMutation({
+    mutationFn: async (bookingId: string) => {
+      await fetch(`/api/bookings/${bookingId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'cancelled' }) });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+  });
+
   return (
     <DashboardShell role="customer" tenantName="DetailFlow">
       <div className="grid gap-4">
@@ -37,10 +54,10 @@ export default function CustomerHome() {
                 <Badge intent={nextBooking.payment_status === 'paid' ? 'success' : 'warning'}>{nextBooking.payment_status}</Badge>
               </div>
             </div>
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               <Link href={`/bookings/${nextBooking.id}`}><Button>View</Button></Link>
               <Button intent="secondary" disabled>Reschedule</Button>
-              <Button intent="destructive" disabled>Cancel</Button>
+              <Button intent="destructive" onClick={() => cancelMutation.mutate(nextBooking.id)} disabled={cancelMutation.isPending}>Cancel</Button>
             </div>
           </div>
         ) : (

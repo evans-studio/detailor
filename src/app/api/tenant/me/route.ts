@@ -10,10 +10,10 @@ export async function GET(req: Request) {
     if (!profile) throw new Error('No profile');
     const { data: tenant } = await admin
       .from('tenants')
-      .select('id, trading_name, is_demo, stripe_public_key, stripe_secret_key')
+      .select('id, trading_name, is_demo, stripe_public_key')
       .eq('id', profile.tenant_id)
       .single();
-    return NextResponse.json({ ok: true, tenant: tenant ?? { id: profile.tenant_id, is_demo: true } });
+    return NextResponse.json({ ok: true, tenant: tenant ?? null });
   } catch (e: unknown) {
     return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
   }
