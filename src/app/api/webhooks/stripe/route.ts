@@ -108,13 +108,13 @@ export async function POST(req: Request) {
         };
         await admin.from('subscriptions').upsert(subPayload, { onConflict: 'stripe_subscription_id' });
       }
-      // Link or invite profile
+      // Link or invite profile (assign admin to tenant owner)
       if (tenantId && email) {
         const { data: prof } = await admin.from('profiles').select('id').eq('email', email).maybeSingle();
         if (prof?.id) {
           await admin.from('profiles').update({ tenant_id: tenantId, role: 'admin' }).eq('id', prof.id);
         } else {
-          await admin.from('invites').insert({ email, tenant_id: tenantId, role: 'admin' });
+          await admin.from('tenant_invites').insert({ email, tenant_id: tenantId, role: 'admin' });
         }
       }
       // Seed default configs (best-effort)

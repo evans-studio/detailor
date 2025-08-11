@@ -47,6 +47,16 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: false, error: 'Sign-in failed' }, { status: 400 });
       }
       const accessToken = signIn.data.session.access_token;
+      // Link profile with correct role (admin if email == tenant.contact_email)
+      try {
+        const { data: tenant } = await admin.from('tenants').select('id, contact_email').eq('contact_email', email).maybeSingle();
+        if (tenant?.id) {
+          const uid = signIn.data.user?.id as string | undefined;
+          if (uid) {
+            await admin.from('profiles').upsert({ id: uid, email, tenant_id: tenant.id, role: 'admin' }, { onConflict: 'id' });
+          }
+        }
+      } catch {}
       return NextResponse.json({ ok: true, access_token: accessToken, email });
     }
 

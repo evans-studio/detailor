@@ -28,7 +28,22 @@ export default function SignInPage() {
       const apiRes = await fetch('/api/profiles/me', { headers: token ? { Authorization: `Bearer ${token}` } : {} });
       const json = await apiRes.json();
       const role = json?.profile?.role as 'admin' | 'staff' | 'customer' | undefined;
-      if (role === 'admin') window.location.href = '/dashboard';
+      // Enforce onboarding for admins if tenant not configured
+      if (role === 'admin') {
+        try {
+          const t = await fetch('/api/settings/tenant');
+          const tj = await t.json();
+          const tenant = tj?.tenant;
+          const services = await fetch('/api/admin/services').then(r=>r.json()).catch(()=>({services:[]}));
+          const patterns = await fetch('/api/admin/availability/work-patterns').then(r=>r.json()).catch(()=>({patterns:[]}));
+          const needs = !tenant?.legal_name || (services?.services?.length ?? 0) === 0 || (patterns?.patterns?.length ?? 0) === 0;
+          window.location.href = needs ? '/onboarding' : '/dashboard';
+          return;
+        } catch {
+          window.location.href = '/dashboard';
+          return;
+        }
+      }
       else if (role === 'staff') window.location.href = '/dashboard';
       else window.location.href = '/customer/dashboard';
     } catch {
