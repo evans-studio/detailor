@@ -1,8 +1,9 @@
 export const runtime = 'nodejs';
 import Stripe from 'stripe';
 
-export default async function WelcomePage({ searchParams }: { searchParams: { session_id?: string } }) {
-  const sessionId = searchParams?.session_id;
+export default async function WelcomePage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
+  const sp = await searchParams;
+  const sessionId = sp?.session_id;
   let status: 'ok' | 'error' = 'ok';
   let message = 'Subscription confirmed. Your workspace is being prepared.';
   let customerEmail: string | null = null;
