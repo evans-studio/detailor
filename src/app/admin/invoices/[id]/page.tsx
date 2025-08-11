@@ -62,6 +62,26 @@ export default function AdminInvoiceDetailPage() {
     },
   });
   async function onMarkPaid() { await markPaid.mutateAsync(); }
+
+  function exportCsv() {
+    if (!invoice) return;
+    const headers = ['Number','Date','Total','Paid','Balance'];
+    const row = [
+      invoice.number,
+      new Date(invoice.created_at).toISOString(),
+      String(invoice.total ?? 0),
+      String(invoice.paid_amount ?? 0),
+      String(invoice.balance ?? 0),
+    ];
+    const csv = [headers.join(','), row.join(',')].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `invoice-${invoice.number}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
   return (
     <DashboardShell role="admin" tenantName="DetailFlow">
       <RoleGuard allowed={["admin","staff"]}>
@@ -74,6 +94,7 @@ export default function AdminInvoiceDetailPage() {
                 <div className="text-[var(--font-size-xl)] font-semibold">Invoice {invoice.number}</div>
                 <div className="flex items-center gap-2">
                   <a className="underline" href={`/api/invoices/${invoice.id}`} target="_blank" rel="noreferrer">Download PDF</a>
+                  <button className="underline" onClick={exportCsv}>Export CSV</button>
                   <Badge intent={invoice.balance === 0 ? 'success' : 'warning'}>{invoice.balance === 0 ? 'Paid' : 'Unpaid'}</Badge>
                 </div>
               </div>
