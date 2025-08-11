@@ -21,8 +21,17 @@ export function WelcomeHandoff({ email }: { email: string | null }) {
   const persistSession = React.useCallback(async () => {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
-    if (!token) return;
-    await fetch('/api/session/set', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ access_token: token }) });
+    if (!token) return false;
+    const res = await fetch('/api/session/set', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ access_token: token })
+    });
+    if (!res.ok) return false;
+    // Verify cookie by calling an authenticated endpoint
+    const me = await fetch('/api/profiles/me', { credentials: 'include' });
+    return me.ok;
   }, [supabase]);
 
   async function createAccount(e: React.FormEvent) {
@@ -33,8 +42,8 @@ export function WelcomeHandoff({ email }: { email: string | null }) {
     setError(null);
     const res = await supabase.auth.signUp({ email, password });
     if (res.error) { setError(res.error.message); return; }
-    await persistSession();
-    window.location.href = '/onboarding';
+    const ok = await persistSession();
+    if (ok) window.location.href = '/onboarding';
   }
 
   React.useEffect(() => { if (session) { void persistSession(); } }, [session, persistSession]);
@@ -46,7 +55,7 @@ export function WelcomeHandoff({ email }: { email: string | null }) {
       <div className="grid gap-3">
         <div className="text-[var(--color-text-muted)]">You are signed in.</div>
         <button
-          onClick={async () => { await persistSession(); window.location.href = '/onboarding'; }}
+          onClick={async () => { const ok = await persistSession(); if (ok) window.location.href = '/onboarding'; }}
           className="inline-block rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 py-2 text-[var(--color-primary-foreground)] text-center"
         >
           Start Onboarding

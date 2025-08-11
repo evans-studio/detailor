@@ -12,6 +12,8 @@ export default function OnboardingPage() {
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const { notify } = useNotifications();
+  const [hasService, setHasService] = React.useState<boolean | null>(null);
+  const [hasAvailability, setHasAvailability] = React.useState<boolean | null>(null);
 
   // Business Info
   const [businessForm, setBusinessForm] = React.useState({
@@ -93,6 +95,7 @@ export default function OnboardingPage() {
           });
           const serviceData = await serviceRes.json();
           if (!serviceData.ok) throw new Error(serviceData.error);
+          setHasService(true);
           setCurrentStep('availability');
           break;
 
@@ -120,6 +123,7 @@ export default function OnboardingPage() {
           });
           const availabilityData = await availabilityRes.json();
           if (!availabilityData.ok) throw new Error(availabilityData.error);
+          setHasAvailability(true);
           setCurrentStep('branding');
           break;
 
@@ -134,6 +138,17 @@ export default function OnboardingPage() {
             })
           });
           // Don't fail if branding fails - it's not critical
+          // Enforce completion prerequisites
+          if (!hasService) {
+            setCurrentStep('service');
+            notify({ title: 'Add your first service to continue' });
+            break;
+          }
+          if (!hasAvailability) {
+            setCurrentStep('availability');
+            notify({ title: 'Set your working hours to continue' });
+            break;
+          }
           setCurrentStep('complete');
           break;
       }
@@ -159,7 +174,7 @@ export default function OnboardingPage() {
             <div className="text-[var(--color-text-muted)] mb-6">Your business is now ready to accept bookings. You can customize more settings later.</div>
           </div>
           <a 
-            href="/admin" 
+            href="/dashboard" 
             className="inline-block rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 py-3 text-[var(--color-primary-foreground)] font-medium hover:opacity-90 transition-opacity"
           >
             Go to Dashboard
@@ -539,9 +554,7 @@ export default function OnboardingPage() {
                 Back
               </Button>
               <div className="flex gap-2">
-                <Button intent="ghost" onClick={() => setCurrentStep('complete')}>
-                  Skip
-                </Button>
+              {/* Remove skip to enforce completion */}
                 <Button 
                   onClick={() => handleSubmit('branding')} 
                   disabled={submitting}

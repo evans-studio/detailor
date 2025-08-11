@@ -31,9 +31,40 @@ export default function DashboardPage() {
     },
   });
   const pendingInvoices = React.useMemo(() => invoices.filter((iv) => Number(iv.total) > Number(iv.paid_amount)).length, [invoices]);
+  const [servicesCount, setServicesCount] = React.useState<number | null>(null);
+  const [patternsCount, setPatternsCount] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const s = await fetch('/api/admin/services');
+        const sj = await s.json();
+        setServicesCount(Array.isArray(sj?.services) ? sj.services.length : 0);
+      } catch { setServicesCount(0); }
+      try {
+        const p = await fetch('/api/admin/availability/work-patterns');
+        const pj = await p.json();
+        setPatternsCount(Array.isArray(pj?.patterns) ? pj.patterns.length : 0);
+      } catch { setPatternsCount(0); }
+    })();
+  }, []);
   return (
     <DashboardShell role="admin" tenantName="DetailFlow">
       <RoleGuard allowed={["admin","staff"]}>
+        {(servicesCount === 0 || patternsCount === 0) && (
+          <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 mb-4">
+            <div className="font-semibold mb-1">Welcome! Let’s finish setting up</div>
+            <div className="text-[var(--color-text-muted)] text-sm mb-3">Complete setup so you can start taking bookings.</div>
+            <ul className="list-disc pl-5 text-sm mb-3">
+              <li className={servicesCount === 0 ? '' : 'line-through'}>Add your first service</li>
+              <li className={patternsCount === 0 ? '' : 'line-through'}>Set your working hours</li>
+            </ul>
+            <div className="flex gap-2">
+              {servicesCount === 0 && <a className="btn-primary" href="/admin/services">Add Service</a>}
+              {patternsCount === 0 && <a className="btn-ghost" href="/admin/settings/booking">Set Hours</a>}
+            </div>
+          </div>
+        )}
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           <KpiCard label="Bookings Today" value={typeof kpis?.bookings_today === 'number' ? String(kpis?.bookings_today) : '—'} />
           <KpiCard label="Revenue (7d)" value={typeof kpis?.revenue_7d === 'number' ? `£${kpis?.revenue_7d.toFixed(2)}` : '—'} />

@@ -7,6 +7,22 @@ import { useNotifications } from '@/lib/notifications';
 import Link from 'next/link';
 
 export default function BookingConfirmationPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center p-6">
+          <div className="text-[var(--font-size-lg)] font-semibold text-[var(--color-text)] mb-4">
+            Loading confirmation...
+          </div>
+        </div>
+      </div>
+    }>
+      <BookingConfirmationInner />
+    </React.Suspense>
+  );
+}
+
+function BookingConfirmationInner() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>('loading');
