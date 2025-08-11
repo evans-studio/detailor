@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { api } from '@/lib/api';
+import { useRealtimeCustomerUpdates } from '@/lib/realtime';
 import { Button } from '@/ui/button';
 import Link from 'next/link';
 import { Badge } from '@/ui/badge';
@@ -11,6 +12,9 @@ type Booking = { id: string; start_at: string; status: string; payment_status: s
 
 export default function CustomerHome() {
   const queryClient = useQueryClient();
+  
+  // System Bible Pattern: Real-time customer updates
+  useRealtimeCustomerUpdates('detail-flow', undefined, true);
   const { data: bookings = [] } = useQuery({
     queryKey: ['bookings', { scope: 'customer-home' }],
     queryFn: async (): Promise<Booking[]> => {

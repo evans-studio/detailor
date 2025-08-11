@@ -35,6 +35,20 @@ export async function POST(req: Request) {
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
     if (!profile || profile.role !== 'admin') throw new Error('Admin only');
+
+    // Check services limit for the tenant
+    const { data: tenant } = await admin.from('tenants').select('feature_flags').eq('id', profile.tenant_id).single();
+    const servicesLimit = tenant?.feature_flags?.services_limit as number | null;
+    
+    if (servicesLimit !== null && servicesLimit > 0) {
+      const { data: currentServices } = await admin.from('services').select('id').eq('tenant_id', profile.tenant_id);
+      const currentCount = currentServices?.length || 0;
+      
+      if (currentCount >= servicesLimit) {
+        throw new Error(`Service limit reached (${servicesLimit}). Upgrade to Pro for more services.`);
+      }
+    }
+
     const { data, error } = await admin
       .from('services')
       .insert({ tenant_id: profile.tenant_id, ...payload })

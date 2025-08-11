@@ -14,9 +14,45 @@ function planFromPriceId(priceId: string | null | undefined): 'starter' | 'pro' 
 }
 
 function featureFlagsForPlan(plan: 'starter' | 'pro' | 'enterprise') {
-  if (plan === 'starter') return { staff_limit: 1, services_limit: 2, messaging: false, analytics: false };
-  if (plan === 'pro') return { staff_limit: 5, services_limit: null, messaging: true, analytics: true };
-  return { staff_limit: null, services_limit: null, messaging: true, analytics: true, white_label: true };
+  if (plan === 'starter') {
+    return {
+      bookings_limit: 100,
+      services_limit: 10,
+      staff_limit: 1,
+      customer_portal: false,
+      online_payments: false,
+      analytics: false,
+      custom_branding: false,
+      sms_notifications: false,
+      messaging: false
+    };
+  }
+  if (plan === 'pro') {
+    return {
+      bookings_limit: 500,
+      services_limit: 50,
+      staff_limit: 3,
+      customer_portal: true,
+      online_payments: true,
+      analytics: true,
+      custom_branding: true,
+      sms_notifications: 'addon',
+      messaging: true
+    };
+  }
+  return {
+    bookings_limit: null,
+    services_limit: null,
+    staff_limit: null,
+    customer_portal: true,
+    online_payments: true,
+    analytics: true,
+    custom_branding: true,
+    white_label: true,
+    api_access: true,
+    sms_notifications: true,
+    messaging: true
+  };
 }
 
 export async function POST(req: Request) {

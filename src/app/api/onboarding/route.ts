@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { getUserFromRequest } from '@/lib/authServer';
+import { sendWelcomeEmail } from '@/lib/email';
 
 const bodySchema = z.object({
   legal_name: z.string().min(1),
@@ -43,6 +44,18 @@ export async function POST(req: Request) {
         await admin.from('tenant_invites').update({ status: 'accepted', accepted_by: user.id, accepted_at: new Date().toISOString() }).eq('id', invite.id);
       }
     } catch {}
+
+    // Send welcome email to admin
+    try {
+      await sendWelcomeEmail({
+        tenant_name: tenant.trading_name || tenant.legal_name,
+        admin_email: parsed.admin_email,
+        admin_name: parsed.admin_full_name,
+      });
+    } catch (emailError) {
+      // Log email errors but don't fail the onboarding
+      console.error('Failed to send welcome email:', emailError);
+    }
 
     return NextResponse.json({ ok: true, tenant, invite });
   } catch (error: unknown) {

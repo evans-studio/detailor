@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { sendBookingNotificationToAdmin } from '@/lib/email';
 
 const createSchema = z.object({
   customer_id: z.string().uuid(),
@@ -69,6 +70,30 @@ export async function POST(req: Request) {
     }
     if (!tenantId) throw new Error('No tenant context');
 
+    // Check booking limits for starter plans
+    const { data: tenant } = await admin.from('tenants').select('feature_flags, plan').eq('id', tenantId).single();
+    const bookingsLimit = tenant?.feature_flags?.bookings_limit as number | null;
+    
+    if (bookingsLimit !== null && bookingsLimit > 0) {
+      // Get current month's booking count
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+      
+      const { data: monthlyBookings } = await admin
+        .from('bookings')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .gte('created_at', monthStart)
+        .lt('created_at', monthEnd);
+      
+      const currentCount = monthlyBookings?.length || 0;
+      
+      if (currentCount >= bookingsLimit) {
+        throw new Error(`Monthly booking limit reached (${bookingsLimit}). Upgrade to Pro for unlimited bookings.`);
+      }
+    }
+
     // Compute price from quote-like method using service price and pricing config
     const { data: svc } = await admin.from('services').select('*').eq('id', payload.service_id).single();
     if (!svc) throw new Error('Service not found');
@@ -108,6 +133,54 @@ export async function POST(req: Request) {
       .select('*')
       .single();
     if (error) throw error;
+
+    // Note: For authenticated bookings, emails will be sent when payment is confirmed
+    // This is typically handled in the payment confirmation flow
+    // For now, only send admin notification for new bookings
+    try {
+      const { data: bookingDetails } = await admin
+        .from('bookings')
+        .select(`
+          *,
+          customers (name, email, phone),
+          vehicles (make, model, year, colour),
+          addresses (address_line1, address_line2, city, postcode),
+          services (name),
+          tenants (name, settings)
+        `)
+        .eq('id', data.id)
+        .single();
+
+      if (bookingDetails) {
+        const customer = bookingDetails.customers as { name: string; email: string; phone?: string };
+        const tenant = bookingDetails.tenants as { name: string; settings?: Record<string, unknown> };
+        const adminEmail = 'admin@example.com';
+
+        const vehicle = bookingDetails.vehicles as { make: string; model: string; year?: number };
+        const address = bookingDetails.addresses as { address_line1: string; address_line2?: string; city: string; postcode: string };
+        const service = bookingDetails.services as { name: string };
+
+        // Send notification to admin for new bookings
+        await sendBookingNotificationToAdmin({
+          booking_id: bookingDetails.id,
+          reference: bookingDetails.reference,
+          service_name: service.name,
+          customer_name: customer.name,
+          customer_email: customer.email,
+          customer_phone: customer.phone,
+          start_at: bookingDetails.start_at,
+          address: `${address.address_line1}${address.address_line2 ? ', ' + address.address_line2 : ''}, ${address.city}, ${address.postcode}`,
+          vehicle_name: `${vehicle.year || ''} ${vehicle.make} ${vehicle.model}`.trim(),
+          price_breakdown: bookingDetails.price_breakdown,
+          admin_email: adminEmail,
+          tenant_name: tenant.name,
+        });
+      }
+    } catch (emailError) {
+      // Log email errors but don't fail the booking
+      console.error('Failed to send admin notification email:', emailError);
+    }
+
     return NextResponse.json({ ok: true, booking: data });
   } catch (error: unknown) {
     return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });

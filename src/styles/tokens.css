@@ -1,32 +1,32 @@
 /* Design Tokens — Phase FE-0 (no components) */
 
 :root {
-  /* Brand */
-  --color-primary: #2B6CB0; /* Deep Clean Blue */
+  /* Brand - System Bible Aligned */
+  --color-primary: #3B82F6; /* blue-600 */
   --color-primary-foreground: #FFFFFF;
   --color-secondary: #F6B500; /* Sunburst Gold */
   --color-secondary-foreground: #1A1A1A;
 
-  /* Neutrals */
-  --color-bg: #F9FAFB; /* Soft Cloud */
-  --color-surface: #FFFFFF;
-  --color-border: #E5E7EB;
+  /* Neutrals - System Bible Aligned */
+  --color-bg: #F9FAFB; /* Surface from System Bible */
+  --color-surface: #FFFFFF; /* Background from System Bible */
+  --color-border: #E5E7EB; /* Borders from System Bible */
   --color-muted: #F3F4F6;
-  --color-muted-foreground: #6B7280;
+  --color-muted-foreground: #6B7280; /* Text secondary from System Bible */
 
-  /* Text */
-  --color-text: #1A1A1A;
-  --color-text-muted: #6B7280;
+  /* Text - System Bible Aligned */
+  --color-text: #111827; /* Text primary from System Bible */
+  --color-text-muted: #6B7280; /* Text secondary from System Bible */
   --color-inverse-text: #F8F8F8;
 
-  /* Status */
-  --color-success: #16A34A;
+  /* Status - System Bible Aligned */
+  --color-success: #10B981; /* Success from System Bible */
   --color-success-foreground: #FFFFFF;
-  --color-warning: #FACC15;
+  --color-warning: #F59E0B; /* Warning from System Bible */
   --color-warning-foreground: #1A1A1A;
-  --color-error: #DC2626;
+  --color-error: #EF4444; /* Error from System Bible */
   --color-error-foreground: #FFFFFF;
-  --color-info: #0284C7;
+  --color-info: #3B82F6; /* Using primary blue for info */
   --color-info-foreground: #FFFFFF;
 
   /* States */

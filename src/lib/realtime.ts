@@ -1,5 +1,7 @@
 "use client";
 import { createClient } from '@supabase/supabase-js';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import type { QueryClient } from '@tanstack/react-query';
 
 export type SupaBooking = {
@@ -97,6 +99,87 @@ export function wireRealtimeInvalidations(tenantId: string, queryClient: QueryCl
     unsubBookings();
     unsubPayments();
     unsubInvoices();
+  };
+}
+
+// System Bible Compliant: Real-time React Hook for Admin Operations
+export function useRealtimeAdminUpdates(tenantId: string, enabled = true) {
+  const queryClient = useQueryClient();
+  
+  useEffect(() => {
+    if (!enabled || !tenantId) return;
+    
+    // System Bible Pattern: Multi-entity real-time invalidation
+    const unsubscribe = wireRealtimeInvalidations(tenantId, queryClient);
+    
+    return unsubscribe;
+  }, [tenantId, enabled, queryClient]);
+}
+
+// System Bible Compliant: Enhanced real-time subscription for customer operations
+export function useRealtimeCustomerUpdates(tenantId: string, customerId?: string, enabled = true) {
+  const queryClient = useQueryClient();
+  
+  useEffect(() => {
+    if (!enabled || !tenantId) return;
+    
+    const unsubBookings = subscribeBookings(tenantId, (event) => {
+      // System Bible Pattern: Granular invalidation for customer-specific updates
+      if (customerId && event.record.id) {
+        queryClient.invalidateQueries({ queryKey: ['bookings', { scope: 'customer-home' }] });
+        queryClient.invalidateQueries({ queryKey: ['bookings', { scope: 'me' }] });
+      }
+    });
+    
+    const unsubPayments = subscribePayments(tenantId, () => {
+      if (customerId) {
+        queryClient.invalidateQueries({ queryKey: ['invoices', { customerId }] });
+        queryClient.invalidateQueries({ queryKey: ['bookings', { scope: 'customer-home' }] });
+      }
+    });
+    
+    return () => {
+      unsubBookings();
+      unsubPayments();
+    };
+  }, [tenantId, customerId, enabled, queryClient]);
+}
+
+// System Bible Pattern: Status-aware real-time updates for workflow management
+export function subscribeBookingStatusChanges(
+  tenantId: string, 
+  statusFilter: string[] = [], 
+  onChange: (event: { type: 'INSERT' | 'UPDATE' | 'DELETE'; record: SupaBooking; previousStatus?: string }) => void
+) {
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+  );
+  
+  const channel = client
+    .channel('booking-status-changes')
+    .on('postgres_changes', { 
+      event: '*', 
+      schema: 'public', 
+      table: 'bookings', 
+      filter: `tenant_id=eq.${tenantId}` 
+    }, (payload) => {
+      const record = payload.new as unknown as SupaBooking;
+      const oldRecord = payload.old as unknown as SupaBooking;
+      
+      // System Bible Pattern: Status workflow validation
+      if (statusFilter.length === 0 || statusFilter.includes(record?.status)) {
+        onChange({ 
+          type: payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE', 
+          record,
+          previousStatus: oldRecord?.status 
+        });
+      }
+    })
+    .subscribe();
+    
+  return () => {
+    client.removeChannel(channel);
   };
 }
 
