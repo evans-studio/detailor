@@ -36,10 +36,11 @@ export function WelcomeHandoff({ email }: { email: string | null }) {
     window.location.href = '/onboarding';
   }
 
+  React.useEffect(() => { if (session) { void persistSession(); } }, [session, persistSession]);
+
   if (loading) return null;
 
   if (session) {
-    React.useEffect(() => { void persistSession(); }, []);
     return (
       <div className="grid gap-3">
         <div className="text-[var(--color-text-muted)]">You are signed in.</div>
