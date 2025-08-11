@@ -93,7 +93,7 @@ export default function AdminInvoiceDetailPage() {
               <div className="flex items-center justify-between">
                 <div className="text-[var(--font-size-xl)] font-semibold">Invoice {invoice.number}</div>
                 <div className="flex items-center gap-2">
-                  <a className="underline" href={`/api/invoices/${invoice.id}`} target="_blank" rel="noreferrer">Download PDF</a>
+                  <a className="underline" href={`/api/invoices/${invoice.id}?format=pdf`} target="_blank" rel="noreferrer">Download PDF</a>
                   <button className="underline" onClick={exportCsv}>Export CSV</button>
                   <Badge intent={invoice.balance === 0 ? 'success' : 'warning'}>{invoice.balance === 0 ? 'Paid' : 'Unpaid'}</Badge>
                 </div>
