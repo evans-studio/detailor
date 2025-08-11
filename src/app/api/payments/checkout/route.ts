@@ -24,6 +24,7 @@ export async function POST(req: Request) {
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
       subscription_data: {
+        trial_period_days: 7,
         metadata: { app: 'detailflow' },
       },
       metadata: { app: 'detailflow' },
@@ -56,7 +57,7 @@ export async function GET(req: Request) {
       customer_email: email,
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
-      subscription_data: { metadata: { app: 'detailflow' } },
+      subscription_data: { trial_period_days: 7, metadata: { app: 'detailflow' } },
       metadata: { app: 'detailflow' },
     });
     if (session.url) return NextResponse.redirect(session.url, { status: 303 });
