@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import Stripe from 'stripe';
+import { WelcomeHandoff } from '@/components/WelcomeHandoff';
 
 export default async function WelcomePage({ searchParams }: { searchParams: Promise<{ session_id?: string }> }) {
   const sp = await searchParams;
@@ -28,10 +29,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-2">Welcome to DetailFlow</h1>
         <p className="text-[var(--color-text-muted)] mb-4">{message}</p>
         {customerEmail ? <div className="mb-4 text-sm">Signed up as: {customerEmail}</div> : null}
-        <div className="flex justify-center gap-2">
-          <a href="/onboarding" className="inline-block rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 py-2 text-[var(--color-primary-foreground)]">Start Onboarding</a>
-          <a href="/dashboard" className="inline-block rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 py-2">Skip for now</a>
-        </div>
+        <WelcomeHandoff email={customerEmail} />
       </div>
     </main>
   );
