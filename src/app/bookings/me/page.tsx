@@ -54,6 +54,26 @@ export default function MyBookingsPage() {
               <div className="flex gap-2">
                 <Link href={`/bookings/${b.id}`}><Button intent="ghost">Details</Button></Link>
                 <Button intent="secondary" disabled>Reschedule</Button>
+                {b.payment_status !== 'paid' ? (
+                  <Button
+                    intent="primary"
+                    onClick={async () => {
+                      // Find invoice for this booking and open checkout
+                      try {
+                        const res = await fetch(`/api/invoices?booking_id=${b.id}`);
+                        const json = await res.json();
+                        const inv = (json?.invoices || [])[0];
+                        if (inv?.id) {
+                          const pay = await fetch('/api/payments/checkout-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invoice_id: inv.id }) });
+                          const pj = await pay.json();
+                          if (pj?.url) window.location.href = pj.url as string;
+                        }
+                      } catch {}
+                    }}
+                  >
+                    Pay now
+                  </Button>
+                ) : null}
                 <Button intent="destructive" onClick={() => cancelMutation.mutate(b.id)} disabled={cancelMutation.isPending}>Cancel</Button>
               </div>
             </div>

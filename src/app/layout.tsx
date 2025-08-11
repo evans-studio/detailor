@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import { NotificationsProvider } from "@/lib/notifications";
 import { BrandLoader } from "@/lib/brand-loader";
 import { QueryProvider } from "@/lib/query-client";
+import { RealtimeBridge } from "@/components/RealtimeBridge";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,6 +34,7 @@ export default function RootLayout({
         <ThemeProvider paletteName="Master">
           <QueryProvider>
             <BrandLoader />
+            <RealtimeBridge />
             <NotificationsProvider>{children}</NotificationsProvider>
           </QueryProvider>
         </ThemeProvider>
