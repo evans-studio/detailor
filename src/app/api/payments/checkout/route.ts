@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     if (!secret) return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.detailflow.com';
-    const stripe = new Stripe(secret, { apiVersion: '2025-07-30.basil' });
+    const stripe = new Stripe(secret);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
@@ -44,7 +44,7 @@ export async function GET(req: Request) {
     if (!secret) return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.detailflow.com';
-    const stripe = new Stripe(secret, { apiVersion: '2025-07-30.basil' });
+    const stripe = new Stripe(secret);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
