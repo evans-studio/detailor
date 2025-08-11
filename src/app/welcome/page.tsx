@@ -27,7 +27,10 @@ export default async function WelcomePage({ searchParams }: { searchParams: { se
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-2">Welcome to DetailFlow</h1>
         <p className="text-[var(--color-text-muted)] mb-4">{message}</p>
         {customerEmail ? <div className="mb-4 text-sm">Signed up as: {customerEmail}</div> : null}
-        <a href="/dashboard" className="inline-block rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 py-2 text-[var(--color-primary-foreground)]">Go to Dashboard</a>
+        <div className="flex justify-center gap-2">
+          <a href="/onboarding" className="inline-block rounded-[var(--radius-md)] bg-[var(--color-primary)] px-4 py-2 text-[var(--color-primary-foreground)]">Start Onboarding</a>
+          <a href="/dashboard" className="inline-block rounded-[var(--radius-md)] border border-[var(--color-border)] px-4 py-2">Skip for now</a>
+        </div>
       </div>
     </main>
   );

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-const PUBLIC_PATHS = new Set(['/signin', '/signup', '/forgot-password', '/demo']);
+const PUBLIC_PATHS = new Set(['/signin', '/signup', '/forgot-password', '/demo', '/welcome']);
 
 function isPublicPath(pathname: string) {
   for (const p of PUBLIC_PATHS) if (pathname.startsWith(p)) return true;
