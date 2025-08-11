@@ -9,6 +9,7 @@ import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
 import { Button } from '@/ui/button';
 import { EntityVehicleDrawer } from '@/components/EntityVehicleDrawer';
 import { EntityAddressDrawer } from '@/components/EntityAddressDrawer';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/ui/tabs';
 
 type Customer = { id: string; name: string; email?: string; phone?: string; flags?: Record<string, unknown> };
 type Vehicle = { id: string; make: string; model: string; size_tier?: string };
@@ -62,65 +63,76 @@ export default function AdminCustomerDetailPage() {
         <div>Loading…</div>
       ) : (
         <div className="grid gap-4">
-          <h1 className="text-[var(--font-size-2xl)] font-semibold">{customer.name}</h1>
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-              <div className="font-medium mb-2">Profile</div>
-              <div className="grid gap-2">
+          <div className="flex items-center justify-between">
+            <h1 className="text-[var(--font-size-2xl)] font-semibold">{customer.name}</h1>
+            <div className="flex gap-2">
+              <Button onClick={() => updateProfile.mutate({ flags: { ...(customer.flags||{}), inactive: !Boolean((customer.flags||{} as Record<string, unknown>)['inactive']) } as unknown as Record<string, unknown> })}>
+                {((customer.flags||{} as Record<string, unknown>)['inactive']) ? 'Mark Active' : 'Mark Inactive'}
+              </Button>
+            </div>
+          </div>
+          <Tabs defaultValue="profile">
+            <TabsList>
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+              <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
+              <TabsTrigger value="addresses">Addresses</TabsTrigger>
+              <TabsTrigger value="bookings">Bookings</TabsTrigger>
+            </TabsList>
+            <TabsContent value="profile">
+              <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-2">
                 <div>Email: {customer.email || '—'}</div>
                 <div>Phone: {customer.phone || '—'}</div>
                 <div>Status: {(customer.flags && typeof customer.flags === 'object' && (customer.flags as Record<string, unknown>)['inactive']) ? 'Inactive' : 'Active'}</div>
-                <div className="flex gap-2">
-                  <button className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 py-1" onClick={() => updateProfile.mutate({ flags: { ...(customer.flags||{}), inactive: !Boolean((customer.flags||{} as Record<string, unknown>)['inactive']) } as unknown as Record<string, unknown> })}>
-                    {((customer.flags||{} as Record<string, unknown>)['inactive']) ? 'Mark Active' : 'Mark Inactive'}
-                  </button>
-                </div>
               </div>
-            </div>
-            <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-              <div className="font-medium mb-2">Bookings (last 10)</div>
-              {bookings.length === 0 ? (
-                <div className="text-[var(--color-text-muted)]">No bookings</div>
-              ) : (
-                <Table>
-                  <THead><TR><TH>When</TH><TH>Status</TH><TH>Total</TH></TR></THead>
-                  <TBody>
-                    {bookings.map((b) => (
-                      <TR key={b.id}><TD>{new Date(b.start_at).toLocaleString()}</TD><TD>{b.status}</TD><TD>£{b.price_breakdown?.total ?? 0}</TD></TR>
-                    ))}
-                  </TBody>
-                </Table>
-              )}
-            </div>
-          </div>
-            <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-            <div className="font-medium mb-2">Vehicles</div>
-              <div className="mb-2"><Button onClick={() => setVehOpen(true)}>Add Vehicle</Button></div>
-            {vehicles.length === 0 ? (
-              <div className="text-[var(--color-text-muted)]">None</div>
-            ) : (
-              <Table>
-                <THead><TR><TH>Make</TH><TH>Model</TH><TH>Size</TH></TR></THead>
-                <TBody>
-                  {vehicles.map((v) => (<TR key={v.id}><TD>{v.make}</TD><TD>{v.model}</TD><TD>{v.size_tier || '—'}</TD></TR>))}
-                </TBody>
-              </Table>
-            )}
-          </div>
-          <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
-            <div className="font-medium mb-2">Addresses</div>
-            <div className="mb-2"><Button onClick={() => setAddrOpen(true)}>Add Address</Button></div>
-            {addresses.length === 0 ? (
-              <div className="text-[var(--color-text-muted)]">None</div>
-            ) : (
-              <Table>
-                <THead><TR><TH>Label</TH><TH>Address</TH><TH>Postcode</TH></TR></THead>
-                <TBody>
-                  {addresses.map((a) => (<TR key={a.id}><TD>{a.label || '—'}</TD><TD>{a.address_line1}</TD><TD>{a.postcode || '—'}</TD></TR>))}
-                </TBody>
-              </Table>
-            )}
-          </div>
+            </TabsContent>
+            <TabsContent value="vehicles">
+              <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                <div className="flex items-center justify-between mb-2"><div className="font-medium">Vehicles</div><Button onClick={() => setVehOpen(true)}>Add Vehicle</Button></div>
+                {vehicles.length === 0 ? (
+                  <div className="text-[var(--color-text-muted)]">None</div>
+                ) : (
+                  <Table>
+                    <THead><TR><TH>Make</TH><TH>Model</TH><TH>Size</TH></TR></THead>
+                    <TBody>
+                      {vehicles.map((v) => (<TR key={v.id}><TD>{v.make}</TD><TD>{v.model}</TD><TD>{v.size_tier || '—'}</TD></TR>))}
+                    </TBody>
+                  </Table>
+                )}
+              </div>
+            </TabsContent>
+            <TabsContent value="addresses">
+              <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                <div className="flex items-center justify-between mb-2"><div className="font-medium">Addresses</div><Button onClick={() => setAddrOpen(true)}>Add Address</Button></div>
+                {addresses.length === 0 ? (
+                  <div className="text-[var(--color-text-muted)]">None</div>
+                ) : (
+                  <Table>
+                    <THead><TR><TH>Label</TH><TH>Address</TH><TH>Postcode</TH></TR></THead>
+                    <TBody>
+                      {addresses.map((a) => (<TR key={a.id}><TD>{a.label || '—'}</TD><TD>{a.address_line1}</TD><TD>{a.postcode || '—'}</TD></TR>))}
+                    </TBody>
+                  </Table>
+                )}
+              </div>
+            </TabsContent>
+            <TabsContent value="bookings">
+              <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                <div className="font-medium mb-2">Bookings (last 10)</div>
+                {bookings.length === 0 ? (
+                  <div className="text-[var(--color-text-muted)]">No bookings</div>
+                ) : (
+                  <Table>
+                    <THead><TR><TH>When</TH><TH>Status</TH><TH>Total</TH></TR></THead>
+                    <TBody>
+                      {bookings.map((b) => (
+                        <TR key={b.id}><TD>{new Date(b.start_at).toLocaleString()}</TD><TD>{b.status}</TD><TD>£{b.price_breakdown?.total ?? 0}</TD></TR>
+                      ))}
+                    </TBody>
+                  </Table>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
           <EntityVehicleDrawer open={vehOpen} onOpenChange={setVehOpen} customerId={id} onCreated={async () => {
             await queryClient.invalidateQueries({ queryKey: ['customer-vehicles', id] });
           }} />
