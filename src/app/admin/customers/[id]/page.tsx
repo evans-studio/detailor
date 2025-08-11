@@ -3,6 +3,7 @@ import * as React from 'react';
 import { useParams } from 'next/navigation';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { api } from '@/lib/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { RoleGuard } from '@/components/RoleGuard';
 import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
 import { Button } from '@/ui/button';
@@ -17,25 +18,42 @@ type Booking = { id: string; start_at: string; status: string; price_breakdown?:
 export default function AdminCustomerDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
-  const [customer, setCustomer] = React.useState<Customer | null>(null);
-  const [vehicles, setVehicles] = React.useState<Vehicle[]>([]);
-  const [addresses, setAddresses] = React.useState<Address[]>([]);
-  const [bookings, setBookings] = React.useState<Booking[]>([]);
+  const queryClient = useQueryClient();
+  const { data: customer } = useQuery({
+    queryKey: ['customer', id],
+    queryFn: async (): Promise<Customer | null> => {
+      const res = await fetch(`/api/customers/${id}`);
+      const json = await res.json();
+      return json.customer || null;
+    },
+  });
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['customer-vehicles', id],
+    queryFn: async (): Promise<Vehicle[]> => (await api<{ ok: boolean; vehicles: Vehicle[] }>(`/api/customers/${id}/vehicles`)).vehicles || [],
+  });
+  const { data: addresses = [] } = useQuery({
+    queryKey: ['customer-addresses', id],
+    queryFn: async (): Promise<Address[]> => (await api<{ ok: boolean; addresses: Address[] }>(`/api/customers/${id}/addresses`)).addresses || [],
+  });
+  const { data: bookings = [] } = useQuery({
+    queryKey: ['customer-bookings-preview', id],
+    queryFn: async (): Promise<Booking[]> => {
+      const bs = await api<{ ok: boolean; bookings: (Booking & { customer_id?: string })[] }>(`/api/bookings`);
+      return (bs.bookings || []).filter((b) => (b as unknown as { customer_id?: string }).customer_id === id).slice(0, 10);
+    },
+  });
   const [vehOpen, setVehOpen] = React.useState(false);
   const [addrOpen, setAddrOpen] = React.useState(false);
 
-  React.useEffect(() => {
-    (async () => {
-      const list = await api<{ ok: boolean; customers: Customer[] }>(`/api/customers`);
-      setCustomer(list.customers.find((c) => c.id === id) || null);
-      const vs = await api<{ ok: boolean; vehicles: Vehicle[] }>(`/api/customers/${id}/vehicles`);
-      setVehicles(vs.vehicles || []);
-      const as = await api<{ ok: boolean; addresses: Address[] }>(`/api/customers/${id}/addresses`);
-      setAddresses(as.addresses || []);
-      const bs = await api<{ ok: boolean; bookings: (Booking & { customer_id?: string })[] }>(`/api/bookings`);
-      setBookings((bs.bookings || []).filter((b) => b.customer_id === id).slice(0, 10));
-    })();
-  }, [id]);
+  const updateProfile = useMutation({
+    mutationFn: async (payload: Partial<Customer>) => {
+      await fetch(`/api/customers/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['customer', id] });
+      await queryClient.invalidateQueries({ queryKey: ['customers'] });
+    },
+  });
 
   return (
     <DashboardShell role="admin" tenantName="DetailFlow">
@@ -48,9 +66,16 @@ export default function AdminCustomerDetailPage() {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
               <div className="font-medium mb-2">Profile</div>
-              <div>Email: {customer.email || '—'}</div>
-              <div>Phone: {customer.phone || '—'}</div>
-              <div>Status: {(customer.flags && typeof customer.flags === 'object' && (customer.flags as Record<string, unknown>)['inactive']) ? 'Inactive' : 'Active'}</div>
+              <div className="grid gap-2">
+                <div>Email: {customer.email || '—'}</div>
+                <div>Phone: {customer.phone || '—'}</div>
+                <div>Status: {(customer.flags && typeof customer.flags === 'object' && (customer.flags as Record<string, unknown>)['inactive']) ? 'Inactive' : 'Active'}</div>
+                <div className="flex gap-2">
+                  <button className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-2 py-1" onClick={() => updateProfile.mutate({ flags: { ...(customer.flags||{}), inactive: !Boolean((customer.flags||{} as Record<string, unknown>)['inactive']) } as unknown as Record<string, unknown> })}>
+                    {((customer.flags||{} as Record<string, unknown>)['inactive']) ? 'Mark Active' : 'Mark Inactive'}
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
               <div className="font-medium mb-2">Bookings (last 10)</div>
@@ -97,12 +122,10 @@ export default function AdminCustomerDetailPage() {
             )}
           </div>
           <EntityVehicleDrawer open={vehOpen} onOpenChange={setVehOpen} customerId={id} onCreated={async () => {
-            const vs = await api<{ ok: boolean; vehicles: Vehicle[] }>(`/api/customers/${id}/vehicles`);
-            setVehicles(vs.vehicles || []);
+            await queryClient.invalidateQueries({ queryKey: ['customer-vehicles', id] });
           }} />
           <EntityAddressDrawer open={addrOpen} onOpenChange={setAddrOpen} customerId={id} onCreated={async () => {
-            const as = await api<{ ok: boolean; addresses: Address[] }>(`/api/customers/${id}/addresses`);
-            setAddresses(as.addresses || []);
+            await queryClient.invalidateQueries({ queryKey: ['customer-addresses', id] });
           }} />
         </div>
       )}

@@ -16,9 +16,15 @@ export async function GET(req: Request) {
   try {
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
+    const url = new URL(req.url);
+    const invoiceId = url.searchParams.get('invoice_id') || undefined;
+    const bookingId = url.searchParams.get('booking_id') || undefined;
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
     if (!profile) throw new Error('No profile');
-    const { data, error } = await admin.from('payments').select('*').eq('tenant_id', profile.tenant_id).order('created_at', { ascending: false });
+    let query = admin.from('payments').select('*').eq('tenant_id', profile.tenant_id);
+    if (invoiceId) query = query.eq('invoice_id', invoiceId);
+    if (bookingId) query = query.eq('booking_id', bookingId);
+    const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
     return NextResponse.json({ ok: true, payments: data });
   } catch (e: unknown) {

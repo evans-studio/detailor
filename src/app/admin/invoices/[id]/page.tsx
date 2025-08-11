@@ -5,6 +5,7 @@ import { DashboardShell } from '@/components/layout/DashboardShell';
 import { RoleGuard } from '@/components/RoleGuard';
 import { Badge } from '@/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
 import { StripeTestBadge } from '@/components/StripeTestBadge';
 
 type Invoice = { id: string; number: string; total: number; paid_amount: number; balance: number; created_at: string; booking_id?: string | null };
@@ -19,6 +20,24 @@ export default function AdminInvoiceDetailPage() {
       const res = await fetch(`/api/invoices/${id}`);
       const json = await res.json();
       return json.invoice || null;
+    },
+  });
+  const { data: payments = [] } = useQuery({
+    queryKey: ['payments', { invoiceId: id }],
+    queryFn: async (): Promise<Array<{ id: string; amount: number; status: string; provider: string; created_at: string }>> => {
+      const res = await fetch(`/api/payments?invoice_id=${id}`);
+      const json = await res.json();
+      return json.payments || [];
+    },
+    enabled: Boolean(id),
+  });
+  const refund = useMutation({
+    mutationFn: async (paymentId: string) => {
+      await fetch('/api/payments/refund', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ payment_id: paymentId }) });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['payments'] });
+      await queryClient.invalidateQueries({ queryKey: ['invoice', id] });
     },
   });
   const { data: isDemo = false } = useQuery({
@@ -86,6 +105,29 @@ export default function AdminInvoiceDetailPage() {
               >
                 Create Checkout Link
               </a>
+            ) : null}
+            {payments.length ? (
+              <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                <div className="font-medium mb-2">Payments</div>
+                <Table>
+                  <THead><TR><TH>Date</TH><TH>Provider</TH><TH>Amount</TH><TH>Status</TH><TH></TH></TR></THead>
+                  <TBody>
+                    {payments.map((p) => (
+                      <TR key={p.id}>
+                        <TD>{new Date(p.created_at).toLocaleString()}</TD>
+                        <TD>{p.provider}</TD>
+                        <TD>£{Number(p.amount).toFixed(2)}</TD>
+                        <TD>{p.status}</TD>
+                        <TD>
+                          {p.status !== 'refunded' ? (
+                            <button className="underline" onClick={() => refund.mutate(p.id)} disabled={refund.isPending}>Refund</button>
+                          ) : null}
+                        </TD>
+                      </TR>
+                    ))}
+                  </TBody>
+                </Table>
+              </div>
             ) : null}
           </div>
         )}
