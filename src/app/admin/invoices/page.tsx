@@ -15,6 +15,18 @@ export default function AdminInvoicesPage() {
     queryKey: ['invoices'],
     queryFn: async (): Promise<Invoice[]> => (await api<{ ok: boolean; invoices: Invoice[] }>(`/api/invoices`)).invoices || [],
   });
+  function exportCsv(list: Invoice[]) {
+    const headers = ['Number','Date','Total','Paid','Balance'];
+    const lines = list.map((i) => [i.number, new Date(i.created_at).toISOString(), String(i.total ?? 0), String(i.paid_amount ?? 0), String(i.balance ?? 0)].join(','));
+    const csv = [headers.join(','), ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'invoices.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
   function StatusBadge({ row }: { row: Invoice }) {
     const paid = Number(row.paid_amount) >= Number(row.total);
     return <span className={`rounded-[var(--radius-full)] px-2 py-0.5 text-[var(--font-size-xs)] ${paid ? 'bg-[var(--color-success)] text-[var(--color-success-foreground)]' : 'bg-[var(--color-warning)] text-[var(--color-warning-foreground)]'}`}>{paid ? 'Paid' : 'Unpaid'}</span>;
@@ -26,7 +38,10 @@ export default function AdminInvoicesPage() {
   return (
     <DashboardShell role="admin" tenantName="DetailFlow">
       <RoleGuard allowed={["admin","staff"]}>
-        <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Invoices</h1>
+        <div className="flex items-center justify-between mb-3">
+          <h1 className="text-[var(--font-size-2xl)] font-semibold">Invoices</h1>
+          <button className="underline" onClick={() => exportCsv(filtered)}>Export CSV</button>
+        </div>
         <DataTable
           data={filtered}
           columns={[
