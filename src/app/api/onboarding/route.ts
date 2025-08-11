@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { getUserFromRequest } from '@/lib/authServer';
 
 const bodySchema = z.object({
   legal_name: z.string().min(1),
@@ -34,6 +35,14 @@ export async function POST(req: Request) {
       .select('*')
       .single();
     if (iErr || !invite) throw iErr ?? new Error('Invite creation failed');
+    // If the current request has an authenticated user, link them immediately
+    try {
+      const { user } = await getUserFromRequest(req);
+      if (user) {
+        await admin.from('profiles').upsert({ id: user.id, email: user.email, tenant_id: tenant.id, role: 'admin' }, { onConflict: 'id' });
+        await admin.from('tenant_invites').update({ status: 'accepted', accepted_by: user.id, accepted_at: new Date().toISOString() }).eq('id', invite.id);
+      }
+    } catch {}
 
     return NextResponse.json({ ok: true, tenant, invite });
   } catch (error: unknown) {
