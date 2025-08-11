@@ -36,4 +36,21 @@ export async function PATCH(req: Request) {
   }
 }
 
+export async function GET(req: Request) {
+  try {
+    const { user } = await getUserFromRequest(req);
+    const admin = getSupabaseAdmin();
+    const { pathname } = new URL(req.url);
+    const id = pathname.split('/').pop() as string;
+    const { data: profile } = await admin.from('profiles').select('tenant_id, role, id').eq('id', user.id).single();
+    if (!profile) throw new Error('No profile');
+    const { data, error } = await admin.from('jobs').select('*').eq('id', id).eq('tenant_id', profile.tenant_id).single();
+    if (error) throw error;
+    if (profile.role === 'staff' && data?.staff_profile_id !== profile.id) throw new Error('Forbidden');
+    return NextResponse.json({ ok: true, job: data });
+  } catch (e: unknown) {
+    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+  }
+}
+
 

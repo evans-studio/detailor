@@ -9,6 +9,23 @@ type BookingDefaults = { work_hours?: { start?: string; end?: string }; slot_min
 
 export default function BookingDefaultsPage() {
   const [form, setForm] = React.useState<BookingDefaults>({ work_hours: { start: '09:00', end: '17:00' }, slot_minutes: 60 });
+  const [saving, setSaving] = React.useState(false);
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/settings/booking-defaults');
+        const json = await res.json();
+        const first = (json.patterns || [])[0];
+        if (first) setForm({ work_hours: { start: first.start_time?.slice(0,5) || '09:00', end: first.end_time?.slice(0,5) || '17:00' }, slot_minutes: first.slot_duration_min || 60 });
+      } catch {}
+    })();
+  }, []);
+  async function onSave() {
+    setSaving(true);
+    try {
+      await fetch('/api/settings/booking-defaults', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ start: form.work_hours?.start || '09:00', end: form.work_hours?.end || '17:00', slot_minutes: form.slot_minutes || 60, capacity: 2, weekdays: [1,2,3,4,5] }) });
+    } finally { setSaving(false); }
+  }
   return (
     <DashboardShell role="admin" tenantName="DetailFlow">
       <RoleGuard allowed={["admin"]}>
@@ -19,7 +36,7 @@ export default function BookingDefaultsPage() {
           <Input placeholder="End (HH:MM)" value={form.work_hours?.end || ''} onChange={(e) => setForm({ ...form, work_hours: { ...(form.work_hours||{}), end: e.target.value } })} />
           <Input placeholder="Slot minutes" value={String(form.slot_minutes || 60)} onChange={(e) => setForm({ ...form, slot_minutes: Number(e.target.value || 60) })} />
         </div>
-        <div className="flex justify-end mt-3"><Button disabled>Save (Wires to BE later)</Button></div>
+        <div className="flex justify-end mt-3"><Button onClick={onSave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button></div>
       </RoleGuard>
     </DashboardShell>
   );

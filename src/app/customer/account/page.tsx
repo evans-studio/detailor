@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { api } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
 import Link from 'next/link';
 import { Sheet } from '@/components/Sheet';
@@ -10,8 +11,14 @@ import { Badge } from '@/ui/badge';
 type Invoice = { id: string; number: string; total: number; paid_amount: number; created_at: string };
 
 export default function AccountBillingPage() {
-  const [invoices, setInvoices] = React.useState<Invoice[]>([]);
-  const [profile, setProfile] = React.useState<{ full_name?: string; email?: string } | null>(null);
+  const { data: profile } = useQuery({
+    queryKey: ['me-profile'],
+    queryFn: async () => (await api<{ ok: boolean; profile: { full_name?: string; email?: string } }>(`/api/profiles/me`)).profile,
+  });
+  const { data: invoices = [] } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: async () => (await api<{ ok: boolean; invoices: Invoice[] }>(`/api/invoices`)).invoices || [],
+  });
   const [openId, setOpenId] = React.useState<string | null>(null);
   const current = React.useMemo(() => invoices.find((i) => i.id === openId) || null, [invoices, openId]);
   const [isDemo, setIsDemo] = React.useState(false);
@@ -22,16 +29,6 @@ export default function AccountBillingPage() {
         const json = await res.json();
         setIsDemo(Boolean(json?.tenant?.is_demo));
       } catch { setIsDemo(false); }
-    })();
-  }, []);
-  React.useEffect(() => {
-    (async () => {
-      try {
-        const me = await api<{ ok: boolean; profile: { full_name?: string; email?: string } }>(`/api/profiles/me`);
-        setProfile(me.profile);
-      } catch {}
-      const iv = await api<{ ok: boolean; invoices: Invoice[] }>(`/api/invoices`);
-      setInvoices(iv.invoices || []);
     })();
   }, []);
   return (

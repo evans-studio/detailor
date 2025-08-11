@@ -1,0 +1,129 @@
+import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
+import Stripe from 'stripe';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+
+function planFromPriceId(priceId: string | null | undefined): 'starter' | 'pro' | 'enterprise' {
+  const p = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO;
+  const e = process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE;
+  if (priceId && e && priceId === e) return 'enterprise';
+  if (priceId && p && priceId === p) return 'pro';
+  return 'starter';
+}
+
+function featureFlagsForPlan(plan: 'starter' | 'pro' | 'enterprise') {
+  if (plan === 'starter') return { staff_limit: 1, services_limit: 2, messaging: false, analytics: false };
+  if (plan === 'pro') return { staff_limit: 5, services_limit: null, messaging: true, analytics: true };
+  return { staff_limit: null, services_limit: null, messaging: true, analytics: true, white_label: true };
+}
+
+export async function POST(req: Request) {
+  const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string | undefined;
+  if (!secret || !webhookSecret) return NextResponse.json({ ok: false }, { status: 200 });
+  const stripe = new Stripe(secret, { apiVersion: '2025-07-30.basil' });
+  const body = await req.text();
+  const sig = (await headers()).get('stripe-signature') as string | undefined;
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(body, sig || '', webhookSecret);
+  } catch (err) {
+    return NextResponse.json({ ok: false, error: (err as Error).message }, { status: 400 });
+  }
+
+  try {
+  const admin = getSupabaseAdmin();
+    if (event.type === 'checkout.session.completed') {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const customerId = (session.customer as string) || null;
+      const subscriptionId = (session.subscription as string) || null;
+      const priceId = (session.line_items?.data?.[0]?.price?.id as string) || (session?.metadata?.price_id as string) || null;
+      const email = session.customer_details?.email || session.customer_email || '';
+      const plan = planFromPriceId(priceId);
+      const flags = featureFlagsForPlan(plan);
+      // Upsert tenant
+      const { data: existingTenant } = await admin.from('tenants').select('id').eq('email', email).maybeSingle();
+      const tenantPayload: { plan: 'starter'|'pro'|'enterprise'; feature_flags: Record<string, unknown>; status: string; is_demo: boolean; email: string } = { plan, feature_flags: flags as Record<string, unknown>, status: 'active', is_demo: false, email };
+      let tenantId = existingTenant?.id as string | undefined;
+      if (tenantId) {
+        await admin.from('tenants').update(tenantPayload).eq('id', tenantId);
+      } else {
+        const ins = await admin.from('tenants').insert(tenantPayload).select('id').single();
+        tenantId = ins.data?.id as string | undefined;
+      }
+      // Upsert subscription
+      if (tenantId && subscriptionId) {
+        const subPayload: {
+          tenant_id: string;
+          stripe_customer_id: string | null;
+          stripe_subscription_id: string | null;
+          price_id: string | null;
+          status: string;
+          current_period_end: string | null;
+        } = {
+          tenant_id: tenantId,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscriptionId,
+          price_id: priceId,
+          status: 'active',
+          current_period_end: null,
+        };
+        await admin.from('subscriptions').upsert(subPayload, { onConflict: 'stripe_subscription_id' });
+      }
+      // Link or invite profile
+      if (tenantId && email) {
+        const { data: prof } = await admin.from('profiles').select('id').eq('email', email).maybeSingle();
+        if (prof?.id) {
+          await admin.from('profiles').update({ tenant_id: tenantId, role: 'admin' }).eq('id', prof.id);
+        } else {
+          await admin.from('invites').insert({ email, tenant_id: tenantId, role: 'admin' });
+        }
+      }
+      // Seed default configs (best-effort)
+      if (tenantId) {
+        await admin.from('pricing_configs').upsert({ tenant_id: tenantId, currency: 'gbp' });
+        await admin.from('services').insert([
+          { tenant_id: tenantId, name: 'Exterior Wash', visible: true },
+          { tenant_id: tenantId, name: 'Interior Clean', visible: true },
+        ]);
+        await admin.from('templates').insert([{ tenant_id: tenantId, key: 'booking.confirmation', channel: 'email', active: true }]);
+      }
+    }
+    if (event.type === 'customer.subscription.created' || event.type === 'customer.subscription.updated') {
+      const sub = event.data.object as Stripe.Subscription;
+      const priceId = (sub.items.data[0]?.price?.id as string) || null;
+      const plan = planFromPriceId(priceId);
+      const flags = featureFlagsForPlan(plan);
+      // Find subscription row and tenant
+      const admin = getSupabaseAdmin();
+      const { data: existingSub } = await admin.from('subscriptions').select('tenant_id').eq('stripe_subscription_id', sub.id).maybeSingle();
+      const tenantId = existingSub?.tenant_id as string | undefined;
+      if (tenantId) {
+        await admin.from('tenants').update({ plan, feature_flags: flags, status: sub.status === 'active' ? 'active' : 'past_due' }).eq('id', tenantId);
+        const periodEnd = (sub as unknown as { current_period_end?: number }).current_period_end;
+        await admin.from('subscriptions').upsert({
+          tenant_id: tenantId,
+          stripe_customer_id: sub.customer as string,
+          stripe_subscription_id: sub.id,
+          price_id: priceId,
+          status: sub.status,
+          current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,
+        }, { onConflict: 'stripe_subscription_id' });
+      }
+    }
+    if (event.type === 'invoice.payment_failed') {
+      const inv = event.data.object as Stripe.Invoice;
+      const admin = getSupabaseAdmin();
+      const { data: existingSub } = await admin.from('subscriptions').select('tenant_id').eq('stripe_customer_id', inv.customer as string).maybeSingle();
+      const tenantId = existingSub?.tenant_id as string | undefined;
+      if (tenantId) {
+        await admin.from('tenants').update({ status: 'suspended' }).eq('id', tenantId);
+      }
+    }
+  } catch {
+    // swallow to avoid retries storm; logs later
+  }
+  return NextResponse.json({ received: true }, { status: 200 });
+}
+
+

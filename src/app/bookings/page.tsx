@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { api } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/ui/badge';
 import { Button } from '@/ui/button';
 import Link from 'next/link';
@@ -31,17 +32,18 @@ export default function BookingsPage() {
   const [view, setView] = React.useState<'list' | 'table'>('list');
   const { notify } = useNotifications();
   // load user profile for role/tenant
+  const { data: me } = useQuery({
+    queryKey: ['me'],
+    queryFn: async () => (await api<{ ok: boolean; profile: { role: 'admin'|'staff'|'customer'; tenant_id?: string } }>(`/api/profiles/me`)).profile,
+  });
   React.useEffect(() => {
-    (async () => {
-      try {
-        const me = await api<{ ok: boolean; profile: { role: 'admin'|'staff'|'customer'; tenant_id?: string } }>(`/api/profiles/me`);
-        setRole(me.profile.role === 'customer' ? 'customer' : 'admin');
-        setTenantId(me.profile.tenant_id || '');
-      } catch {}
-    })();
-  }, []);
-  React.useEffect(() => {
-    (async () => {
+    if (!me) return;
+    setRole(me.role === 'customer' ? 'customer' : 'admin');
+    setTenantId(me.tenant_id || '');
+  }, [me]);
+  useQuery({
+    queryKey: ['bookings', { status, from, to, q }],
+    queryFn: async () => {
       const qs = new URLSearchParams();
       if (status) qs.set('status', status);
       if (from) qs.set('from', from);
@@ -50,8 +52,9 @@ export default function BookingsPage() {
       const url = `/api/bookings${qs.toString() ? `?${qs.toString()}` : ''}`;
       const data = await api<{ ok: boolean; bookings: Booking[] }>(url);
       setBookings(data.bookings || []);
-    })();
-  }, [status, from, to, q]);
+      return data.bookings || [];
+    },
+  });
 
   // Realtime subscriptions
   React.useEffect(() => {

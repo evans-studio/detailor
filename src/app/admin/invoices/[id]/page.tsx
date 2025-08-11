@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { RoleGuard } from '@/components/RoleGuard';
 import { Badge } from '@/ui/badge';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { StripeTestBadge } from '@/components/StripeTestBadge';
 
 type Invoice = { id: string; number: string; total: number; paid_amount: number; balance: number; created_at: string; booking_id?: string | null };
@@ -11,41 +12,41 @@ type Invoice = { id: string; number: string; total: number; paid_amount: number;
 export default function AdminInvoiceDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
-  const [invoice, setInvoice] = React.useState<Invoice | null>(null);
-  const [isDemo, setIsDemo] = React.useState<boolean>(false);
-  const [saving, setSaving] = React.useState(false);
-  React.useEffect(() => {
-    (async () => {
+  const queryClient = useQueryClient();
+  const { data: invoice, isLoading } = useQuery({
+    queryKey: ['invoice', id],
+    queryFn: async (): Promise<Invoice | null> => {
       const res = await fetch(`/api/invoices/${id}`);
       const json = await res.json();
-      setInvoice(json.invoice || null);
-    })();
-  }, [id]);
-  React.useEffect(() => {
-    (async () => {
+      return json.invoice || null;
+    },
+  });
+  const { data: isDemo = false } = useQuery({
+    queryKey: ['tenant-demo-flag'],
+    queryFn: async (): Promise<boolean> => {
       try {
         const t = await fetch('/api/tenant/me');
         const tj = await t.json();
-        setIsDemo(Boolean(tj?.tenant?.is_demo));
-      } catch { setIsDemo(false); }
-    })();
-  }, []);
-  async function onMarkPaid() {
-    if (!invoice) return;
-    setSaving(true);
-    try {
+        return Boolean(tj?.tenant?.is_demo);
+      } catch { return false; }
+    },
+  });
+  const markPaid = useMutation({
+    mutationFn: async () => {
+      if (!invoice) return;
       await fetch('/api/payments/mark-paid', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invoice_id: invoice.id }) });
-      const res = await fetch(`/api/invoices/${id}`);
-      const json = await res.json();
-      setInvoice(json.invoice || null);
-    } finally {
-      setSaving(false);
-    }
-  }
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['invoice', id] });
+      await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+    },
+  });
+  async function onMarkPaid() { await markPaid.mutateAsync(); }
   return (
     <DashboardShell role="admin" tenantName="DetailFlow">
       <RoleGuard allowed={["admin","staff"]}>
-        {!invoice ? (
+        {isLoading || !invoice ? (
           <div>Loading…</div>
         ) : (
           <div className="grid gap-3">
@@ -68,8 +69,8 @@ export default function AdminInvoiceDetailPage() {
               <a className="underline" href={`/bookings/${invoice.booking_id}`}>View Booking</a>
             ) : null}
             {isDemo && Number(invoice.balance) > 0 ? (
-              <button className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 py-1 hover:bg-[var(--color-hover-surface)] w-full md:w-auto" onClick={onMarkPaid} disabled={saving}>
-                {saving ? 'Marking…' : 'Mark as Paid (Demo)'}
+              <button className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 py-1 hover:bg-[var(--color-hover-surface)] w-full md:w-auto" onClick={onMarkPaid} disabled={markPaid.isPending}>
+                {markPaid.isPending ? 'Marking…' : 'Mark as Paid (Demo)'}
               </button>
             ) : null}
           </div>

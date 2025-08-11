@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { api } from '@/lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
@@ -9,26 +10,34 @@ import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
 type Address = { id: string; label?: string; address_line1: string; city?: string; postcode?: string; is_default?: boolean };
 
 export default function MyAddressesPage() {
-  const [addresses, setAddresses] = React.useState<Address[]>([]);
+  const queryClient = useQueryClient();
   const [form, setForm] = React.useState({ label: '', address_line1: '', city: '', postcode: '', is_default: false });
-  const [customerId, setCustomerId] = React.useState<string>('');
-  React.useEffect(() => {
-    (async () => {
+  const { data: customerId } = useQuery({
+    queryKey: ['me-customer-id'],
+    queryFn: async () => {
       const list = await api<{ ok: boolean; customers: Array<{ id: string }> }>(`/api/customers`);
-      const me = list.customers?.[0];
-      if (!me) return;
-      setCustomerId(me.id);
-      const as = await api<{ ok: boolean; addresses: Address[] }>(`/api/customers/${me.id}/addresses`);
-      setAddresses(as.addresses || []);
-    })();
-  }, []);
-  async function create() {
-    if (!customerId) return;
-    await fetch(`/api/customers/${customerId}/addresses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-    const as = await api<{ ok: boolean; addresses: Address[] }>(`/api/customers/${customerId}/addresses`);
-    setAddresses(as.addresses || []);
-    setForm({ label: '', address_line1: '', city: '', postcode: '', is_default: false });
-  }
+      return list.customers?.[0]?.id as string;
+    },
+  });
+  const { data: addresses = [], isLoading } = useQuery({
+    queryKey: ['addresses', customerId],
+    enabled: Boolean(customerId),
+    queryFn: async (): Promise<Address[]> => {
+      const as = await api<{ ok: boolean; addresses: Address[] }>(`/api/customers/${customerId}/addresses`);
+      return as.addresses || [];
+    },
+  });
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      if (!customerId) return;
+      await fetch(`/api/customers/${customerId}/addresses`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    },
+    onSuccess: async () => {
+      setForm({ label: '', address_line1: '', city: '', postcode: '', is_default: false });
+      await queryClient.invalidateQueries({ queryKey: ['addresses', customerId] });
+    },
+  });
+  async function create() { await createMutation.mutateAsync(); }
   return (
     <DashboardShell role="customer" tenantName="DetailFlow">
       <div className="grid gap-4">
@@ -44,7 +53,7 @@ export default function MyAddressesPage() {
           <div className="flex justify-end"><Button onClick={create}>Save</Button></div>
         </div>
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          {addresses.length === 0 ? (
+          {isLoading ? <div>Loading…</div> : addresses.length === 0 ? (
             <div className="text-[var(--color-text-muted)]">No addresses yet.</div>
           ) : (
             <Table>

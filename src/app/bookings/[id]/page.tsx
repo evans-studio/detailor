@@ -3,6 +3,7 @@ import * as React from 'react';
 import { useParams } from 'next/navigation';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { api } from '@/lib/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/ui/button';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Badge } from '@/ui/badge';
@@ -12,34 +13,35 @@ export default function BookingDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   type Booking = { id: string; start_at: string; status: string; payment_status: string; price_breakdown?: { total?: number } };
-  const [data, setData] = React.useState<Booking | null>(null);
+  const queryClient = useQueryClient();
+  const { data, isLoading } = useQuery({
+    queryKey: ['booking', id],
+    queryFn: async (): Promise<Booking | null> => {
+      const list = await api<{ ok: boolean; bookings: Booking[] }>(`/api/bookings`);
+      return list.bookings.find((b) => b.id === id) || null;
+    },
+  });
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [action, setAction] = React.useState<'confirm'|'cancel'|null>(null);
-  React.useEffect(() => {
-    (async () => {
-      const list = await api<{ ok: boolean; bookings: Booking[] }>(`/api/bookings`);
-      setData(list.bookings.find((b) => b.id === id) || null);
-    })();
-  }, [id]);
+  const updateStatus = useMutation({
+    mutationFn: async (newStatus: 'confirmed' | 'cancelled') => {
+      if (!data) return;
+      await fetch(`/api/bookings/${data.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['booking', id] });
+      await queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+    },
+  });
   async function onConfirmAction() {
     if (!data || !action) return;
-    if (action === 'confirm') {
-      const res = await fetch(`/api/bookings/${data.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'confirmed' }) });
-      if (res.ok) {
-        const json = await res.json(); setData(json.booking);
-      }
-    }
-    if (action === 'cancel') {
-      const res = await fetch(`/api/bookings/${data.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'cancelled' }) });
-      if (res.ok) {
-        const json = await res.json(); setData(json.booking);
-      }
-    }
+    await updateStatus.mutateAsync(action === 'confirm' ? 'confirmed' : 'cancelled');
     setConfirmOpen(false); setAction(null);
   }
   return (
     <DashboardShell role="admin" tenantName="DetailFlow">
-      {!data ? (
+      {isLoading || !data ? (
         <div>Loading…</div>
       ) : (
         <div className="grid gap-3">

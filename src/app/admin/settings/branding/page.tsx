@@ -4,6 +4,7 @@ import { DashboardShell } from '@/components/layout/DashboardShell';
 import { RoleGuard } from '@/components/RoleGuard';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
+import { ThemeProvider } from '@/lib/theme-provider';
 
 type TenantBrand = { brand_theme?: { brand?: { primary?: string; secondary?: string } } } | null;
 export default function BrandingSettings() {
@@ -35,6 +36,12 @@ export default function BrandingSettings() {
               <Input placeholder="Primary" value={tenant.brand_theme?.brand?.primary || ''} onChange={(e) => setTenant({ ...tenant, brand_theme: { ...(tenant.brand_theme||{}), brand: { ...(tenant.brand_theme?.brand||{}), primary: e.target.value } } })} />
               <Input placeholder="Secondary" value={tenant.brand_theme?.brand?.secondary || ''} onChange={(e) => setTenant({ ...tenant, brand_theme: { ...(tenant.brand_theme||{}), brand: { ...(tenant.brand_theme?.brand||{}), secondary: e.target.value } } })} />
             </div>
+            <ThemeProvider>
+              <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                <div className="font-medium mb-2">Live Preview</div>
+                <button className="rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 py-1 text-[var(--color-primary-foreground)]">Primary Button</button>
+              </div>
+            </ThemeProvider>
             <div className="flex justify-end"><Button onClick={onSave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button></div>
           </div>
         )}

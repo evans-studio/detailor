@@ -2,6 +2,7 @@
 import * as React from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { api } from '@/lib/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
@@ -9,26 +10,34 @@ import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
 type Vehicle = { id: string; make: string; model: string; year?: number; colour?: string; size_tier?: string };
 
 export default function MyVehiclesPage() {
-  const [vehicles, setVehicles] = React.useState<Vehicle[]>([]);
+  const queryClient = useQueryClient();
   const [form, setForm] = React.useState({ make: '', model: '', year: '', colour: '', size_tier: 'M' });
-  const [customerId, setCustomerId] = React.useState<string>('');
-  React.useEffect(() => {
-    (async () => {
+  const { data: customerId } = useQuery({
+    queryKey: ['me-customer-id'],
+    queryFn: async () => {
       const list = await api<{ ok: boolean; customers: Array<{ id: string }> }>(`/api/customers`);
-      const me = list.customers?.[0];
-      if (!me) return;
-      setCustomerId(me.id);
-      const vs = await api<{ ok: boolean; vehicles: Vehicle[] }>(`/api/customers/${me.id}/vehicles`);
-      setVehicles(vs.vehicles || []);
-    })();
-  }, []);
-  async function create() {
-    if (!customerId) return;
-    await fetch(`/api/customers/${customerId}/vehicles`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-    const vs = await api<{ ok: boolean; vehicles: Vehicle[] }>(`/api/customers/${customerId}/vehicles`);
-    setVehicles(vs.vehicles || []);
-    setForm({ make: '', model: '', year: '', colour: '', size_tier: 'M' });
-  }
+      return list.customers?.[0]?.id as string;
+    },
+  });
+  const { data: vehicles = [], isLoading } = useQuery({
+    queryKey: ['vehicles', customerId],
+    enabled: Boolean(customerId),
+    queryFn: async (): Promise<Vehicle[]> => {
+      const vs = await api<{ ok: boolean; vehicles: Vehicle[] }>(`/api/customers/${customerId}/vehicles`);
+      return vs.vehicles || [];
+    },
+  });
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      if (!customerId) return;
+      await fetch(`/api/customers/${customerId}/vehicles`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    },
+    onSuccess: async () => {
+      setForm({ make: '', model: '', year: '', colour: '', size_tier: 'M' });
+      await queryClient.invalidateQueries({ queryKey: ['vehicles', customerId] });
+    },
+  });
+  async function create() { await createMutation.mutateAsync(); }
   return (
     <DashboardShell role="customer" tenantName="DetailFlow">
       <div className="grid gap-4">
@@ -44,7 +53,7 @@ export default function MyVehiclesPage() {
           <div className="flex justify-end"><Button onClick={create}>Save</Button></div>
         </div>
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-          {vehicles.length === 0 ? (
+          {isLoading ? <div>Loading…</div> : vehicles.length === 0 ? (
             <div className="text-[var(--color-text-muted)]">No vehicles yet.</div>
           ) : (
             <Table>

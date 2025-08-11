@@ -4,14 +4,17 @@ import { DashboardShell } from '@/components/layout/DashboardShell';
 import { RoleGuard } from '@/components/RoleGuard';
 import { DataTable } from '@/components/DataTable';
 import Link from 'next/link';
-import { useQuery, fetchInvoices } from '@/lib/data';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
 type Invoice = { id: string; number: string; total: number; paid_amount: number; balance: number; created_at: string; booking_id?: string | null };
 
 export default function AdminInvoicesPage() {
   const [q, setQ] = React.useState('');
-  const { data: invoicesData, reload } = useQuery('invoices', fetchInvoices);
-  const invoices = (invoicesData || []) as Invoice[];
+  const { data: invoices = [] } = useQuery({
+    queryKey: ['invoices'],
+    queryFn: async (): Promise<Invoice[]> => (await api<{ ok: boolean; invoices: Invoice[] }>(`/api/invoices`)).invoices || [],
+  });
   function StatusBadge({ row }: { row: Invoice }) {
     const paid = Number(row.paid_amount) >= Number(row.total);
     return <span className={`rounded-[var(--radius-full)] px-2 py-0.5 text-[var(--font-size-xs)] ${paid ? 'bg-[var(--color-success)] text-[var(--color-success-foreground)]' : 'bg-[var(--color-warning)] text-[var(--color-warning-foreground)]'}`}>{paid ? 'Paid' : 'Unpaid'}</span>;

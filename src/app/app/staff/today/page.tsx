@@ -19,7 +19,7 @@ export default function StaffTodayPage() {
     setJobs(json.jobs || []);
     setLoading(false);
   }
-  React.useEffect(() => { load(); }, []);
+  React.useEffect(() => { load(); }, [day]);
   async function start(id: string) { await fetch(`/api/jobs/${id}/start`, { method: 'POST' }); await load(); }
   async function complete(id: string) { await fetch(`/api/jobs/${id}/complete`, { method: 'POST' }); await load(); }
   return (

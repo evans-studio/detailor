@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { NotificationsProvider } from "@/lib/notifications";
 import { BrandLoader } from "@/lib/brand-loader";
+import { QueryProvider } from "@/lib/query-client";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,8 +31,10 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {/* In a real app, derive tenantId from domain or session */}
         <ThemeProvider paletteName="Master">
-          <BrandLoader />
-          <NotificationsProvider>{children}</NotificationsProvider>
+          <QueryProvider>
+            <BrandLoader />
+            <NotificationsProvider>{children}</NotificationsProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
