@@ -1,102 +1,158 @@
-import Image from "next/image";
+import Link from 'next/link';
 
 export default function Home() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailflow.vercel.app';
+  const starter = process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER || '';
+  const pro = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || '';
+  const ent = process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE || '';
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div>
+      {/* Header */}
+      <header className="sticky top-0 bg-white border-b border-[var(--df-border)] z-40">
+        <div className="container h-16 flex items-center justify-between">
+          <div className="font-semibold text-[var(--df-fg)]">DetailFlow</div>
+          <nav className="hidden md:flex items-center gap-6 text-[var(--df-body)]">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#demo">Demo</a>
+            <Link className="btn-ghost" href="/signin">Sign in</Link>
+            <a className="btn-primary" href={`${appUrl}/api/payments/checkout?price_id=${starter}`}>Start Free Trial</a>
+          </nav>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </header>
+
+      {/* Hero */}
+      <section className="section">
+        <div className="container grid md:grid-cols-2 items-center gap-10">
+          <div className="grid gap-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-[var(--df-fg)]">Run your detailing business in one place.</h1>
+            <p className="text-[var(--df-body)] text-lg">Bookings, payments, and customers—automated and effortless.</p>
+            <div className="flex gap-3">
+              <a className="btn-primary" href={`${appUrl}/api/payments/checkout?price_id=${starter}`}>Start Free Trial</a>
+              <a className="btn-ghost" href="#demo">See Demo</a>
+            </div>
+          </div>
+          <div className="card p-6 text-center">Device mockup</div>
+        </div>
+      </section>
+
+      {/* Trust bar */}
+      <section className="border-t border-[var(--df-border)] py-6">
+        <div className="container text-center text-[var(--df-muted)]">Trusted by modern mobile detailers — [client logos]</div>
+      </section>
+
+      {/* Pinned Scrollytelling (placeholder static until assets wired) */}
+      <section id="features" className="section">
+        <div className="container grid md:grid-cols-2 gap-10 items-start">
+          <div className="grid gap-5">
+            <div>
+              <div className="text-[var(--df-fg)] font-semibold">1. Instant online booking</div>
+              <p className="text-[var(--df-body)]">Give customers a clean 6-step flow that confirms in seconds.</p>
+            </div>
+            <div>
+              <div className="text-[var(--df-fg)] font-semibold">2. Smart pricing, zero surprises</div>
+              <p className="text-[var(--df-body)]">Size and distance-based pricing with a transparent breakdown.</p>
+            </div>
+            <div>
+              <div className="text-[var(--df-fg)] font-semibold">3. Automated confirmations & reminders</div>
+              <p className="text-[var(--df-body)]">No-shows drop when clients stay informed.</p>
+            </div>
+            <div>
+              <div className="text-[var(--df-fg)] font-semibold">4. Admin overview at a glance</div>
+              <p className="text-[var(--df-body)]">Today’s jobs, revenue, and action items—front and center.</p>
+            </div>
+            <div>
+              <div className="text-[var(--df-fg)] font-semibold">5. Get paid faster</div>
+              <p className="text-[var(--df-body)]">Online or on-site. Invoices and receipts tracked automatically.</p>
+            </div>
+          </div>
+          <div className="card p-6 text-center">Pinned device mockup (crossfades on scroll)</div>
+        </div>
+      </section>
+
+      {/* Feature Grid */}
+      <section className="section">
+        <div className="container grid md:grid-cols-3 gap-6">
+          {[
+            ['Effortless Bookings','Real-time availability, no phone tag.'],
+            ['Customer CRM','Vehicles, addresses, and history—organized.'],
+            ['Payments & Invoices','Take payment online or mark paid on the day.'],
+            ['Automation','Branded confirmations, reminders, and follow-ups.'],
+            ['Reports','Revenue trends, repeat rate, top services.'],
+            ['White-label (Enterprise)','Custom domain and branding.'],
+          ].map(([h, s]) => (
+            <div key={h} className="card p-5">
+              <div className="font-semibold text-[var(--df-fg)]">{h}</div>
+              <div className="text-[var(--df-body)]">{s}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Screens Showcase placeholder */}
+      <section className="section">
+        <div className="container card p-6 text-center" id="demo">Screens carousel (real UI screenshots)</div>
+      </section>
+
+      {/* Pricing */}
+      <section id="pricing" className="section">
+        <div className="container text-center">
+          <h2 className="text-3xl font-bold text-[var(--df-fg)] mb-8">Simple pricing that scales with you</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[{name:'Starter',price:'£49.99',pid:starter, blurb:'Solo operators'}, {name:'Pro',price:'£99.99',pid:pro, blurb:'Growing teams'}, {name:'Enterprise',price:'£199.99',pid:ent, blurb:'Advanced needs'}].map((t) => (
+              <div key={t.name} className="card p-6 grid gap-3">
+                <div className="text-xl font-semibold">{t.name}</div>
+                <div className="text-3xl font-bold">{t.price}</div>
+                <div className="text-[var(--df-muted)]">{t.blurb}</div>
+                <a className="btn-primary text-center" href={`${appUrl}/api/payments/checkout?price_id=${t.pid}`}>Select Plan</a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="section">
+        <div className="container grid md:grid-cols-2 gap-6">
+          {[
+            ['Do I need my own website?','No—your booking page is live as soon as you sign up.'],
+            ['How do I get paid?','Connect Stripe in the app to accept online payments or mark paid in person.'],
+            ['Can I cancel anytime?','Yes—manage your plan in the billing portal.'],
+            ['Does this work on mobile?','Yes—built mobile-first for you and your customers.'],
+            ['Can I import my customers?','Yes—CSV import and manual add are supported.'],
+            ['Can I use my branding?','Absolutely—upload your logo and colors (or use the default theme).'],
+          ].map(([q,a]) => (
+            <div key={q} className="card p-5">
+              <div className="font-semibold text-[var(--df-fg)]">{q}</div>
+              <div className="text-[var(--df-body)]">{a}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-10" style={{ background: 'var(--df-primary)' }}>
+        <div className="container text-center grid gap-3">
+          <div className="text-white text-2xl font-bold">Start running your business on autopilot.</div>
+          <div className="flex gap-3 justify-center">
+            <a className="btn-primary" href={`${appUrl}/api/payments/checkout?price_id=${starter}`}>Start Free Trial</a>
+            <a className="btn-ghost" href="#demo" style={{ color: 'white' }}>Book a Demo</a>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="section">
+        <div className="container grid md:grid-cols-2 gap-6 items-start">
+          <div className="text-sm text-[var(--df-muted)]">DetailFlow is a trading name of Evans Studio Ltd.</div>
+          <nav className="flex gap-4 justify-end text-sm">
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+            <a href="#demo">Demo</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+          </nav>
+        </div>
       </footer>
     </div>
   );
