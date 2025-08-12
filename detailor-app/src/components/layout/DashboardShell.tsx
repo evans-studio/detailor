@@ -10,26 +10,26 @@ import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { Badge } from '@/ui/badge';
 
 // Enterprise icons (you can replace with lucide-react)
-const MenuIcon = () => (
-  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+const MenuIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className }) => (
+  <svg className={className ?? 'h-5 w-5'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
   </svg>
 );
 
-const SearchIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+const SearchIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className }) => (
+  <svg className={className ?? 'h-4 w-4'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
   </svg>
 );
 
-const BellIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+const BellIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className }) => (
+  <svg className={className ?? 'h-4 w-4'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-3.5-3.5a50.002 50.002 0 00-4.5-4.5L11 7H8a2 2 0 00-2 2v5a2 2 0 002 2h1a2 2 0 00-1 2 2 2 0 002 2v0a2 2 0 002-2z" />
   </svg>
 );
 
-const UserIcon = () => (
-  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+const UserIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className }) => (
+  <svg className={className ?? 'h-4 w-4'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
   </svg>
 );
