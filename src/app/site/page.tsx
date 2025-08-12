@@ -1,6 +1,22 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import Image from 'next/image';
 
+type BrandSettings = {
+  logo_url?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  accent_color?: string;
+  font_family?: string;
+};
+
+type HomepageContent = {
+  hero?: { tagline?: string; description?: string; cta_text?: string; hero_image_url?: string };
+  about?: { title?: string; content?: string; image_url?: string };
+  services?: { featured?: string[]; show_pricing?: boolean };
+  testimonials?: Array<{ name: string; content: string; rating?: number }>;
+  contact?: { show_phone?: boolean; show_email?: boolean; show_address?: boolean; service_area_radius?: number };
+};
+
 async function loadTenantForSubdomain(subdomain: string) {
   const admin = getSupabaseAdmin();
   const { data: tenant } = await admin
@@ -23,14 +39,14 @@ export default async function SitePage({ searchParams }: { searchParams?: Record
   }
   const name = tenant.trading_name || tenant.legal_name || 'Business';
   const tpl = tenant.homepage_template || 'professional-clean';
-  const brand = (tenant.brand_settings || {}) as Record<string, any>;
-  const content = (tenant.homepage_content || {}) as Record<string, any>;
+  const brand = (tenant.brand_settings || {}) as BrandSettings;
+  const content = (tenant.homepage_content || {}) as HomepageContent;
   if (tpl === 'professional-clean') return <ProfessionalClean name={name} brand={brand} content={content} />;
   if (tpl === 'service-focused') return <ServiceFocused name={name} brand={brand} content={content} />;
   return <LocalExpert name={name} brand={brand} content={content} />;
 }
 
-function ProfessionalClean({ name, brand, content }: { name: string; brand: Record<string, any>; content: Record<string, any> }) {
+function ProfessionalClean({ name, brand, content }: { name: string; brand: BrandSettings; content: HomepageContent }) {
   const primary = brand.primary_color || '#1a365d';
   return (
     <main className="min-h-screen bg-white">
@@ -53,7 +69,7 @@ function ProfessionalClean({ name, brand, content }: { name: string; brand: Reco
       <section className="max-w-6xl mx-auto px-6 py-12">
         <h2 className="text-2xl font-semibold text-gray-900">Services</h2>
         <div className="mt-6 grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {(content?.services?.featured || []).map((s: string) => (
+          {(content?.services?.featured || []).map((s) => (
             <div key={s} className="rounded-lg border p-4">
               <div className="font-medium">{s}</div>
             </div>
@@ -68,7 +84,7 @@ function ProfessionalClean({ name, brand, content }: { name: string; brand: Reco
   );
 }
 
-function ServiceFocused({ name }: { name: string; brand: Record<string, any>; content: Record<string, any> }) {
+function ServiceFocused({ name }: { name: string; brand: BrandSettings; content: HomepageContent }) {
   return (
     <main className="min-h-screen grid place-items-center p-12">
       <div className="text-gray-600">Service Focused template coming soon for this tenant. {name}</div>
@@ -76,7 +92,7 @@ function ServiceFocused({ name }: { name: string; brand: Record<string, any>; co
   );
 }
 
-function LocalExpert({ name }: { name: string; brand: Record<string, any>; content: Record<string, any> }) {
+function LocalExpert({ name }: { name: string; brand: BrandSettings; content: HomepageContent }) {
   return (
     <main className="min-h-screen grid place-items-center p-12">
       <div className="text-gray-600">Local Expert template coming soon for this tenant. {name}</div>
