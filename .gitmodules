@@ -1,0 +1,3 @@
+[submodule "detailor-landing"]
+	path = detailor-landing
+	url = https://github.com/evans-studio/detailor-landing

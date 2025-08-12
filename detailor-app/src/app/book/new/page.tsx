@@ -1,0 +1,473 @@
+"use client";
+import * as React from 'react';
+import { Button } from '@/ui/button';
+import { Input } from '@/ui/input';
+import { Select } from '@/ui/select';
+import { Combobox } from '@/ui/combobox';
+import { getQuote, getSlots, createBooking } from '@/lib/bookingApi';
+import { api } from '@/lib/api';
+import { useNotifications } from '@/lib/notifications';
+
+type Step = 'vehicle' | 'service' | 'schedule' | 'customer' | 'review' | 'payment';
+type CustomerInfo = { name: string; email: string; phone: string; };
+
+export default function NewBookingPage() {
+  const [step, setStep] = React.useState<Step>('vehicle');
+  const [vehicle, setVehicle] = React.useState({ make: '', model: '', year: '', colour: '', size: 'M', vehicle_id: '' });
+  const [service, setService] = React.useState<{ service_id: string; addons: string[] }>({ service_id: '', addons: [] });
+  const [services, setServices] = React.useState<Array<{ id: string; name: string }>>([]);
+  const [location, setLocation] = React.useState({ address_id: '', start: '', end: '' });
+  const [quote, setQuote] = React.useState<{ price_breakdown?: { total?: number; distanceSurcharge?: number } } | null>(null);
+  const [customerId, setCustomerId] = React.useState<string>('');
+  const [customerInfo, setCustomerInfo] = React.useState<CustomerInfo>({ name: '', email: '', phone: '' });
+  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
+  const [vehicles, setVehicles] = React.useState<Array<{ id: string; make: string; model: string; size_tier?: string }>>([]);
+  const [addresses, setAddresses] = React.useState<Array<{ id: string; label?: string; address_line1: string; postcode?: string }>>([]);
+  const { notify } = useNotifications();
+
+  // Load persisted form state
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem('bookingFormState');
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved.vehicle) setVehicle(saved.vehicle);
+        if (saved.service) setService(saved.service);
+        if (saved.location) setLocation(saved.location);
+      }
+    } catch {}
+  }, []);
+  React.useEffect(() => {
+    const toSave = JSON.stringify({ vehicle, service, location });
+    localStorage.setItem('bookingFormState', toSave);
+  }, [vehicle, service, location]);
+
+  async function refreshQuote() {
+    if (!service.service_id || !customerId) return;
+    try {
+      if (isAuthenticated) {
+        const q = await getQuote({ customer_id: customerId, service_id: service.service_id, addon_ids: service.addons, vehicle_size_tier: vehicle.size });
+        setQuote(q.quote);
+      } else {
+        // Use guest quote API
+        const res = await fetch('/api/guest/quotes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_id: customerId,
+            service_id: service.service_id,
+            addon_ids: service.addons,
+            vehicle_size_tier: vehicle.size
+          })
+        });
+        const data = await res.json();
+        if (data.ok) setQuote(data.quote);
+      }
+    } catch (error) {
+      console.error('Failed to get quote:', error);
+    }
+  }
+
+  React.useEffect(() => {
+    void refreshQuote();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [service, vehicle.size]);
+
+  // Check authentication status and load data accordingly
+  React.useEffect(() => {
+    (async () => {
+      try {
+        // Try to load customer data if authenticated
+        const list = await api<{ ok: boolean; customers: Array<{ id: string }> }>(`/api/customers`);
+        const me = list.customers?.[0];
+        if (me?.id) {
+          setIsAuthenticated(true);
+          setCustomerId(me.id);
+          
+          // Load services for authenticated users
+          const s = await api<{ ok: boolean; services: Array<{ id: string; name: string }> }>(`/api/services`);
+          setServices(s.services);
+          
+          const vs = await api<{ ok: boolean; vehicles: Array<{ id: string; make: string; model: string; size_tier?: string }> }>(`/api/customers/${me.id}/vehicles`);
+          setVehicles(vs.vehicles || []);
+          const as = await api<{ ok: boolean; addresses: Array<{ id: string; label?: string; address_line1: string; postcode?: string }> }>(`/api/customers/${me.id}/addresses`);
+          setAddresses(as.addresses || []);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        // Not authenticated - guest user
+        setIsAuthenticated(false);
+        
+        // Get tenant info and load services for guest users
+        try {
+          const tenantRes = await fetch('/api/guest/tenant').then(r => r.json());
+          if (tenantRes.ok) {
+            const tenantId = tenantRes.tenant.id;
+            const s = await fetch(`/api/guest/services?tenant_id=${tenantId}`).then(r => r.json());
+            setServices(s.services || []);
+            // Store tenant ID for later use
+            localStorage.setItem('guestTenantId', tenantId);
+          }
+        } catch (e) {
+          console.error('Failed to load guest data:', e);
+        }
+      }
+    })();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-[var(--color-background)]">
+      <div className="mx-auto max-w-2xl px-6 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-[var(--font-size-2xl)] font-semibold text-[var(--color-text)]">Book a Service</h1>
+          <div className="text-[var(--color-text-muted)]">Step: {step}</div>
+        </div>
+
+      {step === 'vehicle' && (
+        <div className="grid gap-3 max-w-lg">
+          <div className="grid gap-1">
+            <div className="text-[var(--font-size-sm)]">Vehicle</div>
+            {vehicles.length > 0 ? (
+              <>
+                <Select
+                  options={vehicles.map((v) => ({ label: `${v.make} ${v.model}`, value: v.id }))}
+                  value={vehicle.vehicle_id || vehicles[0]?.id || ''}
+                  onValueChange={(v) => {
+                    const found = vehicles.find((x) => x.id === v);
+                    setVehicle({ make: found?.make || '', model: found?.model || '', year: '', colour: '', size: (found?.size_tier as string) || 'M', vehicle_id: v });
+                  }}
+                />
+              </>
+            ) : (
+              <>
+                <Input placeholder="Make" value={vehicle.make} onChange={(e) => setVehicle({ ...vehicle, make: e.target.value })} />
+                <Input placeholder="Model" value={vehicle.model} onChange={(e) => setVehicle({ ...vehicle, model: e.target.value })} />
+                <Input placeholder="Year" value={vehicle.year} onChange={(e) => setVehicle({ ...vehicle, year: e.target.value })} />
+                <Input placeholder="Colour" value={vehicle.colour} onChange={(e) => setVehicle({ ...vehicle, colour: e.target.value })} />
+                <Select options={[{ label: 'S', value: 'S' }, { label: 'M', value: 'M' }, { label: 'L', value: 'L' }, { label: 'XL', value: 'XL' }]} value={vehicle.size} onValueChange={(v) => setVehicle({ ...vehicle, size: v })} />
+              </>
+            )}
+          </div>
+          <div className="flex justify-end gap-2"><Button onClick={() => setStep('service')}>Next</Button></div>
+        </div>
+      )}
+
+      {step === 'service' && (
+        <div className="grid gap-3 max-w-lg">
+          <div className="grid gap-1">
+            <div className="text-[var(--font-size-sm)]">Service</div>
+            <Combobox options={services.map((s) => ({ label: s.name, value: s.id }))} value={service.service_id} onChange={(v) => setService({ ...service, service_id: v })} />
+            <div className="text-[var(--color-text-muted)]">Total: £{quote?.price_breakdown?.total ?? 0}</div>
+            {quote?.price_breakdown?.distanceSurcharge ? (
+              <div className="text-[var(--color-text-muted)]">Surcharge: £{quote?.price_breakdown?.distanceSurcharge}</div>
+            ) : null}
+          </div>
+          <div className="flex justify-between gap-2">
+            <Button intent="ghost" onClick={() => setStep('vehicle')}>Back</Button>
+            <Button onClick={() => setStep(isAuthenticated === false ? 'customer' : 'schedule')}>Next</Button>
+          </div>
+        </div>
+      )}
+
+      {step === 'customer' && (
+        <div className="grid gap-3 max-w-lg">
+          <div className="text-[var(--font-size-lg)] font-semibold text-[var(--color-text)]">Your Details</div>
+          <div className="grid gap-3">
+            <div className="grid gap-1">
+              <label className="text-[var(--font-size-sm)] font-medium text-[var(--color-text)]">Full Name</label>
+              <Input 
+                placeholder="Enter your full name" 
+                value={customerInfo.name} 
+                onChange={(e) => setCustomerInfo({ ...customerInfo, name: e.target.value })} 
+                required
+              />
+            </div>
+            <div className="grid gap-1">
+              <label className="text-[var(--font-size-sm)] font-medium text-[var(--color-text)]">Email Address</label>
+              <Input 
+                type="email"
+                placeholder="Enter your email address" 
+                value={customerInfo.email} 
+                onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })} 
+                required
+              />
+            </div>
+            <div className="grid gap-1">
+              <label className="text-[var(--font-size-sm)] font-medium text-[var(--color-text)]">Phone Number</label>
+              <Input 
+                type="tel"
+                placeholder="Enter your phone number" 
+                value={customerInfo.phone} 
+                onChange={(e) => setCustomerInfo({ ...customerInfo, phone: e.target.value })} 
+                required
+              />
+            </div>
+          </div>
+          <div className="flex justify-between gap-2">
+            <Button intent="ghost" onClick={() => setStep('service')}>Back</Button>
+            <Button 
+              onClick={() => {
+                if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
+                  notify({ title: 'Please fill in all required fields' });
+                  return;
+                }
+                setStep('schedule');
+              }}
+              disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 'schedule' && (
+        <ScheduleStep addresses={addresses} selectedAddressId={location.address_id} onBack={() => setStep(isAuthenticated === false ? 'customer' : 'service')} onNext={() => setStep('review')} onSet={(s) => setLocation(s)} />
+      )}
+
+      {step === 'review' && (
+        <div className="grid gap-3 max-w-lg">
+          <div>Review your booking:</div>
+          <div>Vehicle: {vehicle.make} {vehicle.model} ({vehicle.size})</div>
+          <div>Service: {service.service_id}</div>
+          <div>Date: {new Date(location.start).toLocaleString()}</div>
+          <div>Total: £{quote?.price_breakdown?.total ?? 0}</div>
+          <div className="flex justify-between gap-2">
+            <Button intent="ghost" onClick={() => setStep('schedule')}>Back</Button>
+            <Button onClick={async () => {
+              // Validate slot still available
+              const latest = await getSlots(14);
+              const stillAvailable = latest.slots.some((s) => s.start === location.start && s.end === location.end);
+              if (!stillAvailable) {
+                notify({ title: 'Selected slot is no longer available' });
+                setStep('schedule');
+                return;
+              }
+              // For guest users, create customer first
+              let finalCustomerId = customerId;
+              let finalVehicleId = vehicle.vehicle_id;
+              let finalAddressId = location.address_id;
+
+              if (isAuthenticated === false) {
+                // Create customer, vehicle, and address for guest users
+                try {
+                  const tenantId = localStorage.getItem('guestTenantId');
+                  if (!tenantId) {
+                    notify({ title: 'Session expired. Please refresh the page.' });
+                    return;
+                  }
+
+                  const customerRes = await fetch('/api/guest/customers', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      name: customerInfo.name,
+                      email: customerInfo.email,
+                      phone: customerInfo.phone,
+                      tenant_id: tenantId
+                    })
+                  });
+                  const customerData = await customerRes.json();
+                  if (!customerData.ok) throw new Error(customerData.error);
+                  finalCustomerId = customerData.customer.id;
+
+                  // Create vehicle
+                  const vehicleRes = await fetch(`/api/guest/customers/${finalCustomerId}/vehicles`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      make: vehicle.make,
+                      model: vehicle.model,
+                      year: vehicle.year,
+                      colour: vehicle.colour,
+                      size_tier: vehicle.size
+                    })
+                  });
+                  const vehicleData = await vehicleRes.json();
+                  if (!vehicleData.ok) throw new Error(vehicleData.error);
+                  finalVehicleId = vehicleData.vehicle.id;
+
+                  // Create address - for now using a default address since we don't have address input in this flow
+                  const addressRes = await fetch(`/api/guest/customers/${finalCustomerId}/addresses`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      address_line1: 'To be confirmed',
+                      city: 'To be confirmed',
+                      postcode: 'TBC'
+                    })
+                  });
+                  const addressData = await addressRes.json();
+                  if (!addressData.ok) throw new Error(addressData.error);
+                  finalAddressId = addressData.address.id;
+                } catch (error) {
+                  notify({ title: `Failed to create customer record: ${(error as Error).message}` });
+                  return;
+                }
+              }
+
+              if (!finalCustomerId || !finalVehicleId || !finalAddressId) {
+                notify({ title: 'Please complete all required information' });
+                setStep('vehicle');
+                return;
+              }
+
+              // Store booking data in localStorage for payment completion
+              const bookingData = {
+                customer_id: finalCustomerId,
+                vehicle_id: finalVehicleId, 
+                address_id: finalAddressId,
+                service_id: service.service_id,
+                addon_ids: service.addons,
+                start_at: location.start,
+                end_at: location.end,
+                reference: `BK-${Date.now()}`,
+                customer_info: isAuthenticated === false ? customerInfo : null
+              };
+              localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
+              
+              // Redirect to payment
+              setStep('payment');
+            }}>Continue to Payment</Button>
+          </div>
+        </div>
+      )}
+
+      {step === 'payment' && (
+        <div className="grid gap-4 max-w-lg">
+          <div className="text-[var(--font-size-lg)] font-semibold text-[var(--color-text)]">Payment</div>
+          
+          <div className="border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 bg-[var(--color-surface)]">
+            <div className="text-[var(--font-size-md)] font-medium text-[var(--color-text)] mb-3">Booking Summary</div>
+            <div className="space-y-2 text-[var(--font-size-sm)]">
+              <div className="flex justify-between">
+                <span className="text-[var(--color-text-muted)]">Vehicle:</span>
+                <span className="text-[var(--color-text)]">{vehicle.make} {vehicle.model} ({vehicle.size})</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--color-text-muted)]">Service:</span>
+                <span className="text-[var(--color-text)]">{services.find(s => s.id === service.service_id)?.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-[var(--color-text-muted)]">Date & Time:</span>
+                <span className="text-[var(--color-text)]">{new Date(location.start).toLocaleString()}</span>
+              </div>
+              {isAuthenticated === false && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--color-text-muted)]">Name:</span>
+                    <span className="text-[var(--color-text)]">{customerInfo.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--color-text-muted)]">Email:</span>
+                    <span className="text-[var(--color-text)]">{customerInfo.email}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[var(--color-text-muted)]">Phone:</span>
+                    <span className="text-[var(--color-text)]">{customerInfo.phone}</span>
+                  </div>
+                </>
+              )}
+              <div className="border-t border-[var(--color-border)] pt-2 mt-3">
+                <div className="flex justify-between font-semibold">
+                  <span className="text-[var(--color-text)]">Total:</span>
+                  <span className="text-[var(--color-text)]">£{quote?.price_breakdown?.total ?? 0}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-between gap-2">
+            <Button intent="ghost" onClick={() => setStep('review')}>Back</Button>
+            <Button 
+              intent="primary"
+              onClick={async () => {
+                try {
+                  // Create Stripe checkout session for booking payment
+                  const checkoutRes = await fetch('/api/payments/checkout-booking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      amount: Math.round((quote?.price_breakdown?.total ?? 0) * 100), // Convert to pence
+                      currency: 'gbp',
+                      customer_email: isAuthenticated === false ? customerInfo.email : undefined,
+                      booking_reference: `BK-${Date.now()}`,
+                      return_url: `${window.location.origin}/bookings/confirmation`
+                    })
+                  });
+                  
+                  const checkoutData = await checkoutRes.json();
+                  
+                  if (checkoutData.url) {
+                    // Redirect to Stripe checkout
+                    window.location.href = checkoutData.url;
+                  } else {
+                    notify({ title: 'Payment setup failed. Please try again.' });
+                  }
+                } catch (error) {
+                  notify({ title: 'Payment setup failed. Please try again.' });
+                }
+              }}
+            >
+              Pay £{quote?.price_breakdown?.total ?? 0}
+            </Button>
+          </div>
+        </div>
+      )}
+      </div>
+    </div>
+  );
+}
+
+function ScheduleStep({ addresses, selectedAddressId, onBack, onNext, onSet }: { addresses: Array<{ id: string; label?: string; address_line1: string; postcode?: string }>; selectedAddressId?: string; onBack: () => void; onNext: () => void; onSet: (s: { address_id: string; start: string; end: string }) => void }) {
+  const [slots, setSlots] = React.useState<Array<{ start: string; end: string; capacity: number }>>([]);
+  const [start, setStart] = React.useState('');
+  const [end, setEnd] = React.useState('');
+  const [addressId, setAddressId] = React.useState(selectedAddressId || (addresses[0]?.id || ''));
+  React.useEffect(() => {
+    (async () => {
+      try {
+        // Try authenticated API first
+        const s = await getSlots(14);
+        setSlots(s.slots);
+      } catch (error) {
+        // Fall back to guest API
+        try {
+          const tenantId = localStorage.getItem('guestTenantId');
+          if (tenantId) {
+            const res = await fetch(`/api/guest/availability/slots?tenant_id=${tenantId}&days=14`);
+            const data = await res.json();
+            if (data.ok) setSlots(data.slots);
+          }
+        } catch (e) {
+          console.error('Failed to load slots:', e);
+        }
+      }
+    })();
+  }, []);
+  return (
+    <div className="grid gap-3 max-w-lg">
+      <div className="grid gap-1">
+        <div className="text-[var(--font-size-sm)]">Service Address</div>
+        <Select
+          options={addresses.map((a) => ({ label: `${a.label || a.address_line1}${a.postcode ? `, ${a.postcode}` : ''}`, value: a.id }))}
+          value={addressId}
+          onValueChange={(v) => setAddressId(v)}
+        />
+      </div>
+      <div className="text-[var(--font-size-sm)]">Choose a slot</div>
+      <div className="grid gap-2 max-h-64 overflow-auto">
+        {slots.map((s) => (
+          <label key={s.start} className="flex items-center gap-2">
+            <input type="radio" name="slot" onChange={() => { setStart(s.start); setEnd(s.end); }} />
+            <span>{new Date(s.start).toLocaleString()} – {new Date(s.end).toLocaleTimeString()}</span>
+          </label>
+        ))}
+      </div>
+      <div className="flex justify-between gap-2"><Button intent="ghost" onClick={onBack}>Back</Button><Button onClick={() => { onSet({ address_id: addressId, start, end }); onNext(); }}>Next</Button></div>
+    </div>
+  );
+}
+
+

@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+:root {
+  --df-bg: #ffffff;
+  --df-fg: #0B1220;
+  --df-muted: #64748B;
+  --df-body: #334155;
+  --df-border: #E5E7EB;
+  --df-primary: #3B82F6;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+html, body {
+  background: var(--df-bg);
+  color: var(--df-body);
+}
+
+.btn-primary {
+  background: var(--df-primary);
+  color: white;
+  border-radius: var(--radius-md);
+  padding: 12px 20px;
+  transition: transform 120ms ease;
+}
+.btn-primary:hover { transform: scale(1.02); }
+.btn-ghost { color: var(--df-fg); padding: 12px 16px; border-radius: var(--radius-md); }
+
+.container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+.section { padding: 64px 0; }
+.card { border: 1px solid var(--df-border); border-radius: var(--radius-lg); box-shadow: 0 1px 10px rgba(0,0,0,0.04); }
+@import "../styles/tokens.css" layer(base);
+
+@layer base {
+  :root {
+    color-scheme: light dark;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+  }
+
+  ::selection {
+    background: var(--color-selection);
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}

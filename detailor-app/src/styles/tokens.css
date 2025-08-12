@@ -1,0 +1,101 @@
+/* Design Tokens — Phase FE-0 (no components) */
+
+:root {
+  /* Brand - System Bible Aligned */
+  --color-primary: #3B82F6; /* blue-600 */
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #F6B500; /* Sunburst Gold */
+  --color-secondary-foreground: #1A1A1A;
+
+  /* Neutrals - System Bible Aligned */
+  --color-bg: #F9FAFB; /* Surface from System Bible */
+  --color-surface: #FFFFFF; /* Background from System Bible */
+  --color-border: #E5E7EB; /* Borders from System Bible */
+  --color-muted: #F3F4F6;
+  --color-muted-foreground: #6B7280; /* Text secondary from System Bible */
+
+  /* Text - System Bible Aligned */
+  --color-text: #111827; /* Text primary from System Bible */
+  --color-text-muted: #6B7280; /* Text secondary from System Bible */
+  --color-inverse-text: #F8F8F8;
+
+  /* Status - System Bible Aligned */
+  --color-success: #10B981; /* Success from System Bible */
+  --color-success-foreground: #FFFFFF;
+  --color-warning: #F59E0B; /* Warning from System Bible */
+  --color-warning-foreground: #1A1A1A;
+  --color-error: #EF4444; /* Error from System Bible */
+  --color-error-foreground: #FFFFFF;
+  --color-info: #3B82F6; /* Using primary blue for info */
+  --color-info-foreground: #FFFFFF;
+
+  /* States */
+  --color-focus-ring: #2563EB;
+  --color-selection: #DBEAFE;
+  --color-hover-surface: #F9FAFB;
+
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+
+  --line-height-xs: 1.2;
+  --line-height-sm: 1.35;
+  --line-height-md: 1.5;
+  --line-height-lg: 1.6;
+
+  --letter-spacing-tight: -0.01em;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.02em;
+
+  /* Shape & Elevation */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 9999px;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --shadow-focus: 0 0 0 3px var(--color-focus-ring);
+
+  /* Spacing & Motion */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 320ms;
+}
+
+/* Dark mode mappings */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #141414;
+    --color-surface: #1E1E1E;
+    --color-border: #2A2A2A;
+    --color-muted: #222222;
+    --color-muted-foreground: #A3A3A3;
+    --color-text: #F8F8F8;
+    --color-text-muted: #A3A3A3;
+    --color-inverse-text: #1A1A1A;
+    --color-hover-surface: #222222;
+  }
+}
+
+
