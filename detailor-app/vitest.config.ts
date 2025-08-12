@@ -12,6 +12,9 @@ const dirname =
 export default defineConfig({
   test: {
     projects: [
+      // Unit tests project
+      './vitest.unit.config.ts',
+      // Storybook tests project
       {
         extends: true,
         plugins: [

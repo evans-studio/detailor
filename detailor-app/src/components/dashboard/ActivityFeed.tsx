@@ -1,0 +1,417 @@
+"use client";
+
+import * as React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card';
+import { Badge } from '@/ui/badge';
+import { Button } from '@/ui/button';
+import { Avatar, AvatarFallback } from '@/ui/avatar';
+import { twMerge } from 'tailwind-merge';
+
+// Activity Types
+export type ActivityType = 
+  | 'booking_created'
+  | 'booking_confirmed'
+  | 'booking_started'
+  | 'booking_completed'
+  | 'booking_cancelled'
+  | 'payment_received'
+  | 'payment_failed'
+  | 'customer_registered'
+  | 'service_added'
+  | 'review_received'
+  | 'system_notification';
+
+export interface ActivityItem {
+  id: string;
+  type: ActivityType;
+  title: string;
+  description: string;
+  timestamp: string;
+  user?: {
+    name: string;
+    initials: string;
+    avatar?: string;
+  };
+  metadata?: {
+    amount?: number;
+    currency?: string;
+    bookingReference?: string;
+    customerName?: string;
+    serviceName?: string;
+    rating?: number;
+    status?: string;
+  };
+  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  read?: boolean;
+  actionable?: boolean;
+  onClick?: () => void;
+}
+
+// Activity Icons
+const icons = {
+  booking_created: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+    </svg>
+  ),
+  booking_confirmed: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+    </svg>
+  ),
+  booking_started: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293L12 11l.707-.707A1 1 0 0113.414 10H15M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+  booking_completed: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4" />
+    </svg>
+  ),
+  booking_cancelled: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  ),
+  payment_received: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+    </svg>
+  ),
+  payment_failed: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.232 16.5c-.77.833.192 2.5 1.732 2.5z" />
+    </svg>
+  ),
+  customer_registered: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+    </svg>
+  ),
+  service_added: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+    </svg>
+  ),
+  review_received: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+    </svg>
+  ),
+  system_notification: () => (
+    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  ),
+};
+
+// Activity color scheme
+const getActivityColor = (type: ActivityType, priority?: string) => {
+  if (priority === 'urgent') return 'var(--color-error)';
+  if (priority === 'high') return 'var(--color-warning)';
+  
+  switch (type) {
+    case 'booking_created':
+    case 'booking_confirmed':
+    case 'customer_registered':
+    case 'service_added':
+      return 'var(--color-primary)';
+    case 'booking_started':
+      return 'var(--color-warning)';
+    case 'booking_completed':
+    case 'payment_received':
+    case 'review_received':
+      return 'var(--color-success)';
+    case 'booking_cancelled':
+    case 'payment_failed':
+      return 'var(--color-error)';
+    case 'system_notification':
+    default:
+      return 'var(--color-slate-500)';
+  }
+};
+
+// Format relative time
+const formatRelativeTime = (timestamp: string) => {
+  const now = new Date();
+  const date = new Date(timestamp);
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  if (diffInMinutes < 1) return 'Just now';
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+  if (diffInHours < 24) return `${diffInHours}h ago`;
+  if (diffInDays < 7) return `${diffInDays}d ago`;
+  
+  return date.toLocaleDateString();
+};
+
+// Single Activity Item Component
+function ActivityItemComponent({ activity, showAvatar = true }: { 
+  activity: ActivityItem; 
+  showAvatar?: boolean;
+}) {
+  const IconComponent = icons[activity.type];
+  const activityColor = getActivityColor(activity.type, activity.priority);
+
+  return (
+    <div 
+      className={`
+        group relative flex gap-4 p-4 rounded-[var(--radius-lg)] transition-all
+        ${activity.onClick ? 'cursor-pointer hover:bg-[var(--color-hover-surface)]' : ''}
+        ${!activity.read ? 'bg-[var(--color-primary-50)] border-l-2 border-[var(--color-primary)]' : ''}
+        ${activity.priority === 'urgent' ? 'ring-1 ring-[var(--color-error)] ring-opacity-50' : ''}
+      `}
+      onClick={activity.onClick}
+    >
+      {/* Timeline indicator */}
+      <div className="flex flex-col items-center">
+        <div 
+          className="flex items-center justify-center w-8 h-8 rounded-full shadow-sm"
+          style={{ backgroundColor: activityColor, color: 'white' }}
+        >
+          <IconComponent />
+        </div>
+        <div className="w-px h-full bg-[var(--color-border)] mt-2 group-last:hidden" />
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h4 className="text-[var(--font-size-sm)] font-[var(--font-weight-semibold)] text-[var(--color-text)] truncate">
+                {activity.title}
+              </h4>
+              {activity.priority && activity.priority !== 'low' && (
+                <Badge 
+                  variant={activity.priority === 'urgent' ? 'error' : 'warning'}
+                  size="sm"
+                >
+                  {activity.priority}
+                </Badge>
+              )}
+              {!activity.read && (
+                <div className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
+              )}
+            </div>
+            
+            <p className="text-[var(--font-size-sm)] text-[var(--color-text-secondary)] mb-2 line-clamp-2">
+              {activity.description}
+            </p>
+
+            {/* Metadata */}
+            {activity.metadata && (
+              <div className="flex flex-wrap gap-3 text-[var(--font-size-xs)] text-[var(--color-text-muted)]">
+                {activity.metadata.bookingReference && (
+                  <span>Ref: {activity.metadata.bookingReference}</span>
+                )}
+                {activity.metadata.customerName && (
+                  <span>{activity.metadata.customerName}</span>
+                )}
+                {activity.metadata.amount && (
+                  <span className="font-[var(--font-weight-medium)]">
+                    {activity.metadata.currency || '£'}{activity.metadata.amount.toFixed(2)}
+                  </span>
+                )}
+                {activity.metadata.rating && (
+                  <span className="flex items-center gap-1">
+                    ⭐ {activity.metadata.rating}/5
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 text-[var(--font-size-xs)] text-[var(--color-text-muted)]">
+            <time>{formatRelativeTime(activity.timestamp)}</time>
+          </div>
+        </div>
+
+        {/* User info */}
+        {showAvatar && activity.user && (
+          <div className="flex items-center gap-2 mt-3">
+            <Avatar size="sm">
+              <AvatarFallback className="text-[var(--font-size-xs)]">
+                {activity.user.initials}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-[var(--font-size-xs)] text-[var(--color-text-muted)]">
+              {activity.user.name}
+            </span>
+          </div>
+        )}
+
+        {/* Quick actions */}
+        {activity.actionable && (
+          <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button size="sm" intent="ghost">View</Button>
+            <Button size="sm" intent="ghost">Mark as Read</Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Main Activity Feed Component
+interface ActivityFeedProps {
+  activities: ActivityItem[];
+  title?: string;
+  showHeader?: boolean;
+  showAvatar?: boolean;
+  maxItems?: number;
+  className?: string;
+  loading?: boolean;
+  onLoadMore?: () => void;
+  onMarkAllRead?: () => void;
+}
+
+export function ActivityFeed({
+  activities,
+  title = "Recent Activity",
+  showHeader = true,
+  showAvatar = true,
+  maxItems,
+  className,
+  loading = false,
+  onLoadMore,
+  onMarkAllRead,
+}: ActivityFeedProps) {
+  const displayedActivities = maxItems ? activities.slice(0, maxItems) : activities;
+  const unreadCount = activities.filter(a => !a.read).length;
+
+  if (loading) {
+    return <ActivityFeedSkeleton className={className} />;
+  }
+
+  return (
+    <Card className={className}>
+      {showHeader && (
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex items-center gap-3">
+            <CardTitle>{title}</CardTitle>
+            {unreadCount > 0 && (
+              <Badge variant="primary" size="sm">
+                {unreadCount} new
+              </Badge>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {unreadCount > 0 && onMarkAllRead && (
+              <Button size="sm" intent="ghost" onClick={onMarkAllRead}>
+                Mark all read
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+      )}
+
+      <CardContent className={showHeader ? '' : 'pt-6'}>
+        {displayedActivities.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--color-muted)] flex items-center justify-center">
+              <svg className="w-6 h-6 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <p className="text-[var(--color-text-muted)] text-[var(--font-size-sm)]">
+              No recent activity to show
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            {displayedActivities.map((activity) => (
+              <ActivityItemComponent 
+                key={activity.id} 
+                activity={activity} 
+                showAvatar={showAvatar}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Load More Button */}
+        {maxItems && activities.length > maxItems && onLoadMore && (
+          <div className="mt-6 text-center">
+            <Button intent="ghost" size="sm" onClick={onLoadMore}>
+              Load More Activity
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Activity Feed Loading Skeleton
+export function ActivityFeedSkeleton({ className }: { className?: string }) {
+  return (
+    <Card className={className}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="h-6 bg-[var(--color-muted)] rounded w-32 animate-pulse" />
+          <div className="h-5 bg-[var(--color-muted)] rounded w-16 animate-pulse" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex gap-4 p-4 animate-pulse">
+              <div className="w-8 h-8 bg-[var(--color-muted)] rounded-full" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-[var(--color-muted)] rounded w-3/4" />
+                <div className="h-3 bg-[var(--color-muted)] rounded w-1/2" />
+                <div className="h-3 bg-[var(--color-muted)] rounded w-1/4" />
+              </div>
+              <div className="h-3 bg-[var(--color-muted)] rounded w-12" />
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Sample data generator for testing
+export function generateSampleActivities(count: number = 10): ActivityItem[] {
+  const types: ActivityType[] = [
+    'booking_created', 'booking_confirmed', 'booking_started', 'booking_completed',
+    'payment_received', 'customer_registered', 'review_received'
+  ];
+  
+  const customers = ['John Smith', 'Sarah Johnson', 'Mike Wilson', 'Emma Brown', 'David Lee'];
+  const services = ['Premium Detail', 'Express Wash', 'Paint Correction', 'Ceramic Coating'];
+
+  return Array.from({ length: count }, (_, i) => {
+    const type = types[Math.floor(Math.random() * types.length)];
+    const customer = customers[Math.floor(Math.random() * customers.length)];
+    const service = services[Math.floor(Math.random() * services.length)];
+    const timestamp = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000);
+
+    return {
+      id: `activity-${i}`,
+      type,
+      title: `${type.replace('_', ' ')} - ${customer}`,
+      description: `${service} booking for ${customer}`,
+      timestamp: timestamp.toISOString(),
+      user: {
+        name: customer,
+        initials: customer.split(' ').map(n => n[0]).join(''),
+      },
+      metadata: {
+        customerName: customer,
+        serviceName: service,
+        bookingReference: `DET-${1000 + i}`,
+        amount: Math.random() * 200 + 50,
+        currency: '£',
+      },
+      priority: Math.random() > 0.8 ? 'high' : 'medium',
+      read: Math.random() > 0.3,
+      actionable: Math.random() > 0.5,
+    };
+  });
+}

@@ -7,11 +7,30 @@ import { Combobox } from '@/ui/combobox';
 import { getQuote, getSlots, createBooking } from '@/lib/bookingApi';
 import { api } from '@/lib/api';
 import { useNotifications } from '@/lib/notifications';
+import { 
+  EnterpriseBookingFlow,
+  type BookingStep,
+  type ServiceOption,
+  type AddonOption,
+  type BookingData
+} from '@/components/booking/EnterpriseBookingFlow';
 
 type Step = 'vehicle' | 'service' | 'schedule' | 'customer' | 'review' | 'payment';
 type CustomerInfo = { name: string; email: string; phone: string; };
 
 export default function NewBookingPage() {
+  // Enterprise Booking Flow State
+  const [currentStep, setCurrentStep] = React.useState<BookingStep>('services');
+  const [bookingData, setBookingData] = React.useState<Partial<BookingData>>({
+    addons: [],
+    pricing: { subtotal: 0, tax: 0, total: 0 }
+  });
+  const [enterpriseServices, setEnterpriseServices] = React.useState<ServiceOption[]>([]);
+  const [enterpriseAddons, setEnterpriseAddons] = React.useState<AddonOption[]>([]);
+  const [businessName, setBusinessName] = React.useState('Detailor');
+  const [brandColor, setBrandColor] = React.useState('#1a365d');
+  
+  // Legacy state for compatibility
   const [step, setStep] = React.useState<Step>('vehicle');
   const [vehicle, setVehicle] = React.useState({ make: '', model: '', year: '', colour: '', size: 'M', vehicle_id: '' });
   const [service, setService] = React.useState<{ service_id: string; addons: string[] }>({ service_id: '', addons: [] });
@@ -23,6 +42,7 @@ export default function NewBookingPage() {
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
   const [vehicles, setVehicles] = React.useState<Array<{ id: string; make: string; model: string; size_tier?: string }>>([]);
   const [addresses, setAddresses] = React.useState<Array<{ id: string; label?: string; address_line1: string; postcode?: string }>>([]);
+  const [useEnterpriseFlow, setUseEnterpriseFlow] = React.useState(true);
   const { notify } = useNotifications();
 
   // Load persisted form state
@@ -73,6 +93,56 @@ export default function NewBookingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [service, vehicle.size]);
 
+  // Transform services data for enterprise flow
+  const transformServicesForEnterprise = (services: Array<{ id: string; name: string; base_price?: number; duration?: number }>) => {
+    return services.map(service => ({
+      id: service.id,
+      name: service.name,
+      description: `Professional ${service.name.toLowerCase()} service`,
+      duration: service.duration || 120,
+      base_price: service.base_price || 50,
+      features: [
+        'Professional grade products',
+        'Experienced technicians',
+        'Satisfaction guaranteed',
+        'Fully insured service'
+      ],
+      popular: service.name.toLowerCase().includes('wash'),
+      premium: service.name.toLowerCase().includes('detail')
+    })) as ServiceOption[];
+  };
+
+  const sampleAddons: AddonOption[] = [
+    {
+      id: 'interior-protection',
+      name: 'Interior Protection',
+      description: 'Fabric and leather protection treatment',
+      price: 25,
+      category: 'protection'
+    },
+    {
+      id: 'wax-protection',
+      name: 'Premium Wax',
+      description: 'Long-lasting paint protection',
+      price: 35,
+      category: 'exterior'
+    },
+    {
+      id: 'carpet-shampoo',
+      name: 'Carpet Deep Clean',
+      description: 'Professional carpet and upholstery cleaning',
+      price: 20,
+      category: 'interior'
+    },
+    {
+      id: 'headlight-restoration',
+      name: 'Headlight Restoration',
+      description: 'Restore clarity to foggy headlights',
+      price: 30,
+      category: 'exterior'
+    }
+  ];
+
   // Check authentication status and load data accordingly
   React.useEffect(() => {
     (async () => {
@@ -85,8 +155,10 @@ export default function NewBookingPage() {
           setCustomerId(me.id);
           
           // Load services for authenticated users
-          const s = await api<{ ok: boolean; services: Array<{ id: string; name: string }> }>(`/api/services`);
+          const s = await api<{ ok: boolean; services: Array<{ id: string; name: string; base_price?: number; duration?: number }> }>(`/api/services`);
           setServices(s.services);
+          setEnterpriseServices(transformServicesForEnterprise(s.services));
+          setEnterpriseAddons(sampleAddons);
           
           const vs = await api<{ ok: boolean; vehicles: Array<{ id: string; make: string; model: string; size_tier?: string }> }>(`/api/customers/${me.id}/vehicles`);
           setVehicles(vs.vehicles || []);
@@ -106,6 +178,15 @@ export default function NewBookingPage() {
             const tenantId = tenantRes.tenant.id;
             const s = await fetch(`/api/guest/services?tenant_id=${tenantId}`).then(r => r.json());
             setServices(s.services || []);
+            setEnterpriseServices(transformServicesForEnterprise(s.services || []));
+            setEnterpriseAddons(sampleAddons);
+            
+            // Try to get business name and branding
+            setBusinessName(tenantRes.tenant.trading_name || tenantRes.tenant.legal_name || 'Detailor');
+            if (tenantRes.tenant.brand_settings?.primary_color) {
+              setBrandColor(tenantRes.tenant.brand_settings.primary_color);
+            }
+            
             // Store tenant ID for later use
             localStorage.setItem('guestTenantId', tenantId);
           }
@@ -116,12 +197,54 @@ export default function NewBookingPage() {
     })();
   }, []);
 
+  // Enterprise booking flow handlers
+  const handleStepChange = (step: BookingStep) => {
+    setCurrentStep(step);
+  };
+
+  const handleDataChange = (data: Partial<BookingData>) => {
+    setBookingData(prev => ({ ...prev, ...data }));
+  };
+
+  const handleBookingComplete = () => {
+    // Handle booking completion
+    notify({ title: 'Booking completed successfully!' });
+  };
+
+  // Render enterprise flow or legacy flow based on feature flag
+  if (useEnterpriseFlow && enterpriseServices.length > 0) {
+    return (
+      <EnterpriseBookingFlow
+        currentStep={currentStep}
+        onStepChange={handleStepChange}
+        services={enterpriseServices}
+        addons={enterpriseAddons}
+        bookingData={bookingData}
+        onDataChange={handleDataChange}
+        businessName={businessName}
+        brandColor={brandColor}
+        onComplete={handleBookingComplete}
+      />
+    );
+  }
+
+  // Legacy booking flow for fallback
   return (
     <div className="min-h-screen bg-[var(--color-background)]">
       <div className="mx-auto max-w-2xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-[var(--font-size-2xl)] font-semibold text-[var(--color-text)]">Book a Service</h1>
-          <div className="text-[var(--color-text-muted)]">Step: {step}</div>
+          <div className="text-[var(--color-text-muted)]">
+            Step: {step}
+            <Button 
+              size="sm" 
+              intent="ghost" 
+              className="ml-4"
+              onClick={() => setUseEnterpriseFlow(true)}
+            >
+              Try New Experience
+            </Button>
+          </div>
         </div>
 
       {step === 'vehicle' && (

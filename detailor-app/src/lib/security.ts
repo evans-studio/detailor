@@ -9,8 +9,9 @@ export function sanitizeHtml(input: string): string {
   // Remove script tags and their content
   let sanitized = input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
   
-  // Remove dangerous HTML attributes
+  // Remove dangerous HTML attributes (more comprehensive)
   sanitized = sanitized.replace(/\s*on\w+\s*=\s*["'][^"']*["']/gi, ''); // Remove event handlers
+  sanitized = sanitized.replace(/\s*on\w+\s*=\s*[^"'\s>]+/gi, ''); // Remove unquoted event handlers
   sanitized = sanitized.replace(/javascript:/gi, ''); // Remove javascript: protocols
   sanitized = sanitized.replace(/vbscript:/gi, ''); // Remove vbscript: protocols
   sanitized = sanitized.replace(/data:/gi, ''); // Remove data: protocols (except in specific contexts)
@@ -69,8 +70,8 @@ export function sanitizePhone(phone: string): string | null {
   
   // Ensure + is only at the beginning
   if (sanitized.includes('+')) {
-    const parts = sanitized.split('+');
-    sanitized = '+' + parts.join('');
+    const parts = sanitized.split('+').filter(part => part.length > 0);
+    sanitized = (phone.startsWith('+') ? '+' : '') + parts.join('');
   }
   
   // Basic validation - should be between 7 and 15 digits (international standard)
@@ -146,7 +147,8 @@ export function validateFileUpload(filename: string, allowedTypes: string[] = []
     'php', 'asp', 'aspx', 'jsp', 'py', 'pl', 'rb', 'sh'
   ];
   
-  const extension = filename.split('.').pop()?.toLowerCase();
+  const parts = filename.split('.');
+  const extension = parts.length > 1 ? parts.pop()?.toLowerCase() : undefined;
   
   if (!extension) {
     return { valid: false, error: 'File must have an extension' };

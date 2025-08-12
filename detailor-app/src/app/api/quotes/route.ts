@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { computePriceBreakdown, calculateDistanceSurcharge } from '@/lib/pricing';
 
 const createSchema = z.object({
   customer_id: z.string().uuid(),
@@ -14,18 +15,6 @@ const createSchema = z.object({
   discount_code: z.string().optional(),
 });
 
-function computePriceBreakdown(
-  basePrice: number,
-  vehicleMultiplier: number,
-  addonsTotal: number,
-  distanceSurcharge: number,
-  taxRate: number
-) {
-  const subtotal = basePrice * vehicleMultiplier + addonsTotal + distanceSurcharge;
-  const tax = Math.round(subtotal * taxRate * 100) / 100;
-  const total = Math.round((subtotal + tax) * 100) / 100;
-  return { base: basePrice, vehicleMultiplier, addons: addonsTotal, distanceSurcharge, taxRate, tax, total };
-}
 
 export async function GET(req: Request) {
   try {
@@ -80,12 +69,14 @@ export async function POST(req: Request) {
       .single();
 
     const vehicleMultiplier = Number(pricing?.vehicle_tiers?.[payload.vehicle_size_tier] ?? 1);
-    const freeRadius = Number(pricing?.distance_policy?.free_radius ?? 0);
-    const perMile = Number(pricing?.distance_policy?.surcharge_per_mile ?? 0);
     const taxRate = Number(pricing?.tax?.rate ?? 0);
     const distance = Number(payload.distance_miles ?? 0);
-    const billableMiles = Math.max(0, distance - freeRadius);
-    const distanceSurcharge = Math.round(billableMiles * perMile * 100) / 100;
+    
+    const distancePolicy = {
+      free_radius: Number(pricing?.distance_policy?.free_radius ?? 0),
+      surcharge_per_mile: Number(pricing?.distance_policy?.surcharge_per_mile ?? 0),
+    };
+    const distanceSurcharge = calculateDistanceSurcharge(distance, distancePolicy);
 
     const breakdown = computePriceBreakdown(Number(svc.base_price), vehicleMultiplier, addonsTotal, distanceSurcharge, taxRate);
 

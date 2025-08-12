@@ -14,20 +14,11 @@ import { Sheet } from '@/components/Sheet';
 import { Button } from '@/ui/button';
 import Link from 'next/link';
 import { EntityCustomerDrawer } from '@/components/EntityCustomerDrawer';
+import { EnterpriseCustomerGrid, type CustomerData } from '@/components/customers/EnterpriseCustomerGrid';
+import { CustomerProfilePanel } from '@/components/customers/CustomerProfilePanel';
 
-type Customer = { 
-  id: string; 
-  name: string; 
-  email?: string; 
-  phone?: string; 
-  flags?: Record<string, unknown>; 
-  last_booking_at?: string;
-  total_bookings?: number;
-  total_spent?: number;
-  preferred_services?: string[];
-  vehicles?: Array<{ id: string; name: string; }>;
-  addresses?: Array<{ id: string; address: string; }>;
-};
+// Using CustomerData type from EnterpriseCustomerGrid
+type Customer = CustomerData;
 
 export default function AdminCustomersPage() {
   const queryClient = useQueryClient();
@@ -72,12 +63,35 @@ export default function AdminCustomersPage() {
   
   const [filtersOpen, setFiltersOpen] = React.useState(false);
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [selectedCustomer, setSelectedCustomer] = React.useState<Customer | null>(null);
+  const [profilePanelOpen, setProfilePanelOpen] = React.useState(false);
   
   const getCustomerStatus = (customer: Customer) => {
     if (customer.flags?.inactive) return { label: 'Inactive', intent: 'default' as const };
     if ((customer.total_spent || 0) >= 1000) return { label: 'VIP', intent: 'success' as const };
     if ((customer.total_bookings || 0) <= 1) return { label: 'New', intent: 'info' as const };
     return { label: 'Active', intent: 'success' as const };
+  };
+
+  // Enhanced customer handlers
+  const handleCustomerClick = (customer: Customer) => {
+    setSelectedCustomer(customer);
+    setProfilePanelOpen(true);
+  };
+
+  const handleCustomerEdit = (customer: Customer) => {
+    // In a real app, this would open an edit modal/drawer
+    console.log('Edit customer:', customer);
+  };
+
+  const handleBookService = (customer: Customer) => {
+    // Navigate to booking page with customer pre-selected
+    window.location.href = `/book/new?customer_id=${customer.id}`;
+  };
+
+  const handleExportCustomers = () => {
+    // In a real app, this would trigger a CSV/Excel export
+    console.log('Exporting customers...');
   };
   
   const CustomerCard = ({ customer }: { customer: Customer }) => {
@@ -130,166 +144,56 @@ export default function AdminCustomersPage() {
   return (
     <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={['admin','staff']}>
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-start justify-between">
+        <div className="space-y-8">
+          {/* Enterprise Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-[var(--font-size-2xl)] font-semibold text-[var(--color-text)] mb-2">Customer CRM</h1>
-              <div className="text-[var(--color-text-muted)]">System Bible compliant customer relationship management</div>
+              <h1 className="text-[var(--font-size-4xl)] font-[var(--font-weight-bold)] text-[var(--color-text)] tracking-[var(--letter-spacing-tight)]">
+                Customer CRM
+              </h1>
+              <p className="text-[var(--color-text-secondary)] mt-2">
+                Enterprise-grade customer relationship management with advanced analytics
+              </p>
             </div>
-            <Button intent="primary" onClick={() => setCreateOpen(true)}>New Customer</Button>
+            <div className="flex gap-3">
+              <Button intent="secondary" onClick={handleExportCustomers}>
+                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Export Data
+              </Button>
+              <Button intent="primary" onClick={() => setCreateOpen(true)}>
+                <svg className="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                New Customer
+              </Button>
+            </div>
           </div>
 
-          {/* CRM Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-[var(--font-size-2xl)] font-bold text-[var(--color-text)]">
-                  {customerSegments.all.length}
-                </div>
-                <div className="text-[var(--color-text-muted)] text-[var(--font-size-sm)]">Total Customers</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-[var(--font-size-2xl)] font-bold text-[var(--color-success)]">
-                  {customerSegments.active.length}
-                </div>
-                <div className="text-[var(--color-text-muted)] text-[var(--font-size-sm)]">Active Customers</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-[var(--font-size-2xl)] font-bold text-[var(--color-info)]">
-                  {customerSegments.new.length}
-                </div>
-                <div className="text-[var(--color-text-muted)] text-[var(--font-size-sm)]">New Customers</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="text-[var(--font-size-2xl)] font-bold text-[var(--color-primary)]">
-                  {customerSegments.vip.length}
-                </div>
-                <div className="text-[var(--color-text-muted)] text-[var(--font-size-sm)]">VIP Customers</div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Search & Filters */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-[var(--font-size-lg)]">Search & Filters</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Input 
-                  placeholder="Search name, email, phone..." 
-                  value={q} 
-                  onChange={(e) => setQ(e.target.value)} 
-                />
-                <Select 
-                  options={[
-                    { label: 'All Status', value: 'all' }, 
-                    { label: 'Active', value: 'active' }, 
-                    { label: 'Inactive', value: 'inactive' }
-                  ]} 
-                  value={status} 
-                  onValueChange={(v) => setStatus(v as typeof status)} 
-                />
-                <Select 
-                  options={[
-                    { label: 'All Segments', value: 'all' },
-                    { label: 'New Customers', value: 'new' },
-                    { label: 'Regular', value: 'regular' },
-                    { label: 'VIP', value: 'vip' }
-                  ]} 
-                  value={segment} 
-                  onValueChange={(v) => setSegment(v as typeof segment)} 
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Customer Segments Tabs */}
-          <Tabs defaultValue="all" onValueChange={setActiveTab}>
-            <TabsList className="mb-6">
-              <TabsTrigger value="all">
-                All ({customerSegments.all.length})
-              </TabsTrigger>
-              <TabsTrigger value="active">
-                Active ({customerSegments.active.length})
-              </TabsTrigger>
-              <TabsTrigger value="new">
-                New ({customerSegments.new.length})
-              </TabsTrigger>
-              <TabsTrigger value="regular">
-                Regular ({customerSegments.regular.length})
-              </TabsTrigger>
-              <TabsTrigger value="vip">
-                VIP ({customerSegments.vip.length})
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="all">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {customerSegments.all.length === 0 ? (
-                  <div className="col-span-full text-center py-8 text-[var(--color-text-muted)]">
-                    No customers found
-                  </div>
-                ) : (
-                  customerSegments.all.map((customer) => (
-                    <CustomerCard key={customer.id} customer={customer} />
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="active">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {customerSegments.active.map((customer) => (
-                  <CustomerCard key={customer.id} customer={customer} />
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="new">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {customerSegments.new.length === 0 ? (
-                  <div className="col-span-full text-center py-8 text-[var(--color-text-muted)]">
-                    No new customers
-                  </div>
-                ) : (
-                  customerSegments.new.map((customer) => (
-                    <CustomerCard key={customer.id} customer={customer} />
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="regular">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {customerSegments.regular.map((customer) => (
-                  <CustomerCard key={customer.id} customer={customer} />
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="vip">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {customerSegments.vip.length === 0 ? (
-                  <div className="col-span-full text-center py-8 text-[var(--color-text-muted)]">
-                    No VIP customers yet
-                  </div>
-                ) : (
-                  customerSegments.vip.map((customer) => (
-                    <CustomerCard key={customer.id} customer={customer} />
-                  ))
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
+          {/* Enterprise Customer Grid */}
+          <EnterpriseCustomerGrid
+            customers={customers}
+            loading={false}
+            onCustomerClick={handleCustomerClick}
+            onCustomerEdit={handleCustomerEdit}
+            onBookService={handleBookService}
+            onExport={handleExportCustomers}
+            className=""
+          />
           
+          {/* Customer Profile Panel */}
+          <CustomerProfilePanel
+            customer={selectedCustomer}
+            open={profilePanelOpen}
+            onClose={() => {
+              setProfilePanelOpen(false);
+              setSelectedCustomer(null);
+            }}
+            onEdit={handleCustomerEdit}
+            onBookService={handleBookService}
+          />
+
           {/* Mobile Filters Sheet */}
           <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
             <div className="grid gap-3">
