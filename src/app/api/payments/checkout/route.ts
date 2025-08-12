@@ -25,9 +25,9 @@ export async function POST(req: Request) {
       billing_address_collection: 'auto',
       subscription_data: {
         trial_period_days: 7,
-        metadata: { app: 'detailflow' },
+        metadata: { app: 'detailflow', price_id },
       },
-      metadata: { app: 'detailflow' },
+      metadata: { app: 'detailflow', price_id },
     });
 
     return NextResponse.json({ ok: true, url: session.url, id: session.id });
@@ -57,8 +57,8 @@ export async function GET(req: Request) {
       customer_email: email,
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
-      subscription_data: { trial_period_days: 7, metadata: { app: 'detailflow' } },
-      metadata: { app: 'detailflow' },
+      subscription_data: { trial_period_days: 7, metadata: { app: 'detailflow', price_id } },
+      metadata: { app: 'detailflow', price_id },
     });
     if (session.url) return NextResponse.redirect(session.url, { status: 303 });
     return NextResponse.json({ ok: false, error: 'No checkout URL' }, { status: 400 });

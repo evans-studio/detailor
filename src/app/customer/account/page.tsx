@@ -23,6 +23,10 @@ export default function AccountBillingPage() {
   const [openId, setOpenId] = React.useState<string | null>(null);
   const current = React.useMemo(() => invoices.find((i) => i.id === openId) || null, [invoices, openId]);
   const [isDemo, setIsDemo] = React.useState(false);
+  const { data: billingSummary } = useQuery({
+    queryKey: ['billing-summary'],
+    queryFn: async () => (await api<{ ok: boolean; current?: string; next?: string; nextDate?: string }>(`/api/billing/summary`)),
+  });
   const { data: methods = [] } = useQuery<PaymentMethod[]>({
     queryKey: ['payment-methods'],
     queryFn: async () => (await (await fetch('/api/payments/methods')).json()).methods || [],
@@ -58,6 +62,17 @@ export default function AccountBillingPage() {
                   <div className="text-[var(--color-text-muted)] text-sm">{m.default ? 'Default' : ''}</div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+          <div className="font-medium mb-2">Subscription</div>
+          {!billingSummary?.ok ? (
+            <div className="text-[var(--color-text-muted)]">Loading...</div>
+          ) : (
+            <div className="text-sm text-[var(--color-text)] space-y-1">
+              {billingSummary.current && <div>Current: {billingSummary.current}</div>}
+              {billingSummary.next && <div>Next: {billingSummary.next}{billingSummary.nextDate ? ` on ${new Date(billingSummary.nextDate).toLocaleDateString()}` : ''}</div>}
             </div>
           )}
         </div>
