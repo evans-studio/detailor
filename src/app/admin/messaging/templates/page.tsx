@@ -35,6 +35,7 @@ export default function TemplatesListPage() {
     <DashboardShell tenantName="DetailFlow">
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Templates</h1>
+        <SmsCreditsBanner />
         <div className="flex justify-end mb-2"><Button onClick={() => setCreateOpen(true)}>New Template</Button></div>
         {loading ? <div>Loading…</div> : rows.length === 0 ? (
           <div className="text-[var(--color-text-muted)]">No templates yet.</div>
@@ -60,6 +61,43 @@ export default function TemplatesListPage() {
       </RoleGuard>
     </DashboardShell>
   );
+}
+
+function SmsCreditsBanner() {
+  const [credits, setCredits] = React.useState<number | null>(null);
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/tenant/me');
+        const json = await res.json();
+        const ff = (json?.tenant?.feature_flags as Record<string, unknown>) || {};
+        setCredits(Number(ff.sms_credits || 0));
+      } catch { setCredits(null); }
+    })();
+  }, []);
+  return (
+    <div className="mb-3 flex items-center justify-between rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+      <div className="text-sm">
+        <div className="font-medium">SMS Credits</div>
+        <div className="text-[var(--color-text-muted)]">Current balance: {credits === null ? '—' : credits}</div>
+      </div>
+      <div className="flex gap-2">
+        <a className="btn-ghost underline" href="#" onClick={async (e) => { e.preventDefault(); await startSmsPurchase('price_1RvGJrQJVipO0E7TTLe0cv4X','sms100'); }}>Buy 100 (£4)</a>
+        <a className="btn-ghost underline" href="#" onClick={async (e) => { e.preventDefault(); await startSmsPurchase('price_1RvGKqQJVipO0E7TWgsghOCn','sms500'); }}>Buy 500 (£18)</a>
+        <a className="btn-ghost underline" href="#" onClick={async (e) => { e.preventDefault(); await startSmsPurchase('price_1RvGLVQJVipO0E7TzeqjIDi4','sms1000'); }}>Buy 1000 (£32)</a>
+      </div>
+    </div>
+  );
+}
+
+async function startSmsPurchase(priceId: string, sku: string) {
+  const res = await fetch('/api/payments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider: 'stripe', amount: 1, currency: 'GBP', price_id: priceId, addon_sku: sku }),
+  });
+  const json = await res.json();
+  if (json?.url) window.location.href = json.url as string;
 }
 
 
