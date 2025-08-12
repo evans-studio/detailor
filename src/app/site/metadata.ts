@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
-import type { HomepageContent } from './page';
 
 export async function generateMetadata({ searchParams }: { searchParams?: Record<string, string> }): Promise<Metadata> {
   const sub = searchParams?.subdomain || '';
@@ -13,7 +12,7 @@ export async function generateMetadata({ searchParams }: { searchParams?: Record
     .maybeSingle();
   if (!tenant) return {};
   const titleBase = tenant.trading_name || tenant.legal_name || 'Detailing';
-  const content = (tenant.homepage_content as unknown as HomepageContent) || {};
+  const content = (tenant.homepage_content as unknown as { hero?: { description?: string } }) || {};
   const desc = content.hero?.description || 'Premium mobile detailing';
   return {
     title: `${titleBase} • Mobile Detailing`,
