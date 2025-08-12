@@ -28,8 +28,9 @@ process.env.SUPABASE_SERVICE_ROLE_KEY = 'test-service-role-key';
 process.env.NEXT_PUBLIC_ROOT_DOMAIN = 'detailor.co.uk';
 process.env.NEXT_PUBLIC_MARKETING_URL = 'https://detailor.co.uk';
 process.env.NEXT_PUBLIC_APP_URL = 'https://admin.detailor.co.uk';
-process.env.STRIPE_SECRET_KEY = 'sk_test_123';
-process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_123';
+// Use non-secret placeholders for tests; never commit real or pattern-matching keys
+process.env.STRIPE_SECRET_KEY = 'test-stripe-secret';
+process.env.STRIPE_PUBLISHABLE_KEY = 'test-stripe-publishable';
 process.env.RESEND_API_KEY = 'test-resend-key';
 process.env.RESEND_FROM = 'test@detailor.co.uk';
 
