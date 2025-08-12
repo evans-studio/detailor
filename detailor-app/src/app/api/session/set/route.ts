@@ -8,11 +8,17 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { access_token } = schema.parse(body);
     const res = NextResponse.json({ ok: true });
+    const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || '').trim();
+    const cookieDomain = process.env.NODE_ENV === 'production' && rootDomain
+      ? (rootDomain.startsWith('.') ? rootDomain : `.${rootDomain}`)
+      : undefined;
+    const secure = process.env.NODE_ENV === 'production';
     res.cookies.set('sb-access-token', access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure,
       sameSite: 'lax',
       path: '/',
+      domain: cookieDomain,
       maxAge: 60 * 60 * 8,
     });
     return res;

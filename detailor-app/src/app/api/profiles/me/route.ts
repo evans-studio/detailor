@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     if (error || !profile) throw error ?? new Error('Profile not found');
     return NextResponse.json({ ok: true, profile });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 401 });
+    return NextResponse.json({ ok: false, error: (error as Error).message, hint: 'Ensure sb-access-token cookie is present and not expired' }, { status: 401 });
   }
 }
 

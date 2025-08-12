@@ -47,6 +47,14 @@ export async function POST(req: Request) {
         return NextResponse.json({ ok: false, error: 'Sign-in failed' }, { status: 400 });
       }
       const accessToken = signIn.data.session.access_token;
+      const refreshToken = signIn.data.session.refresh_token as string | null;
+      // Configure cookies (domain, security)
+      const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || '').trim();
+      const cookieDomain = process.env.NODE_ENV === 'production' && rootDomain
+        ? (rootDomain.startsWith('.') ? rootDomain : `.${rootDomain}`)
+        : undefined;
+      const secure = process.env.NODE_ENV === 'production';
+
       // Link profile with correct role (admin if email == tenant.contact_email)
       try {
         const { data: tenant } = await admin.from('tenants').select('id, contact_email').eq('contact_email', email).maybeSingle();
@@ -57,12 +65,38 @@ export async function POST(req: Request) {
           }
         }
       } catch {}
-      return NextResponse.json({ ok: true, access_token: accessToken, email });
+
+      // Build response and set cookies so subsequent API calls are authenticated
+      const res = NextResponse.json({ ok: true, access_token: accessToken, refresh_token: refreshToken, email });
+      // Access token cookie (short-lived)
+      res.cookies.set('sb-access-token', accessToken, {
+        httpOnly: true,
+        secure,
+        sameSite: 'lax',
+        path: '/',
+        domain: cookieDomain,
+        maxAge: 60 * 60 * 8, // 8 hours
+      });
+      // Refresh token cookie (longer-lived) if present
+      if (refreshToken) {
+        res.cookies.set('sb-refresh-token', refreshToken, {
+          httpOnly: true,
+          secure,
+          sameSite: 'lax',
+          path: '/',
+          domain: cookieDomain,
+          maxAge: 60 * 60 * 24 * 14, // 14 days
+        });
+      }
+      // Log for debugging
+      console.log('[bootstrap] session established for', email, 'cookieDomain=', cookieDomain);
+      return res;
     }
 
     // If creation failed, assume user exists already; cannot auto-sign-in without known password
     return NextResponse.json({ ok: true, exists: true, email });
   } catch (e) {
+    console.error('[bootstrap] error', (e as Error).message);
     return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
   }
 }

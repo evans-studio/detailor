@@ -19,6 +19,8 @@ export function WelcomeHandoff({ email }: { email: string | null }) {
   }, [supabase]);
 
   const persistSession = React.useCallback(async () => {
+    // Force-refresh auth state to pick up any server-set cookies
+    await supabase.auth.getSession();
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) return false;
@@ -101,6 +103,8 @@ export function WelcomeHandoff({ email }: { email: string | null }) {
                 credentials: 'include',
                 body: JSON.stringify({ access_token: bj.access_token })
               });
+              // Refresh supabase client state
+              await supabase.auth.getSession();
               window.location.href = '/onboarding';
               return;
             }
