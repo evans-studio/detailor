@@ -47,12 +47,21 @@ export async function GET(req: Request) {
 
     await admin.rpc('record_export_usage', { tenant_id_input: profile.tenant_id });
 
+    type BookingRow = {
+      id: string;
+      reference: string;
+      start_at: string;
+      end_at: string;
+      price_breakdown?: { total?: number } | null;
+      customers?: { name?: string; email?: string } | null;
+      services?: { name?: string } | null;
+    };
     const header = 'id,reference,start_at,end_at,service,customer_name,customer_email,total';
-    const lines = (rows || []).map((r) => {
-      const total = Number((r as any).price_breakdown?.total || 0);
-      const svc = (r as any).services?.name || '';
-      const cust = (r as any).customers?.name || '';
-      const email = (r as any).customers?.email || '';
+    const lines = ((rows || []) as BookingRow[]).map((r) => {
+      const total = Number(r.price_breakdown?.total ?? 0);
+      const svc = r.services?.name ?? '';
+      const cust = r.customers?.name ?? '';
+      const email = r.customers?.email ?? '';
       return [r.id, r.reference, r.start_at, r.end_at, svc, cust, email, total]
         .map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',');
     });
