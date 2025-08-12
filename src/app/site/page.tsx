@@ -81,7 +81,7 @@ function ProfessionalClean({ name, brand, content }: { name: string; brand: Bran
       </section>
       <footer className="max-w-6xl mx-auto px-6 py-8 text-sm text-gray-500">
         <div>© {new Date().getFullYear()} {name}</div>
-        <div className="mt-2">Powered by <a className="underline" href="https://detailflow.vercel.app">DetailFlow</a></div>
+        <div className="mt-2">Powered by <a className="underline" href="https://detailor.co.uk">Detailor</a></div>
       </footer>
     </main>
   );

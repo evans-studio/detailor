@@ -8,7 +8,7 @@ import { IconButton } from '@/ui/icon-button';
 import { NotificationsProvider } from '@/lib/notifications';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 
-export function DashboardShell({ role, tenantName = 'DetailFlow', children }: { role?: UserRole; tenantName?: string; children: React.ReactNode }) {
+export function DashboardShell({ role, tenantName = 'Detailor', children }: { role?: UserRole; tenantName?: string; children: React.ReactNode }) {
   const pathname = usePathname();
   const [open, setOpen] = React.useState(false); // mobile drawer
   const [resolvedRole, setResolvedRole] = React.useState<UserRole | null>(role ?? null);

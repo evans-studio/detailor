@@ -18,14 +18,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'DetailFlow',
+  title: 'Detailor',
   description: 'Run your detailing business end-to-end: bookings, payments, messaging, analytics, and a branded homepage.',
-  applicationName: 'DetailFlow',
+  applicationName: 'Detailor',
   viewport: { width: 'device-width', initialScale: 1, viewportFit: 'cover' },
   themeColor: '#3B82F6',
   icons: [{ rel: 'icon', url: '/favicon.ico' }],
   openGraph: {
-    title: 'DetailFlow',
+    title: 'Detailor',
     description: 'End-to-end platform for mobile car detailing businesses.',
     type: 'website',
   },

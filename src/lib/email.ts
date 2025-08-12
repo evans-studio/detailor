@@ -4,7 +4,7 @@ import { Resend } from 'resend';
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL = 'onboarding@resend.dev';
-const REPLY_TO_EMAIL = 'support@detailflow.com';
+const REPLY_TO_EMAIL = 'support@detailor.co.uk';
 
 interface BookingData {
   id: string;
@@ -96,7 +96,7 @@ export async function sendBookingConfirmation(booking: BookingData): Promise<boo
           
           <p>If you need to make any changes or have questions, please reply to this email or contact us.</p>
           
-          <p>Thank you for choosing ${booking.tenant_name || 'DetailFlow'}!</p>
+          <p>Thank you for choosing ${booking.tenant_name || 'Detailor'}!</p>
           
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
           <p style="font-size: 12px; color: #64748b;">
@@ -203,14 +203,14 @@ export async function sendWelcomeEmail(data: WelcomeData): Promise<boolean> {
       from: FROM_EMAIL,
       to: [data.admin_email],
       replyTo: REPLY_TO_EMAIL,
-      subject: `Welcome to DetailFlow - ${data.tenant_name}`,
+      subject: `Welcome to Detailor - ${data.tenant_name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #2563eb; margin-bottom: 20px;">Welcome to DetailFlow!</h1>
+          <h1 style="color: #2563eb; margin-bottom: 20px;">Welcome to Detailor!</h1>
           
           <p>Hello ${data.admin_name},</p>
           
-          <p>Congratulations! Your DetailFlow account for <strong>${data.tenant_name}</strong> has been created successfully.</p>
+          <p>Congratulations! Your Detailor account for <strong>${data.tenant_name}</strong> has been created successfully.</p>
           
           <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h2 style="margin-top: 0; color: #1d4ed8;">Getting Started</h2>
@@ -238,7 +238,7 @@ export async function sendWelcomeEmail(data: WelcomeData): Promise<boolean> {
           
           <p>If you have any questions or need assistance, don't hesitate to reach out. We're here to help you succeed!</p>
           
-          <p>Best regards,<br>The DetailFlow Team</p>
+          <p>Best regards,<br>The Detailor Team</p>
           
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #e2e8f0;">
           <p style="font-size: 12px; color: #64748b;">
@@ -270,14 +270,14 @@ export async function sendPasswordReset(data: PasswordResetData): Promise<boolea
       from: FROM_EMAIL,
       to: [data.email],
       replyTo: REPLY_TO_EMAIL,
-      subject: 'Reset Your DetailFlow Password',
+      subject: 'Reset Your Detailor Password',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #dc2626; margin-bottom: 20px;">Reset Your Password</h1>
           
           <p>Hello${data.name ? ` ${data.name}` : ''},</p>
           
-          <p>We received a request to reset your DetailFlow password. Click the button below to create a new password:</p>
+          <p>We received a request to reset your Detailor password. Click the button below to create a new password:</p>
           
           <div style="text-align: center; margin: 30px 0;">
             <a href="${data.reset_link}" 
@@ -325,11 +325,11 @@ export async function sendTestEmail(to: string): Promise<boolean> {
       from: FROM_EMAIL,
       to: [to],
       replyTo: REPLY_TO_EMAIL,
-      subject: 'DetailFlow Email Test',
+      subject: 'Detailor Email Test',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h1 style="color: #059669;">Email Configuration Test</h1>
-          <p>This is a test email to verify that DetailFlow email integration is working correctly.</p>
+          <p>This is a test email to verify that Detailor email integration is working correctly.</p>
           <p>If you received this email, the configuration is successful!</p>
           <p>Timestamp: ${new Date().toISOString()}</p>
         </div>
