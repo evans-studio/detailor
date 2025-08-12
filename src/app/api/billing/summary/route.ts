@@ -30,18 +30,18 @@ export async function GET(req: Request) {
     let next: string | undefined;
     let nextDate: string | undefined;
 
-    const s = await stripe.subscriptions.retrieve(sub.stripe_subscription_id as string, { expand: ['schedule', 'items.data.price'] });
+    const s = await stripe.subscriptions.retrieve(sub.stripe_subscription_id as string, { expand: ['schedule', 'items.data.price'] }) as unknown as (Stripe.Subscription & { current_period_end?: number; schedule?: string });
     const currentPriceMaybe = s.items.data[0]?.price as Stripe.Price | string | Stripe.DeletedPrice | undefined;
     if (isStripePrice(currentPriceMaybe)) current = `${new Intl.NumberFormat('en-GB', { style: 'currency', currency: (currentPriceMaybe.currency || 'gbp').toUpperCase() }).format(((currentPriceMaybe.unit_amount ?? 0) as number) / 100)} / ${currentPriceMaybe.recurring?.interval}`;
 
     // If there is a schedule, derive next phase price
-    if ((s as unknown as { schedule?: string }).schedule) {
-      const scheduleId = (s as unknown as { schedule?: string }).schedule as string;
+    if (s.schedule) {
+      const scheduleId = s.schedule as string;
       const schedule = await stripe.subscriptionSchedules.retrieve(scheduleId, { expand: ['phases.items.price'] });
       const phase = schedule.phases?.[0];
       const nextPriceMaybe = phase?.items?.[0]?.price as Stripe.Price | string | Stripe.DeletedPrice | undefined;
       if (isStripePrice(nextPriceMaybe)) next = `${new Intl.NumberFormat('en-GB', { style: 'currency', currency: (nextPriceMaybe.currency || 'gbp').toUpperCase() }).format(((nextPriceMaybe.unit_amount ?? 0) as number) / 100)} / ${nextPriceMaybe.recurring?.interval}`;
-      nextDate = s.current_period_end ? new Date((s.current_period_end as number) * 1000).toISOString() : undefined;
+      nextDate = s.current_period_end ? new Date(s.current_period_end * 1000).toISOString() : undefined;
     }
 
     return NextResponse.json({ ok: true, current, next, nextDate });
