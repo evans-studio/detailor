@@ -10,6 +10,12 @@ function isPublicPath(pathname: string) {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const host = req.headers.get('host') || '';
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'detailflow.vercel.app';
+  const marketingUrl = process.env.NEXT_PUBLIC_MARKETING_URL || 'https://detailflow-landing.vercel.app';
+  const isRootHost = host === rootDomain || host === rootDomain.replace(/^app\./,'');
+  const isAppHost = host.startsWith('app.');
+  const subdomainMatch = host.endsWith(rootDomain.replace(/^.*?\./,'')) ? host.split('.')[0] : undefined;
   
   // Security checks for all requests
   const response = NextResponse.next();
@@ -42,6 +48,20 @@ export async function middleware(req: NextRequest) {
   
   if (suspiciousPatterns.some(pattern => pattern.test(pathname))) {
     return new NextResponse('Invalid request', { status: 400 });
+  }
+
+  // Subdomain routing for customer homepages
+  if (!isAppHost && !isRootHost && host.endsWith(rootDomain.replace(/^.*?\./,''))) {
+    // Rewrite to /site for homepage rendering
+    const url = req.nextUrl.clone();
+    url.pathname = '/site';
+    url.searchParams.set('subdomain', subdomainMatch || '');
+    return NextResponse.rewrite(url);
+  }
+
+  // Redirect bare root to marketing site
+  if (isRootHost && (pathname === '/' || pathname === '')) {
+    return NextResponse.redirect(marketingUrl);
   }
 
   // Always allow API routes; API handlers perform their own auth via tokens/cookies
