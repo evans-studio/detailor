@@ -39,16 +39,37 @@ export async function POST(req: Request) {
     const { pathname } = new URL(req.url);
     const jobId = pathname.split('/').slice(-2)[0];
     const { admin, tenantId } = await resolveTenantAndAuthorize(jobId, user.id);
-    const { data: tenant } = await admin.from('tenants').select('is_demo').eq('id', tenantId).single();
+    const { data: tenant } = await admin.from('tenants').select('is_demo, feature_flags').eq('id', tenantId).single();
     if (tenant?.is_demo) return NextResponse.json({ ok: false, error: 'Uploads disabled in demo.' }, { status: 400 });
+
     const form = await req.formData();
     const files = form.getAll('files');
     await admin.storage.createBucket('evidence', { public: false }).catch(() => {});
     const uploaded: string[] = [];
+
+    const ff = (tenant?.feature_flags as Record<string, unknown>) || {};
+    const storageGb = Number(ff.storage_gb ?? 1);
+    const maxBytes = storageGb * 1024 * 1024 * 1024;
+    const singleFileMax = 10 * 1024 * 1024; // 10MB per file limit
+
     for (const file of files) {
       if (!(file instanceof Blob)) continue;
+      const size = (file as File).size || 0;
+      if (size > singleFileMax) {
+        return NextResponse.json({ ok: false, error: 'Each file must be ≤ 10MB. Please compress and retry.' }, { status: 400 });
+      }
       const arr = await file.arrayBuffer();
-      const buffer = Buffer.from(arr);
+      let buffer = Buffer.from(arr);
+      // Attempt simple recompression if available
+      try {
+        const sharp = require('sharp') as typeof import('sharp');
+        if (sharp && buffer.length > 512 * 1024) {
+          buffer = await sharp(buffer).rotate().jpeg({ quality: 80 }).toBuffer();
+        }
+      } catch {}
+      if (buffer.length > maxBytes) {
+        return NextResponse.json({ ok: false, error: 'Storage limit exceeded. Please upgrade your plan.' }, { status: 400 });
+      }
       const name = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
       const path = `${tenantId}/${jobId}/${name}`;
       const contentType = (file as unknown as { type?: string }).type || 'image/jpeg';

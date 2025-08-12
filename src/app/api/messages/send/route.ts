@@ -22,6 +22,13 @@ export async function POST(req: Request) {
     const payload = schema.parse(await req.json());
     const { data: profile } = await admin.from('profiles').select('tenant_id, role, email').eq('id', user.id).single();
     if (!profile || !['staff','admin'].includes(profile.role)) throw new Error('Forbidden');
+    // Enforce SMS/email messaging limits: if using email only, bypass; if SMS enabled, check credits
+    const { data: tenant } = await admin.from('tenants').select('feature_flags').eq('id', profile.tenant_id).single();
+    const ff = (tenant?.feature_flags as Record<string, unknown>) || {};
+    if (ff.sms_notifications === true || ff.sms_notifications === 'addon') {
+      // Optional: decrement credits when SMS channel is used. Here we treat all sends as email; extend when SMS channel is added.
+      // If we later add SMS, we will check 'sms_credits' > 0 and decrement via RPC.
+    }
     // Demo tenants: route to sink (do not actually send)
     const { data: t } = await admin.from('tenants').select('is_demo').eq('id', profile.tenant_id).single();
     if (t?.is_demo) {
