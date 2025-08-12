@@ -60,13 +60,18 @@ export async function POST(req: Request) {
       }
       const arr = await file.arrayBuffer();
       let buffer = Buffer.from(arr);
-      // Attempt simple recompression if available
-      try {
-        const sharp = require('sharp') as typeof import('sharp');
-        if (sharp && buffer.length > 512 * 1024) {
-          buffer = await sharp(buffer).rotate().jpeg({ quality: 80 }).toBuffer();
+      // Attempt simple recompression if available (dynamic import to satisfy linter)
+      if (buffer.length > 512 * 1024) {
+        try {
+          const sharpMod = await import('sharp');
+          const sharp = sharpMod.default || (sharpMod as unknown as (input: Buffer) => any);
+          if (sharp) {
+            buffer = await (sharp as any)(buffer).rotate().jpeg({ quality: 80 }).toBuffer();
+          }
+        } catch {
+          // no-op if sharp not installed
         }
-      } catch {}
+      }
       if (buffer.length > maxBytes) {
         return NextResponse.json({ ok: false, error: 'Storage limit exceeded. Please upgrade your plan.' }, { status: 400 });
       }
