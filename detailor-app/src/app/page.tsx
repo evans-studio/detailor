@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export default function Home() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailor.vercel.app';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk';
   const starter = process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER || '';
   const pro = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || '';
   const ent = process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE || '';

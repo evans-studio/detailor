@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
     if (!secret) return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailor.vercel.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk';
     const stripe = new Stripe(secret);
 
     const session = await stripe.checkout.sessions.create({
@@ -46,7 +46,7 @@ export async function GET(req: Request) {
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
     if (!secret) return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailor.vercel.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk';
     const stripe = new Stripe(secret);
 
     const session = await stripe.checkout.sessions.create({

@@ -42,7 +42,7 @@ export async function POST(req: Request) {
     if (balance <= 0) return NextResponse.json({ ok: true, alreadyPaid: true });
 
     // Create Payment Link or Checkout Session for one-off payment
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailor.vercel.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk';
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
