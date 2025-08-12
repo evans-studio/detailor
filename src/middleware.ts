@@ -15,8 +15,8 @@ export async function middleware(req: NextRequest) {
   const marketingUrl = process.env.NEXT_PUBLIC_MARKETING_URL || 'https://detailflow-landing.vercel.app';
   const baseDomain = rootDomain.replace(/^.*?\./, '');
   const isRootHost = host === rootDomain || host === baseDomain;
-  const isAppHost = host.startsWith('app.');
-  const isWildcardSub = !isAppHost && !isRootHost && host.endsWith(baseDomain);
+  const isAdminHost = host.startsWith('admin.');
+  const isWildcardSub = !isAdminHost && !isRootHost && host.endsWith(baseDomain);
   const subdomainMatch = isWildcardSub ? host.split('.')[0] : undefined;
   
   // Security checks for all requests
@@ -54,6 +54,12 @@ export async function middleware(req: NextRequest) {
 
   // Subdomain routing for customer homepages
   if (isWildcardSub) {
+    // Block unwanted subdomains and redirect to admin
+    const blockedSubdomains = new Set(['app', 'www', 'mail', 'ftp']);
+    if (subdomainMatch && blockedSubdomains.has(subdomainMatch)) {
+      const target = `https://admin.${baseDomain}`;
+      return NextResponse.redirect(target);
+    }
     // Only rewrite the root path to the site renderer; allow deeper paths (e.g., /book) to resolve normally
     if (pathname === '/' || pathname === '') {
       const url = req.nextUrl.clone();
