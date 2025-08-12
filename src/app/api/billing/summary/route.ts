@@ -5,6 +5,10 @@ import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import Stripe from 'stripe';
 
+function isStripePrice(p: Stripe.Price | string | Stripe.DeletedPrice | null | undefined): p is Stripe.Price {
+  return !!p && typeof p !== 'string' && !(p as Stripe.DeletedPrice).deleted;
+}
+
 export async function GET(req: Request) {
   try {
     const { user } = await getUserFromRequest(req);
@@ -27,17 +31,16 @@ export async function GET(req: Request) {
     let nextDate: string | undefined;
 
     const s = await stripe.subscriptions.retrieve(sub.stripe_subscription_id as string, { expand: ['schedule', 'items.data.price'] });
-    const currentPrice = s.items.data[0]?.price;
-    if (currentPrice) current = `${new Intl.NumberFormat('en-GB', { style: 'currency', currency: currentPrice.currency.toUpperCase() }).format((currentPrice.unit_amount || 0) / 100)} / ${currentPrice.recurring?.interval}`;
+    const currentPriceMaybe = s.items.data[0]?.price as Stripe.Price | string | Stripe.DeletedPrice | undefined;
+    if (isStripePrice(currentPriceMaybe)) current = `${new Intl.NumberFormat('en-GB', { style: 'currency', currency: (currentPriceMaybe.currency || 'gbp').toUpperCase() }).format(((currentPriceMaybe.unit_amount ?? 0) as number) / 100)} / ${currentPriceMaybe.recurring?.interval}`;
 
     // If there is a schedule, derive next phase price
     if ((s as unknown as { schedule?: string }).schedule) {
       const scheduleId = (s as unknown as { schedule?: string }).schedule as string;
       const schedule = await stripe.subscriptionSchedules.retrieve(scheduleId, { expand: ['phases.items.price'] });
       const phase = schedule.phases?.[0];
-      const rawNextPrice = phase?.items?.[0]?.price as unknown as (Stripe.Price | string | null | undefined);
-      const nextPrice = (rawNextPrice && typeof rawNextPrice !== 'string' && !(rawNextPrice as any).deleted) ? (rawNextPrice as Stripe.Price) : undefined;
-      if (nextPrice) next = `${new Intl.NumberFormat('en-GB', { style: 'currency', currency: (nextPrice.currency || 'gbp').toUpperCase() }).format(((nextPrice.unit_amount ?? 0) as number) / 100)} / ${nextPrice.recurring?.interval}`;
+      const nextPriceMaybe = phase?.items?.[0]?.price as Stripe.Price | string | Stripe.DeletedPrice | undefined;
+      if (isStripePrice(nextPriceMaybe)) next = `${new Intl.NumberFormat('en-GB', { style: 'currency', currency: (nextPriceMaybe.currency || 'gbp').toUpperCase() }).format(((nextPriceMaybe.unit_amount ?? 0) as number) / 100)} / ${nextPriceMaybe.recurring?.interval}`;
       nextDate = s.current_period_end ? new Date((s.current_period_end as number) * 1000).toISOString() : undefined;
     }
 
