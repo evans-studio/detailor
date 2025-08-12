@@ -63,10 +63,12 @@ export async function POST(req: Request) {
       // Attempt simple recompression if available (dynamic import to satisfy linter)
       if (buffer.length > 512 * 1024) {
         try {
-          const sharpMod = await import('sharp');
-          const sharp = sharpMod.default || (sharpMod as unknown as (input: Buffer) => any);
-          if (sharp) {
-            buffer = await (sharp as any)(buffer).rotate().jpeg({ quality: 80 }).toBuffer();
+          const sharpMod = (await import('sharp')) as unknown as { default: (input: Buffer) => { rotate: () => { jpeg: (opts: { quality: number }) => { toBuffer: () => Promise<Buffer> } } } };
+          const instance = sharpMod?.default?.(buffer);
+          if (instance && typeof instance.rotate === 'function') {
+            const j = (instance as unknown as { rotate: () => { jpeg: (opts: { quality: number }) => { toBuffer: () => Promise<Buffer> } } }).rotate();
+            const out: unknown = await j.jpeg({ quality: 80 }).toBuffer();
+            buffer = Buffer.from(out as Uint8Array);
           }
         } catch {
           // no-op if sharp not installed
