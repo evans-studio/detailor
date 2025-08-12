@@ -13,9 +13,11 @@ export async function middleware(req: NextRequest) {
   const host = req.headers.get('host') || '';
   const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'detailflow.vercel.app';
   const marketingUrl = process.env.NEXT_PUBLIC_MARKETING_URL || 'https://detailflow-landing.vercel.app';
-  const isRootHost = host === rootDomain || host === rootDomain.replace(/^app\./,'');
+  const baseDomain = rootDomain.replace(/^.*?\./, '');
+  const isRootHost = host === rootDomain || host === baseDomain;
   const isAppHost = host.startsWith('app.');
-  const subdomainMatch = host.endsWith(rootDomain.replace(/^.*?\./,'')) ? host.split('.')[0] : undefined;
+  const isWildcardSub = !isAppHost && !isRootHost && host.endsWith(baseDomain);
+  const subdomainMatch = isWildcardSub ? host.split('.')[0] : undefined;
   
   // Security checks for all requests
   const response = NextResponse.next();
@@ -51,12 +53,14 @@ export async function middleware(req: NextRequest) {
   }
 
   // Subdomain routing for customer homepages
-  if (!isAppHost && !isRootHost && host.endsWith(rootDomain.replace(/^.*?\./,''))) {
-    // Rewrite to /site for homepage rendering
-    const url = req.nextUrl.clone();
-    url.pathname = '/site';
-    url.searchParams.set('subdomain', subdomainMatch || '');
-    return NextResponse.rewrite(url);
+  if (isWildcardSub) {
+    // Only rewrite the root path to the site renderer; allow deeper paths (e.g., /book) to resolve normally
+    if (pathname === '/' || pathname === '') {
+      const url = req.nextUrl.clone();
+      url.pathname = '/site';
+      url.searchParams.set('subdomain', subdomainMatch || '');
+      return NextResponse.rewrite(url);
+    }
   }
 
   // Redirect bare root to marketing site
