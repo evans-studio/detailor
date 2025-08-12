@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { z } from 'zod';
+import Stripe from 'stripe';
 
 const createSchema = z.object({
   booking_id: z.string().uuid().optional(),
@@ -38,6 +39,22 @@ export async function POST(req: Request) {
     const admin = getSupabaseAdmin();
     const body = await req.json();
     const payload = createSchema.parse(body);
+    // Handle SMS/top-up add-ons via provider 'stripe' and special metadata
+    if (payload.provider === 'stripe' && (body?.addon_sku || body?.price_id)) {
+      const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
+      if (!secret) throw new Error('Server not configured');
+      const stripe = new Stripe(secret);
+      const url = new URL(req.url);
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${url.origin}`;
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        line_items: [{ price: String(body.price_id), quantity: Number(body.quantity || 1) }],
+        success_url: `${appUrl}/billing?success=1`,
+        cancel_url: `${appUrl}/billing`,
+        metadata: { app: 'detailflow', addon_sku: String(body.addon_sku || ''), price_id: String(body.price_id || '') },
+      });
+      return NextResponse.json({ ok: true, url: session.url });
+    }
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
     if (!profile) throw new Error('No profile');
     // Demo guard: block emails/payments if is_demo=true (sink)

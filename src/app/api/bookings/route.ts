@@ -70,27 +70,24 @@ export async function POST(req: Request) {
     }
     if (!tenantId) throw new Error('No tenant context');
 
-    // Check booking limits for starter plans
+    // Check booking soft-cap limits with 5 overage buffer
     const { data: tenant } = await admin.from('tenants').select('feature_flags, plan').eq('id', tenantId).single();
     const bookingsLimit = tenant?.feature_flags?.bookings_limit as number | null;
-    
+    const buffer = 5;
     if (bookingsLimit !== null && bookingsLimit > 0) {
-      // Get current month's booking count
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
-      
       const { data: monthlyBookings } = await admin
         .from('bookings')
         .select('id')
         .eq('tenant_id', tenantId)
         .gte('created_at', monthStart)
         .lt('created_at', monthEnd);
-      
       const currentCount = monthlyBookings?.length || 0;
-      
-      if (currentCount >= bookingsLimit) {
-        throw new Error(`Monthly booking limit reached (${bookingsLimit}). Upgrade to Pro for unlimited bookings.`);
+      const hardLimit = bookingsLimit + buffer;
+      if (currentCount >= hardLimit) {
+        throw new Error(`Monthly booking limit reached (${bookingsLimit} + ${buffer} overages). Upgrade to increase your limit.`);
       }
     }
 

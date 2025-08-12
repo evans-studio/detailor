@@ -33,6 +33,10 @@ export default function DashboardPage() {
   const pendingInvoices = React.useMemo(() => invoices.filter((iv) => Number(iv.total) > Number(iv.paid_amount)).length, [invoices]);
   const [servicesCount, setServicesCount] = React.useState<number | null>(null);
   const [patternsCount, setPatternsCount] = React.useState<number | null>(null);
+  const { data: usage } = useQuery({
+    queryKey: ['usage'],
+    queryFn: async () => (await (await fetch('/api/billing/usage')).json()) as { ok: boolean; usage?: { used: number; limit: number | null; allowed: number | null; warn: boolean } },
+  });
 
   React.useEffect(() => {
     (async () => {
@@ -63,6 +67,12 @@ export default function DashboardPage() {
               {servicesCount === 0 && <a className="btn-primary" href="/admin/services">Add Service</a>}
               {patternsCount === 0 && <a className="btn-ghost" href="/admin/settings/booking">Set Hours</a>}
             </div>
+          </div>
+        )}
+        {usage?.ok && usage.usage?.limit !== null && usage.usage?.warn && (
+          <div className="rounded-[var(--radius-md)] border border-yellow-200 bg-yellow-50 p-4 mb-4">
+            <div className="font-semibold mb-1 text-yellow-800">Usage warning</div>
+            <div className="text-yellow-800 text-sm">You have used {usage.usage.used} of {usage.usage.limit} bookings this month. You can exceed by 5 before overage charges apply.</div>
           </div>
         )}
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">

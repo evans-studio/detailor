@@ -181,6 +181,7 @@ export async function POST(req: Request) {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       const appInvoiceId = (session.metadata as Record<string, string> | null | undefined)?.['app_invoice_id'];
+      const addonSku = (session.metadata as Record<string, string> | null | undefined)?.['addon_sku'];
       if (appInvoiceId && session.payment_status === 'paid') {
         // Apply payment to our invoice and ledger
         const invRes = await admin.from('invoices').select('id, tenant_id, booking_id, total, paid_amount, balance').eq('id', appInvoiceId).maybeSingle();
@@ -206,6 +207,26 @@ export async function POST(req: Request) {
           });
           if (inv.booking_id) {
             await admin.from('bookings').update({ payment_status: 'paid' }).eq('id', inv.booking_id).eq('tenant_id', inv.tenant_id);
+          }
+        }
+      }
+      // Handle add-on one-time purchases (SMS packs, storage)
+      if (addonSku && (session.payment_status === 'paid' || session.payment_status === 'no_payment_required')) {
+        const admin = getSupabaseAdmin();
+        const customerId = session.customer as string;
+        const { data: existingSub } = await admin.from('subscriptions').select('tenant_id').eq('stripe_customer_id', customerId).maybeSingle();
+        const tenantId = existingSub?.tenant_id as string | undefined;
+        if (tenantId) {
+          if (addonSku.startsWith('sms')) {
+            const amount = parseInt(addonSku.replace('sms', ''), 10) || 0;
+            await admin.rpc('increment_tenant_counter', { tenant_id_input: tenantId, counter_key: 'sms_credits', increment_by: amount });
+          }
+          if (addonSku === 'storage_5gb') {
+            const { data: tenant } = await admin.from('tenants').select('feature_flags').eq('id', tenantId).single();
+            const ff = (tenant?.feature_flags as Record<string, unknown>) || {};
+            const current = Number(ff.storage_gb || 0);
+            ff.storage_gb = current + 5;
+            await admin.from('tenants').update({ feature_flags: ff }).eq('id', tenantId);
           }
         }
       }
