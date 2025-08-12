@@ -35,8 +35,9 @@ export async function GET(req: Request) {
       const scheduleId = (s as unknown as { schedule?: string }).schedule as string;
       const schedule = await stripe.subscriptionSchedules.retrieve(scheduleId, { expand: ['phases.items.price'] });
       const phase = schedule.phases?.[0];
-      const nextPrice = phase?.items?.[0]?.price;
-      if (nextPrice) next = `${new Intl.NumberFormat('en-GB', { style: 'currency', currency: nextPrice.currency.toUpperCase() }).format((nextPrice.unit_amount || 0) / 100)} / ${nextPrice.recurring?.interval}`;
+      const rawNextPrice = phase?.items?.[0]?.price as unknown as (Stripe.Price | string | null | undefined);
+      const nextPrice = (rawNextPrice && typeof rawNextPrice !== 'string' && !(rawNextPrice as any).deleted) ? (rawNextPrice as Stripe.Price) : undefined;
+      if (nextPrice) next = `${new Intl.NumberFormat('en-GB', { style: 'currency', currency: (nextPrice.currency || 'gbp').toUpperCase() }).format(((nextPrice.unit_amount ?? 0) as number) / 100)} / ${nextPrice.recurring?.interval}`;
       nextDate = s.current_period_end ? new Date((s.current_period_end as number) * 1000).toISOString() : undefined;
     }
 
