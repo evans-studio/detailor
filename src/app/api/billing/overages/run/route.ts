@@ -75,12 +75,7 @@ export async function POST(req: Request) {
         await stripe.invoiceItems.create({
           customer: s.stripe_customer_id as string,
           currency: 'gbp',
-          price_data: process.env.STRIPE_OVERAGE_PRODUCT_ID ? {
-            currency: 'gbp',
-            product: process.env.STRIPE_OVERAGE_PRODUCT_ID as string,
-            unit_amount: Math.round(rate * 100),
-          } : undefined,
-          quantity: billable,
+          amount: Math.round(amount * 100),
           description: desc,
         });
         const invoice = await stripe.invoices.create({
