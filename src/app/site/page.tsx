@@ -29,8 +29,8 @@ async function loadTenantForSubdomain(subdomain: string) {
 
 type WithPromise<T> = T | Promise<T>;
 
-export default async function SitePage({ searchParams }: { searchParams?: WithPromise<Record<string, string>> }) {
-  const sp = searchParams instanceof Promise ? await searchParams : searchParams;
+export default async function SitePage({ searchParams }: { searchParams?: Promise<Record<string, string>> }) {
+  const sp = searchParams ? await searchParams : undefined;
   const sub = sp?.subdomain || '';
   const tenant = sub ? await loadTenantForSubdomain(sub) : null;
   if (!tenant || tenant.homepage_published !== true) {
