@@ -5,6 +5,22 @@ import { api } from '@/lib/api';
 
 type TemplateKey = 'professional-clean' | 'service-focused' | 'local-expert';
 
+type BrandSettings = {
+  logo_url?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  accent_color?: string;
+  font_family?: string;
+};
+
+type HomepageContent = {
+  hero?: { tagline?: string; description?: string; cta_text?: string; hero_image_url?: string };
+  about?: { title?: string; content?: string; image_url?: string };
+  services?: { featured?: string[]; show_pricing?: boolean };
+  testimonials?: Array<{ name: string; content: string; rating?: number }>;
+  contact?: { show_phone?: boolean; show_email?: boolean; show_address?: boolean; service_area_radius?: number };
+};
+
 type TenantHomepage = {
   id: string;
   legal_name?: string;
@@ -13,8 +29,9 @@ type TenantHomepage = {
   feature_flags?: Record<string, unknown>;
   homepage_template: TemplateKey;
   homepage_published: boolean;
-  homepage_content: Record<string, unknown>;
-  brand_settings: Record<string, unknown>;
+  homepage_content: HomepageContent;
+  brand_settings: BrandSettings;
+  subdomain?: string;
 };
 
 export default function HomepageAdminPage() {
@@ -52,22 +69,23 @@ export default function HomepageAdminPage() {
     setDraft(prev => prev ? { ...prev, [key]: value } as TenantHomepage : prev);
   }
 
-  function updateBrand<K extends string>(key: K, value: unknown) {
+  function updateBrand<K extends keyof BrandSettings>(key: K, value: BrandSettings[K]) {
     setDraft(prev => prev ? { ...prev, brand_settings: { ...(prev.brand_settings || {}), [key]: value } } as TenantHomepage : prev);
   }
 
   function updateContent(path: string[], value: unknown) {
     setDraft(prev => {
       if (!prev) return prev;
-      const next = { ...(prev.homepage_content || {}) } as Record<string, unknown>;
-      let ref: any = next; // limited, replaces on save
+      const next = ({ ...(prev.homepage_content || {}) } as HomepageContent) as unknown as Record<string, unknown>;
+      let ref: Record<string, unknown> = next;
       for (let i = 0; i < path.length - 1; i++) {
         const k = path[i];
-        ref[k] = (ref[k] as Record<string, unknown>) || {};
-        ref = ref[k];
+        const current = (ref[k] as Record<string, unknown> | undefined);
+        ref[k] = current && typeof current === 'object' ? current : {};
+        ref = ref[k] as Record<string, unknown>;
       }
       ref[path[path.length - 1]] = value as unknown;
-      return { ...prev, homepage_content: next } as TenantHomepage;
+      return { ...prev, homepage_content: (next as unknown as HomepageContent) } as TenantHomepage;
     });
   }
 
@@ -114,19 +132,19 @@ export default function HomepageAdminPage() {
           <h2 className="font-semibold">Content</h2>
           <div className="grid gap-3">
             <label className="text-sm">Hero tagline
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.homepage_content as any)?.hero?.tagline || ''}
+              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.hero?.tagline || ''}
                 onChange={e => updateContent(['hero','tagline'], e.target.value)} />
             </label>
             <label className="text-sm">Hero description
-              <textarea className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.homepage_content as any)?.hero?.description || ''}
+              <textarea className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.hero?.description || ''}
                 onChange={e => updateContent(['hero','description'], e.target.value)} />
             </label>
             <label className="text-sm">CTA text
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.homepage_content as any)?.hero?.cta_text || ''}
+              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.hero?.cta_text || ''}
                 onChange={e => updateContent(['hero','cta_text'], e.target.value)} />
             </label>
             <label className="text-sm">Hero image URL
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.homepage_content as any)?.hero?.hero_image_url || ''}
+              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.hero?.hero_image_url || ''}
                 onChange={e => updateContent(['hero','hero_image_url'], e.target.value)} />
             </label>
           </div>
@@ -134,15 +152,15 @@ export default function HomepageAdminPage() {
           <div className="grid gap-3 mt-6">
             <h3 className="font-medium">About</h3>
             <label className="text-sm">Title
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.homepage_content as any)?.about?.title || ''}
+              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.about?.title || ''}
                 onChange={e => updateContent(['about','title'], e.target.value)} />
             </label>
             <label className="text-sm">Content
-              <textarea className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.homepage_content as any)?.about?.content || ''}
+              <textarea className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.about?.content || ''}
                 onChange={e => updateContent(['about','content'], e.target.value)} />
             </label>
             <label className="text-sm">Image URL
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.homepage_content as any)?.about?.image_url || ''}
+              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.about?.image_url || ''}
                 onChange={e => updateContent(['about','image_url'], e.target.value)} />
             </label>
           </div>
@@ -150,11 +168,11 @@ export default function HomepageAdminPage() {
           <div className="grid gap-3 mt-6">
             <h3 className="font-medium">Services</h3>
             <label className="text-sm">Featured (comma-separated)
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={((draft.homepage_content as any)?.services?.featured || []).join(', ')}
+              <input className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.homepage_content?.services?.featured || []).join(', ')}
                 onChange={e => updateContent(['services','featured'], e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
             </label>
             <label className="text-sm flex items-center gap-2">
-              <input type="checkbox" checked={(draft.homepage_content as any)?.services?.show_pricing ?? false}
+              <input type="checkbox" checked={draft.homepage_content?.services?.show_pricing ?? false}
                 onChange={e => updateContent(['services','show_pricing'], e.target.checked)} />
               Show pricing
             </label>
@@ -164,14 +182,14 @@ export default function HomepageAdminPage() {
             <h3 className="font-medium">Contact</h3>
             {['show_phone','show_email','show_address'].map(key => (
               <label key={key} className="text-sm flex items-center gap-2">
-                <input type="checkbox" checked={(draft.homepage_content as any)?.contact?.[key] ?? false}
+                <input type="checkbox" checked={(draft.homepage_content?.contact as Record<string, boolean> | undefined)?.[key] ?? false}
                   onChange={e => updateContent(['contact', key], e.target.checked)} />
                 {key.replace('show_', '').replace('_',' ')}
               </label>
             ))}
             <label className="text-sm">Service radius (km)
               <input type="number" className="mt-1 w-full border rounded-md px-3 py-2"
-                value={(draft.homepage_content as any)?.contact?.service_area_radius ?? 0}
+                value={draft.homepage_content?.contact?.service_area_radius ?? 0}
                 onChange={e => updateContent(['contact','service_area_radius'], Number(e.target.value))} />
             </label>
           </div>
@@ -181,25 +199,38 @@ export default function HomepageAdminPage() {
           <h2 className="font-semibold">Brand</h2>
           <div className="grid gap-3">
             <label className="text-sm">Logo URL
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.brand_settings as any)?.logo_url || ''}
+              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.brand_settings?.logo_url || ''}
                 onChange={e => updateBrand('logo_url', e.target.value)} />
             </label>
+            <form className="flex items-center gap-3" onSubmit={async e => {
+              e.preventDefault();
+              const input = (e.currentTarget.elements.namedItem('file') as HTMLInputElement);
+              if (!input?.files?.[0]) return;
+              const fd = new FormData();
+              fd.append('file', input.files[0]);
+              const res = await fetch('/api/website/logo', { method: 'POST', body: fd, credentials: 'include' });
+              const json = await res.json();
+              if (json.ok) updateBrand('logo_url', json.url);
+            }}>
+              <input type="file" name="file" accept="image/*" className="text-sm" />
+              <button className="px-3 py-1.5 rounded-md border">Upload</button>
+            </form>
             <label className="text-sm">Primary color
-              <input type="color" className="mt-1 h-10 w-16" value={(draft.brand_settings as any)?.primary_color || '#1a365d'}
+              <input type="color" className="mt-1 h-10 w-16" value={draft.brand_settings?.primary_color || '#1a365d'}
                 onChange={e => updateBrand('primary_color', e.target.value)} />
             </label>
             {canAdvanced && (
               <>
                 <label className="text-sm">Secondary color
-                  <input type="color" className="mt-1 h-10 w-16" value={(draft.brand_settings as any)?.secondary_color || '#2d3748'}
+                  <input type="color" className="mt-1 h-10 w-16" value={draft.brand_settings?.secondary_color || '#2d3748'}
                     onChange={e => updateBrand('secondary_color', e.target.value)} />
                 </label>
                 <label className="text-sm">Accent color
-                  <input type="color" className="mt-1 h-10 w-16" value={(draft.brand_settings as any)?.accent_color || '#3182ce'}
+                  <input type="color" className="mt-1 h-10 w-16" value={draft.brand_settings?.accent_color || '#3182ce'}
                     onChange={e => updateBrand('accent_color', e.target.value)} />
                 </label>
                 <label className="text-sm">Font family
-                  <input className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.brand_settings as any)?.font_family || 'Inter'}
+                  <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.brand_settings?.font_family || 'Inter'}
                     onChange={e => updateBrand('font_family', e.target.value)} />
                 </label>
               </>
@@ -210,7 +241,7 @@ export default function HomepageAdminPage() {
             <h2 className="font-semibold">Live Preview</h2>
             <iframe
               className="mt-2 w-full aspect-[16/10] border rounded-lg"
-              src={`/site?subdomain=${encodeURIComponent((draft as any).subdomain || '')}`}
+              src={`/site?subdomain=${encodeURIComponent(draft.subdomain || '')}`}
             />
             {!draft.homepage_published && (
               <p className="mt-2 text-xs text-gray-500">Preview only. Publish to go live.</p>
