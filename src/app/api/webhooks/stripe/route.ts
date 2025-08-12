@@ -5,20 +5,46 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
-function planFromPriceId(priceId: string | null | undefined): 'starter' | 'pro' | 'enterprise' {
-  const p = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO;
-  const e = process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE;
-  if (priceId && e && priceId === e) return 'enterprise';
-  if (priceId && p && priceId === p) return 'pro';
+type Plan = 'starter' | 'pro' | 'business' | 'enterprise';
+
+// Hard map the new Stripe price IDs → plan (monthly intro/standard + annual launch/standard)
+const PRICE_TO_PLAN: Record<string, Plan> = {
+  // STARTER
+  'price_1RvFduQJVipO0E7Taws14yS5': 'starter', // intro monthly
+  'price_1RvFgcQJVipO0E7Tmh8Gqp87': 'starter', // standard monthly
+  'price_1RvFiyQJVipO0E7TBKzDOW3q': 'starter', // annual launch
+  'price_1RvFmQQJVipO0E7TnTOnYBhG': 'starter', // annual standard
+  // PRO
+  'price_1RvFpnQJVipO0E7TWLul7XZw': 'pro',
+  'price_1RvFrTQJVipO0E7Tc6kr6cez': 'pro',
+  'price_1RvFwZQJVipO0E7TDQfLTL80': 'pro',
+  'price_1RvFyWQJVipO0E7Ttmxm4xq2': 'pro',
+  // BUSINESS
+  'price_1RvGATQJVipO0E7T6jtE1rUO': 'business',
+  'price_1RvGCLQJVipO0E7T7JKuSQZL': 'business',
+  'price_1RvGEdQJVipO0E7Ty5kiGmCf': 'business',
+  'price_1RvGIPQJVipO0E7Td22lY1VK': 'business',
+  // ENTERPRISE
+  'price_1RvG0rQJVipO0E7TyTQtfzKB': 'enterprise',
+  'price_1RvG2YQJVipO0E7TiK5rfozV': 'enterprise',
+  'price_1RvG5hQJVipO0E7TVBKVARvf': 'enterprise',
+  'price_1RvG80QJVipO0E7TYVAdP2WG': 'enterprise',
+};
+
+function planFromPriceId(priceId: string | null | undefined): Plan {
+  if (priceId && PRICE_TO_PLAN[priceId]) return PRICE_TO_PLAN[priceId];
   return 'starter';
 }
 
-function featureFlagsForPlan(plan: 'starter' | 'pro' | 'enterprise') {
+function featureFlagsForPlan(plan: Plan) {
   if (plan === 'starter') {
     return {
-      bookings_limit: 100,
-      services_limit: 10,
+      bookings_limit: 25,
+      services_limit: 3,
       staff_limit: 1,
+      locations_limit: 1,
+      storage_gb: 1,
+      overage_fee: 2.0,
       customer_portal: false,
       online_payments: false,
       analytics: false,
@@ -29,9 +55,12 @@ function featureFlagsForPlan(plan: 'starter' | 'pro' | 'enterprise') {
   }
   if (plan === 'pro') {
     return {
-      bookings_limit: 500,
-      services_limit: 50,
+      bookings_limit: 80,
+      services_limit: null,
       staff_limit: 3,
+      locations_limit: 1,
+      storage_gb: 5,
+      overage_fee: 1.5,
       customer_portal: true,
       online_payments: true,
       analytics: true,
@@ -40,10 +69,32 @@ function featureFlagsForPlan(plan: 'starter' | 'pro' | 'enterprise') {
       messaging: true
     };
   }
+  if (plan === 'business') {
+    return {
+      bookings_limit: 200,
+      services_limit: null,
+      staff_limit: 8,
+      locations_limit: 3,
+      storage_gb: 15,
+      overage_fee: 1.0,
+      customer_portal: true,
+      online_payments: true,
+      analytics: true,
+      custom_branding: true,
+      sms_notifications: 'addon',
+      messaging: true,
+      custom_domain: true,
+      advanced_reporting: true,
+    };
+  }
+  // enterprise
   return {
     bookings_limit: null,
     services_limit: null,
     staff_limit: null,
+    locations_limit: null,
+    storage_gb: 100,
+    overage_fee: 0,
     customer_portal: true,
     online_payments: true,
     analytics: true,
@@ -77,11 +128,11 @@ export async function POST(req: Request) {
       const subscriptionId = (session.subscription as string) || null;
       const priceId = (session.line_items?.data?.[0]?.price?.id as string) || (session?.metadata?.price_id as string) || null;
       const email = session.customer_details?.email || session.customer_email || '';
-      const plan = planFromPriceId(priceId);
+      const plan = planFromPriceId(priceId) as Plan;
       const flags = featureFlagsForPlan(plan);
       // Upsert tenant
       const { data: existingTenant } = await admin.from('tenants').select('id').eq('contact_email', email).maybeSingle();
-      const tenantPayload: { plan: 'starter'|'pro'|'enterprise'; feature_flags: Record<string, unknown>; status: string; is_demo: boolean; contact_email: string } = { plan, feature_flags: flags as Record<string, unknown>, status: 'active', is_demo: false, contact_email: email };
+      const tenantPayload: { plan: Plan; feature_flags: Record<string, unknown>; status: string; is_demo: boolean; contact_email: string } = { plan, feature_flags: flags as Record<string, unknown>, status: 'active', is_demo: false, contact_email: email };
       let tenantId = existingTenant?.id as string | undefined;
       if (tenantId) {
         await admin.from('tenants').update(tenantPayload).eq('id', tenantId);
