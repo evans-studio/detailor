@@ -12,7 +12,7 @@ const EVENTS = [
 
 export default function MessagingTriggersPage() {
   return (
-    <DashboardShell tenantName="DetailFlow">
+    <DashboardShell tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Messaging Triggers</h1>
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">

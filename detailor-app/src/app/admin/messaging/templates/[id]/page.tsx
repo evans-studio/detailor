@@ -37,7 +37,7 @@ export default function TemplateEditorPage() {
   });
   async function onSave() { await saveMutation.mutateAsync(); }
   return (
-    <DashboardShell tenantName="DetailFlow">
+    <DashboardShell tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         {isLoading || !draft ? <div>Loading…</div> : (
           <div className="grid gap-3">

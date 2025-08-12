@@ -333,7 +333,7 @@ export default function AdminBookingsPage() {
   };
 
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin","staff"]}>
         <div className="space-y-6">
           {/* Header with filters */}

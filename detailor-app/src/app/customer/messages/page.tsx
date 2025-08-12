@@ -29,7 +29,7 @@ export default function CustomerMessagesPage() {
   });
   const current = messages.find((m) => m.id === openId) || null;
   return (
-    <DashboardShell role="customer" tenantName="DetailFlow">
+    <DashboardShell role="customer" tenantName="Detailor">
       <div className="grid gap-4">
         <h1 className="text-[var(--font-size-2xl)] font-semibold">Messages</h1>
         {messages.length === 0 ? (

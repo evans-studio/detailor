@@ -26,7 +26,7 @@ export default async function WelcomePage({ searchParams }: { searchParams: Prom
   return (
     <main className="min-h-screen grid place-items-center p-6">
       <div className="max-w-lg w-full rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-center">
-        <h1 className="text-[var(--font-size-2xl)] font-semibold mb-2">Welcome to DetailFlow</h1>
+        <h1 className="text-[var(--font-size-2xl)] font-semibold mb-2">Welcome to Detailor</h1>
         <p className="text-[var(--color-text-muted)] mb-4">{message}</p>
         {customerEmail ? <div className="mb-4 text-sm">Signed up as: {customerEmail}</div> : null}
         <WelcomeHandoff email={customerEmail} />

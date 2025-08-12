@@ -53,7 +53,7 @@ export default function DashboardPage() {
     })();
   }, []);
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin","staff"]}>
         {(servicesCount === 0 || patternsCount === 0) && (
           <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4 mb-4">

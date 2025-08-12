@@ -41,7 +41,7 @@ export default function AccountBillingPage() {
     })();
   }, []);
   return (
-    <DashboardShell role="customer" tenantName="DetailFlow">
+    <DashboardShell role="customer" tenantName="Detailor">
       <div className="grid gap-4">
         <h1 className="text-[var(--font-size-2xl)] font-semibold">Account & Billing</h1>
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">

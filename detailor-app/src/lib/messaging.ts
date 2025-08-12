@@ -18,7 +18,7 @@ export async function sendTenantEmail(params: SendEmailParams) {
   if (!resendKey) throw new Error('Missing RESEND_API_KEY');
   const resend = new Resend(resendKey);
 
-  const from = process.env.RESEND_FROM || 'DetailFlow <no-reply@detailflow.demo>';
+  const from = process.env.RESEND_FROM || 'Detailor <no-reply@detailor.demo>';
 
   // Insert message ledger row (queued)
   const admin = getSupabaseAdmin();

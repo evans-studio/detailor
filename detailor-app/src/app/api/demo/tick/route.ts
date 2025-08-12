@@ -6,7 +6,7 @@ export const runtime = 'nodejs';
 export async function POST() {
   try {
     const admin = getSupabaseAdmin();
-    const tradingName = 'DetailFlow Demo';
+    const tradingName = 'Detailor Demo';
     const { data: tenant } = await admin.from('tenants').select('id').eq('trading_name', tradingName).single();
     if (!tenant) throw new Error('Demo tenant missing');
 

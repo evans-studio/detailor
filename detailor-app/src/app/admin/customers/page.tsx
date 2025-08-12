@@ -128,7 +128,7 @@ export default function AdminCustomersPage() {
     );
   };
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={['admin','staff']}>
         <div className="space-y-6">
           {/* Header */}

@@ -37,7 +37,7 @@ export default function BookingDefaultsPage() {
     } finally { setSaving(false); }
   }
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Booking Defaults</h1>
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-2">

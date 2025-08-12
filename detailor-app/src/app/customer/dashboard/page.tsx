@@ -14,7 +14,7 @@ export default function CustomerHome() {
   const queryClient = useQueryClient();
   
   // System Bible Pattern: Real-time customer updates
-  useRealtimeCustomerUpdates('detail-flow', undefined, true);
+  useRealtimeCustomerUpdates('detailor', undefined, true);
   const { data: bookings = [] } = useQuery({
     queryKey: ['bookings', { scope: 'customer-home' }],
     queryFn: async (): Promise<Booking[]> => {
@@ -39,7 +39,7 @@ export default function CustomerHome() {
   });
 
   return (
-    <DashboardShell role="customer" tenantName="DetailFlow">
+    <DashboardShell role="customer" tenantName="Detailor">
       <div className="grid gap-4">
         <div className="flex items-center justify-between">
           <h1 className="text-[var(--font-size-2xl)] font-semibold">Welcome</h1>

@@ -11,8 +11,8 @@ function isPublicPath(pathname: string) {
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const host = req.headers.get('host') || '';
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'detailflow.vercel.app';
-  const marketingUrl = process.env.NEXT_PUBLIC_MARKETING_URL || 'https://detailflow-landing.vercel.app';
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'detailor.vercel.app';
+  const marketingUrl = process.env.NEXT_PUBLIC_MARKETING_URL || 'https://detailor-landing.vercel.app';
   const baseDomain = rootDomain.replace(/^.*?\./, '');
   const isRootHost = host === rootDomain || host === baseDomain;
   const isAdminHost = host.startsWith('admin.');

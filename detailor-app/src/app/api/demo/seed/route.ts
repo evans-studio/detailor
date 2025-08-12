@@ -8,8 +8,8 @@ export async function POST() {
     const admin = getSupabaseAdmin();
 
     // 1) Tenant (idempotent)
-    const legalName = 'DetailFlow Demo Ltd';
-    const tradingName = 'DetailFlow Demo';
+    const legalName = 'Detailor Demo Ltd';
+    const tradingName = 'Detailor Demo';
     const { data: existingTenant } = await admin
       .from('tenants')
       .select('*')

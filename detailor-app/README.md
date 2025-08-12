@@ -1,4 +1,4 @@
-# DetailFlow - Multi-Tenant Booking Platform
+# Detailor - Multi-Tenant Booking Platform
 
 A production-ready SaaS platform for service-based businesses like auto detailing, cleaning services, and more.
 
@@ -99,7 +99,7 @@ SENTRY_AUTH_TOKEN=your_token
 ## 🏢 Demo Tenant
 
 Test the platform with pre-populated demo data:
-- **Company**: DetailFlow Demo  
+- **Company**: Detailor Demo  
 - **Admin**: demo_admin@tenant.com / DemoPass123!
 - **Customer**: demo_customer@tenant.com / DemoPass123!
 - **Features**: 3 services, sample customers, 4+ bookings

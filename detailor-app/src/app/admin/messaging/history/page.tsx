@@ -22,7 +22,7 @@ export default function MessagingHistoryPage() {
     return rows.filter((m) => (m.recipient || '').toLowerCase().includes(ql) || (m.event || '').toLowerCase().includes(ql));
   }, [rows, q]);
   return (
-    <DashboardShell tenantName="DetailFlow">
+    <DashboardShell tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Messaging History</h1>
         <DataTable

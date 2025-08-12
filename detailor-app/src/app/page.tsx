@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export default function Home() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailflow.vercel.app';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailor.vercel.app';
   const starter = process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER || '';
   const pro = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || '';
   const ent = process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE || '';
@@ -10,7 +10,7 @@ export default function Home() {
       {/* Header */}
       <header className="sticky top-0 bg-white border-b border-[var(--df-border)] z-40">
         <div className="container h-16 flex items-center justify-between">
-          <div className="font-semibold text-[var(--df-fg)]">DetailFlow</div>
+          <div className="font-semibold text-[var(--df-fg)]">Detailor</div>
           <nav className="hidden md:flex items-center gap-6 text-[var(--df-body)]">
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
@@ -144,7 +144,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="section">
         <div className="container grid md:grid-cols-2 gap-6 items-start">
-          <div className="text-sm text-[var(--df-muted)]">DetailFlow is a trading name of Evans Studio Ltd.</div>
+           <div className="text-sm text-[var(--df-muted)]">Detailor is a trading name of Evans Studio Ltd.</div>
           <nav className="flex gap-4 justify-end text-sm">
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>

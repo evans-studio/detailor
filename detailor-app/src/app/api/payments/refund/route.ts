@@ -86,7 +86,7 @@ export async function POST(req: Request) {
           reason: payload.reason === 'duplicate' ? 'duplicate' : 
                  payload.reason === 'fraudulent' ? 'fraudulent' : 'requested_by_customer',
           metadata: {
-            app: 'detailflow',
+            app: 'detailor',
             tenant_id: profile.tenant_id,
             payment_id: payment.id,
             refund_reason: payload.reason || 'requested_by_customer'

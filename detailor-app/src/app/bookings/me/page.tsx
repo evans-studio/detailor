@@ -46,7 +46,7 @@ export default function MyBookingsPage() {
   const queryClient = useQueryClient();
   
   // System Bible Pattern: Real-time customer updates
-  useRealtimeCustomerUpdates('detail-flow', undefined, true);
+  useRealtimeCustomerUpdates('detailor', undefined, true);
   const [activeTab, setActiveTab] = React.useState('upcoming');
   
   const { data: bookings = [] } = useQuery({
@@ -160,7 +160,7 @@ export default function MyBookingsPage() {
   );
 
   return (
-    <DashboardShell role="customer" tenantName="DetailFlow">
+    <DashboardShell role="customer" tenantName="Detailor">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-[var(--font-size-2xl)] font-semibold text-[var(--color-text)]">
           My Bookings

@@ -57,7 +57,7 @@ export default function AdminCustomerDetailPage() {
   });
 
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={['admin','staff']}>
       {!customer ? (
         <div>Loading…</div>

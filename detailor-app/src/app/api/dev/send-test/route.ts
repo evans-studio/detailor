@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { sendTenantEmail } from '@/lib/messaging';
 
-const schema = z.object({ to: z.string().email(), subject: z.string().default('DetailFlow Test'), text: z.string().default('Hello from DetailFlow.'), trading_name: z.string().default('DetailFlow Demo') });
+const schema = z.object({ to: z.string().email(), subject: z.string().default('Detailor Test'), text: z.string().default('Hello from Detailor.'), trading_name: z.string().default('Detailor Demo') });
 
 export async function POST(req: Request) {
   if (process.env.NODE_ENV === 'production') {

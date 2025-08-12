@@ -32,7 +32,7 @@ export default function TemplatesListPage() {
   });
   async function onCreate() { await createMutation.mutateAsync(); }
   return (
-    <DashboardShell tenantName="DetailFlow">
+    <DashboardShell tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Templates</h1>
         <SmsCreditsBanner />

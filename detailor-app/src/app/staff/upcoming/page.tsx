@@ -28,7 +28,7 @@ export default function StaffUpcoming() {
   const { data } = useQuery('jobs-upcoming', () => fetchJobs('?status=not_started'));
   const jobs = (data || []) as JobRow[];
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin","staff"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Upcoming</h1>
         {jobs.length === 0 ? <div className="text-[var(--color-text-muted)]">No upcoming jobs.</div> : (

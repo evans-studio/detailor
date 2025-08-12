@@ -80,7 +80,7 @@ export default function BookingsPage() {
     };
   }, [notify, tenantId]);
   return (
-    <DashboardShell role={role} tenantName="DetailFlow">
+    <DashboardShell role={role} tenantName="Detailor">
       <div className="flex items-center justify-between mb-3">
         <h1 className="text-[var(--font-size-2xl)] font-semibold">Bookings</h1>
         <div className="flex items-center gap-2">

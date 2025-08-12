@@ -40,7 +40,7 @@ export default function BookingDetailPage() {
     setConfirmOpen(false); setAction(null);
   }
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       {isLoading || !data ? (
         <div>Loading…</div>
       ) : (

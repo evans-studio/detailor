@@ -28,7 +28,7 @@ export default function AdminServicesPage() {
   });
   const [name, setName] = React.useState('');
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-[var(--font-size-2xl)] font-semibold">Services</h1>

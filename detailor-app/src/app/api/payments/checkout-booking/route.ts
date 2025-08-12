@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.detailflow.com';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailor.vercel.app';
     const stripe = new Stripe(secret);
 
     const session = await stripe.checkout.sessions.create({
@@ -46,13 +46,13 @@ export async function POST(req: Request) {
         metadata: {
           type: 'booking_payment',
           booking_reference: booking_reference || '',
-          app: 'detailflow'
+           app: 'detailor'
         },
       },
       metadata: {
         type: 'booking_payment',
         booking_reference: booking_reference || '',
-        app: 'detailflow'
+        app: 'detailor'
       },
     });
 

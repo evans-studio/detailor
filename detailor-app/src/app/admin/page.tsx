@@ -45,7 +45,7 @@ export default function AdminTodayView() {
   const today = new Date().toISOString().split('T')[0];
   
   // System Bible Pattern: Real-time admin updates
-  useRealtimeAdminUpdates('detail-flow', true);
+  useRealtimeAdminUpdates('detailor', true);
   
   const { data: todayBookings = [] } = useQuery({
     queryKey: ['bookings', { scope: 'admin-today', date: today }],
@@ -90,7 +90,7 @@ export default function AdminTodayView() {
   );
 
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin", "staff"]}>
         <div className="space-y-6">
           {/* Header */}

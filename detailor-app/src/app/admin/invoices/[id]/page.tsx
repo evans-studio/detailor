@@ -83,7 +83,7 @@ export default function AdminInvoiceDetailPage() {
     URL.revokeObjectURL(url);
   }
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin","staff"]}>
         {isLoading || !invoice ? (
           <div>Loading…</div>

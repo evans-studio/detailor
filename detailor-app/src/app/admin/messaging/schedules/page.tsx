@@ -30,7 +30,7 @@ export default function MessagingSchedulesPage() {
     onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ['messaging-rules'] }); },
   });
   return (
-    <DashboardShell tenantName="DetailFlow">
+    <DashboardShell tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Messaging Schedules</h1>
         {!rules ? (

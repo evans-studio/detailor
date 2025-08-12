@@ -24,7 +24,7 @@ export default function EmailSettings() {
     } finally { setSaving(false); }
   }
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Email Settings</h1>
         {!tenant ? <div>Loading…</div> : (

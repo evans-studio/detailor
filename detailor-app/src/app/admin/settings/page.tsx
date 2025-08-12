@@ -35,7 +35,7 @@ export default function AdminSettingsPage() {
   });
   async function onSave() { await saveMutation.mutateAsync(); }
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Settings</h1>
         {isLoading || !draft ? (

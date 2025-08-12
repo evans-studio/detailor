@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
     if (!secret) return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.detailflow.com';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailor.vercel.app';
     const stripe = new Stripe(secret);
 
     const session = await stripe.checkout.sessions.create({
@@ -25,9 +25,9 @@ export async function POST(req: Request) {
       billing_address_collection: 'auto',
       subscription_data: {
         trial_period_days: 7,
-        metadata: { app: 'detailflow', price_id },
+        metadata: { app: 'detailor', price_id },
       },
-      metadata: { app: 'detailflow', price_id },
+      metadata: { app: 'detailor', price_id },
     });
 
     return NextResponse.json({ ok: true, url: session.url, id: session.id });
@@ -46,7 +46,7 @@ export async function GET(req: Request) {
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
     if (!secret) return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.detailflow.com';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailor.vercel.app';
     const stripe = new Stripe(secret);
 
     const session = await stripe.checkout.sessions.create({
@@ -57,8 +57,8 @@ export async function GET(req: Request) {
       customer_email: email,
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
-      subscription_data: { trial_period_days: 7, metadata: { app: 'detailflow', price_id } },
-      metadata: { app: 'detailflow', price_id },
+      subscription_data: { trial_period_days: 7, metadata: { app: 'detailor', price_id } },
+      metadata: { app: 'detailor', price_id },
     });
     if (session.url) return NextResponse.redirect(session.url, { status: 303 });
     return NextResponse.json({ ok: false, error: 'No checkout URL' }, { status: 400 });

@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         line_items: [{ price: String(body.price_id), quantity: Number(body.quantity || 1) }],
         success_url: `${appUrl}/billing?success=1`,
         cancel_url: `${appUrl}/billing`,
-        metadata: { app: 'detailflow', addon_sku: String(body.addon_sku || ''), price_id: String(body.price_id || '') },
+         metadata: { app: 'detailor', addon_sku: String(body.addon_sku || ''), price_id: String(body.price_id || '') },
       });
       return NextResponse.json({ ok: true, url: session.url });
     }

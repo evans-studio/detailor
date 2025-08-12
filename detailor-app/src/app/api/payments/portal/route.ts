@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     const customerId = sub?.stripe_customer_id as string | undefined;
     if (!customerId) throw new Error('No Stripe customer');
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailflow.vercel.app';
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://detailor.vercel.app';
     if (!secret) throw new Error('Server not configured');
     const stripe = new Stripe(secret);
     const session = await stripe.billingPortal.sessions.create({

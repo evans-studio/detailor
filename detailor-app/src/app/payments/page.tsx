@@ -73,7 +73,7 @@ export default function AdminPaymentsPage() {
   });
 
   return (
-    <DashboardShell role="admin" tenantName="DetailFlow">
+    <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin","staff"]}>
         <div className="flex items-center justify-between mb-3">
           <h1 className="text-[var(--font-size-2xl)] font-semibold">Payments</h1>
