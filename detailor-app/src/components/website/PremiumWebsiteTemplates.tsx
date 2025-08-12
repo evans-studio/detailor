@@ -225,7 +225,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                   {content.hero?.cta_text || 'Book Your Detail'}
                 </Button>
                 <Button 
-                  variant="outline" 
+                  intent="outline" 
                   size="lg"
                   className="font-semibold text-lg px-8 py-4 border-2 hover:bg-gray-50 transition-all"
                   style={{ borderColor: primaryColor, color: primaryColor }}
