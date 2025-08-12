@@ -217,17 +217,18 @@ export async function POST(req: Request) {
         const { data: existingSub } = await admin.from('subscriptions').select('tenant_id').eq('stripe_customer_id', customerId).maybeSingle();
         const tenantId = existingSub?.tenant_id as string | undefined;
         if (tenantId) {
+          const { data: tenantRec } = await admin.from('tenants').select('feature_flags').eq('id', tenantId).single();
+          const ff = (tenantRec?.feature_flags as Record<string, unknown>) || {};
           if (addonSku.startsWith('sms')) {
             const amount = parseInt(addonSku.replace('sms', ''), 10) || 0;
-            await admin.rpc('increment_tenant_counter', { tenant_id_input: tenantId, counter_key: 'sms_credits', increment_by: amount });
+            const current = Number(ff.sms_credits || 0);
+            ff.sms_credits = current + amount;
           }
           if (addonSku === 'storage_5gb') {
-            const { data: tenant } = await admin.from('tenants').select('feature_flags').eq('id', tenantId).single();
-            const ff = (tenant?.feature_flags as Record<string, unknown>) || {};
             const current = Number(ff.storage_gb || 0);
             ff.storage_gb = current + 5;
-            await admin.from('tenants').update({ feature_flags: ff }).eq('id', tenantId);
           }
+          await admin.from('tenants').update({ feature_flags: ff }).eq('id', tenantId);
         }
       }
     }
