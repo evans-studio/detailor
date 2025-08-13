@@ -951,6 +951,99 @@
 .card-entrance-stagger:nth-child(5) { animation-delay: 0.5s; }
 .card-entrance-stagger:nth-child(6) { animation-delay: 0.6s; }
 
+/* ===== MOBILE-FIRST RESPONSIVE ANIMATIONS ===== */
+/* Optimized animations for mobile devices */
+@media (max-width: 640px) {
+  /* Reduce animation intensity on mobile */
+  .hover-lift:hover {
+    transform: translateY(-1px);
+  }
+  
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+  
+  /* Faster animations on mobile for better perceived performance */
+  .animate-slide-in-up {
+    animation-duration: 0.3s;
+  }
+  
+  .animate-fade-in {
+    animation-duration: 0.2s;
+  }
+  
+  .animate-scale-in {
+    animation-duration: 0.2s;
+  }
+  
+  /* Smaller transforms on mobile */
+  .card-hover:hover {
+    transform: translateY(-1px);
+  }
+  
+  .notification-slide-in-right {
+    animation-duration: 0.3s;
+  }
+  
+  .modal-content {
+    animation-duration: 0.25s;
+  }
+  
+  /* Disable complex animations on mobile */
+  .mobile-simple {
+    animation: none !important;
+    transform: none !important;
+    transition: opacity 0.2s ease, visibility 0.2s ease !important;
+  }
+  
+  /* Touch-friendly interactions */
+  .touch-feedback {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .touch-feedback::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.1);
+    transition: width 0.3s, height 0.3s, top 0.3s, left 0.3s;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  
+  .touch-feedback:active::after {
+    width: 200px;
+    height: 200px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  /* Remove hover effects on touch devices */
+  .hover-lift:hover,
+  .hover-scale:hover,
+  .hover-brightness:hover {
+    transform: none;
+    filter: none;
+  }
+  
+  /* Show interactive states immediately on touch devices */
+  .group:hover .group-hover\:opacity-100 {
+    opacity: 1;
+  }
+  
+  /* Ensure buttons are touch-friendly */
+  button, .cursor-pointer {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
 /* ===== ACCESSIBILITY SUPPORT ===== */
 @media (prefers-reduced-motion: reduce) {
   *,

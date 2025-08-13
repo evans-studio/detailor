@@ -6,41 +6,46 @@ import { Badge } from '@/ui/badge';
 import { cva } from 'class-variance-authority';
 import { twMerge } from 'tailwind-merge';
 
-// Enterprise KPI Card Variants
+// Modern KPI Card Variants with Brand System
 const kpiCardStyles = cva(
   [
-    'relative overflow-hidden ripple-container focus-ring',
-    'card-hover group cursor-pointer animate-scale-in',
-    'will-change-transform',
+    'relative overflow-hidden group cursor-pointer',
+    'transition-all duration-200 ease-out',
+    'will-change-transform hover:scale-[1.02]',
+    'rounded-xl border shadow-sm hover:shadow-lg',
   ],
   {
     variants: {
       variant: {
         default: [
-          'bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-muted)]',
-          'border-[var(--color-border)]',
+          'bg-white border-gray-200',
+          'hover:border-gray-300',
         ],
         primary: [
-          'bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-600)]',
-          'border-[var(--color-primary-600)] text-white',
+          'bg-gradient-to-br from-blue-500 to-blue-600',
+          'border-blue-600 text-white shadow-blue-500/20',
+          'hover:shadow-blue-500/30',
         ],
         success: [
-          'bg-gradient-to-br from-[var(--color-success)] to-[var(--color-success-600)]',
-          'border-[var(--color-success-600)] text-white',
+          'bg-gradient-to-br from-green-500 to-green-600',
+          'border-green-600 text-white shadow-green-500/20',
+          'hover:shadow-green-500/30',
         ],
         warning: [
-          'bg-gradient-to-br from-[var(--color-warning)] to-[var(--color-warning-600)]',
-          'border-[var(--color-warning-600)] text-white',
+          'bg-gradient-to-br from-amber-500 to-amber-600',
+          'border-amber-600 text-white shadow-amber-500/20',
+          'hover:shadow-amber-500/30',
         ],
         error: [
-          'bg-gradient-to-br from-[var(--color-error)] to-[var(--color-error-600)]',
-          'border-[var(--color-error-600)] text-white',
+          'bg-gradient-to-br from-red-500 to-red-600',
+          'border-red-600 text-white shadow-red-500/20',
+          'hover:shadow-red-500/30',
         ],
       },
       size: {
-        sm: 'min-h-[120px]',
-        md: 'min-h-[140px]',
-        lg: 'min-h-[160px]',
+        sm: 'min-h-[120px] sm:min-h-[140px]', // Shorter on mobile
+        md: 'min-h-[140px] sm:min-h-[160px]',
+        lg: 'min-h-[160px] sm:min-h-[180px]',
       },
     },
     defaultVariants: {
@@ -165,7 +170,10 @@ export function KPICard({
 
   return (
     <Card 
-      className={twMerge(kpiCardStyles({ variant, size }))}
+      className={twMerge(
+        kpiCardStyles({ variant, size }),
+        'animate-fade-scale touch-feedback gpu-accelerated' // Add premium animations
+      )}
       onClick={handleClick}
       variant={onClick ? 'interactive' : 'elevated'}
       tabIndex={onClick ? 0 : undefined}
@@ -177,38 +185,41 @@ export function KPICard({
         }
       }}
     >
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 right-0 w-32 h-32 transform translate-x-8 -translate-y-8">
-          <div className="w-full h-full rounded-full bg-gradient-to-br from-white to-transparent opacity-20" />
+      {/* Modern Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-0 right-0 w-40 h-40 transform translate-x-10 -translate-y-10">
+          <div className="w-full h-full rounded-full bg-gradient-radial from-white via-white to-transparent" />
+        </div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 transform -translate-x-6 translate-y-6">
+          <div className="w-full h-full rounded-full bg-gradient-radial from-white via-white to-transparent opacity-30" />
         </div>
       </div>
 
-      <CardContent className="relative p-6 h-full flex flex-col justify-between">
-        {/* Header with Icon and Label */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
+      <CardContent className="relative p-4 sm:p-6 h-full flex flex-col">
+        {/* Header with Icon and Label - Mobile Optimized */}
+        <div className="flex items-start justify-between mb-4 sm:mb-6">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className={`
-              p-2 rounded-[var(--radius-md)] transition-smooth
+              p-2 sm:p-3 rounded-lg transition-all duration-200
               ${isColored 
-                ? 'bg-white/20 text-white' 
-                : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
+                ? 'bg-white/20 text-white backdrop-blur-sm' 
+                : 'bg-blue-50 text-blue-600'
               }
-              group-hover:scale-110 group-hover:rotate-3 animate-delay-100
+              group-hover:scale-110 group-hover:rotate-2
             `}>
-              <IconComponent className="h-5 w-5" />
+              <IconComponent className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h3 className={`
-                text-[var(--font-size-sm)] font-[var(--font-weight-medium)]
-                ${isColored ? 'text-white/90' : 'text-[var(--color-text-muted)]'}
+                text-xs sm:text-sm font-semibold mb-1 truncate
+                ${isColored ? 'text-white/95' : 'text-gray-600'}
               `}>
                 {label}
               </h3>
               {subtitle && (
                 <p className={`
-                  text-[var(--font-size-xs)] mt-0.5
-                  ${isColored ? 'text-white/70' : 'text-[var(--color-text-subtle)]'}
+                  text-xs leading-tight line-clamp-2
+                  ${isColored ? 'text-white/75' : 'text-gray-500'}
                 `}>
                   {subtitle}
                 </p>
@@ -223,16 +234,16 @@ export function KPICard({
           )}
         </div>
 
-        {/* Main Value */}
-        <div className="flex-1 flex items-center">
+        {/* Main Value - Responsive Text */}
+        <div className="flex-1 flex items-center py-1 sm:py-2">
           <div className={`
-            text-[var(--font-size-4xl)] font-[var(--font-weight-bold)] leading-none
-            ${isColored ? 'text-white' : 'text-[var(--color-text)]'}
+            text-2xl sm:text-3xl font-bold leading-none
+            ${isColored ? 'text-white' : 'text-gray-900'}
             transition-transform group-hover:scale-105
           `}>
             {loading ? (
               <div className="animate-pulse">
-                <div className="h-10 w-24 bg-current opacity-20 rounded" />
+                <div className="h-6 sm:h-8 w-16 sm:w-20 bg-current opacity-20 rounded" />
               </div>
             ) : (
               displayValue
@@ -240,18 +251,18 @@ export function KPICard({
           </div>
         </div>
 
-        {/* Trend Indicator */}
+        {/* Trend Indicator - Mobile Friendly */}
         {trendData && !loading && (
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mt-auto pt-3 sm:pt-4">
             <div className={`
-              flex items-center gap-2 px-2 py-1 rounded-[var(--radius-full)]
+              flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full font-medium text-xs self-start
               ${isColored 
-                ? 'bg-white/20 text-white' 
+                ? 'bg-white/20 text-white backdrop-blur-sm' 
                 : trend === 'up' 
-                  ? 'bg-[var(--color-success-50)] text-[var(--color-success)]'
+                  ? 'bg-green-100 text-green-700'
                   : trend === 'down'
-                    ? 'bg-[var(--color-error-50)] text-[var(--color-error)]'
-                    : 'bg-[var(--color-muted)] text-[var(--color-text-muted)]'
+                    ? 'bg-red-100 text-red-700'
+                    : 'bg-gray-100 text-gray-600'
               }
             `}>
               {trendData.direction === 'up' ? (
@@ -259,30 +270,28 @@ export function KPICard({
               ) : trendData.direction === 'down' ? (
                 <TrendDownIcon className="h-3 w-3" />
               ) : null}
-              <span className="text-[var(--font-size-xs)] font-[var(--font-weight-medium)]">
+              <span className="font-semibold">
                 {trendData.percentage}%
               </span>
             </div>
             
             <span className={`
-              text-[var(--font-size-xs)]
-              ${isColored ? 'text-white/70' : 'text-[var(--color-text-muted)]'}
+              text-xs font-medium truncate
+              ${isColored ? 'text-white/80' : 'text-gray-500'}
             `}>
               {trendData.label}
             </span>
           </div>
         )}
 
-        {/* Status Badge */}
+        {/* Status Indicator */}
         {variant !== 'default' && !loading && (
           <div className="absolute top-4 right-4">
-            <Badge 
-              variant={isColored ? 'outline' : variant}
-              size="sm"
-              className={isColored ? 'border-white/30 text-white' : ''}
-            >
-              Live
-            </Badge>
+            <div className={`
+              w-2 h-2 rounded-full
+              ${isColored ? 'bg-white/60' : 'bg-green-500'}
+              animate-pulse
+            `} />
           </div>
         )}
       </CardContent>
@@ -290,11 +299,14 @@ export function KPICard({
   );
 }
 
-// Grid container for KPI cards
+// Mobile-First Responsive Grid container for KPI cards with animations
 export function KPIGrid({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={twMerge(
-      'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 stagger-children',
+      'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4',
+      'gap-4 sm:gap-6', // Smaller gap on mobile
+      'auto-rows-fr', // Ensure equal height cards
+      'stagger-children', // Add staggered animation
       className
     )}>
       {children}
@@ -302,22 +314,25 @@ export function KPIGrid({ children, className }: { children: React.ReactNode; cl
   );
 }
 
-// Loading skeleton for KPI cards
+// Modern loading skeleton for KPI cards
 export function KPICardSkeleton({ count = 4 }: { count?: number }) {
   return (
     <KPIGrid>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="animate-scale-in" style={{ animationDelay: `${i * 0.1}s` }}>
-          <Card className="min-h-[140px] animate-pulse">
+        <div key={i} className="animate-pulse" style={{ animationDelay: `${i * 0.1}s` }}>
+          <Card className="min-h-[160px] border-gray-200 bg-white">
             <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 skeleton rounded-[var(--radius-md)]" />
-                <div className="h-4 skeleton rounded w-24" />
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-gray-200 rounded-lg" />
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-20 mb-2" />
+                  <div className="h-3 bg-gray-200 rounded w-16" />
+                </div>
               </div>
-              <div className="h-10 skeleton rounded w-20 mb-4" />
+              <div className="h-8 bg-gray-200 rounded w-24 mb-6" />
               <div className="flex items-center justify-between">
-                <div className="h-6 skeleton rounded w-16" />
-                <div className="h-3 skeleton rounded w-12" />
+                <div className="h-6 bg-gray-200 rounded w-16" />
+                <div className="h-3 bg-gray-200 rounded w-12" />
               </div>
             </CardContent>
           </Card>

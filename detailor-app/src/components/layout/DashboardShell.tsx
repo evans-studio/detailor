@@ -81,7 +81,7 @@ export function DashboardShell({
   const items = getNavForRole(resolvedRole ?? 'admin');
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Skip to main content link for keyboard navigation */}
       <SkipLink />
       
@@ -102,19 +102,18 @@ export function DashboardShell({
           onMobileClose={() => setMobileMenuOpen(false)}
         />
         
-        {/* Main Content Area */}
+        {/* Main Content Area - Mobile Optimized */}
         <main 
           id="main-content"
           className={`
-            flex-1 overflow-auto bg-[var(--color-bg)]
-            transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]
-            ${sidebarCollapsed ? 'ml-16' : 'ml-64'} 
-            md:ml-0
+            flex-1 overflow-auto bg-gray-50
+            transition-all duration-300 ease-out
+            ${sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'} 
           `}
           role="main"
           aria-label="Main content"
         >
-          <div className="p-6 pb-20 md:pb-6 max-w-[1600px] mx-auto">
+          <div className="p-4 sm:p-6 md:p-8 pb-20 sm:pb-24 md:pb-8 max-w-7xl mx-auto">
             <NotificationsProvider>
               {resolvedRole ? children : (
                 <div role="status" aria-label="Loading content">
@@ -145,9 +144,9 @@ function EnterpriseHeader({
   return (
     <header 
       className="
-        h-16 bg-[var(--color-surface)] border-b border-[var(--color-border)]
+        h-16 bg-white border-b border-gray-200
         flex items-center justify-between px-6
-        shadow-[var(--shadow-sm)]
+        shadow-sm
         sticky top-0 z-40
       "
       role="banner"
@@ -186,15 +185,16 @@ function EnterpriseHeader({
         {/* Brand */}
         <div className="flex items-center gap-3">
           <div className="
-            w-8 h-8 rounded-lg bg-gradient-to-br 
-            from-[var(--brand-primary)] to-[var(--color-primary-600)]
+            w-10 h-10 rounded-xl bg-gradient-to-br 
+            from-blue-600 to-blue-700
             flex items-center justify-center text-white font-bold text-sm
+            shadow-md hover:shadow-lg transition-shadow duration-200
           ">
             {tenantName.charAt(0)}
           </div>
           <h1 className="
-            text-[var(--font-size-lg)] font-[var(--font-weight-semibold)]
-            text-[var(--color-text)] tracking-[var(--letter-spacing-tight)]
+            text-lg font-semibold
+            text-gray-900 tracking-tight
           ">
             {tenantName}
           </h1>
@@ -205,20 +205,20 @@ function EnterpriseHeader({
       <div className="hidden md:flex flex-1 max-w-md mx-8">
         <div className="
           relative w-full
-          bg-[var(--color-muted)] border border-[var(--color-border)]
-          rounded-[var(--radius-lg)] transition-colors
-          focus-within:bg-[var(--color-surface)] focus-within:border-[var(--color-primary)]
+          bg-gray-100 border border-gray-200
+          rounded-xl transition-all duration-200
+          focus-within:bg-white focus-within:border-blue-500 focus-within:shadow-md
         ">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z" />
           </svg>
           <input
             type="text"
             placeholder="Search..."
             className="
-              w-full pl-10 pr-4 py-2 bg-transparent 
-              text-[var(--font-size-sm)] text-[var(--color-text)]
-              placeholder:text-[var(--color-text-muted)]
+              w-full pl-10 pr-4 py-2.5 bg-transparent 
+              text-sm text-gray-900
+              placeholder:text-gray-500
               focus:outline-none
             "
           />
@@ -228,13 +228,14 @@ function EnterpriseHeader({
       {/* Right Section */}
       <div className="flex items-center gap-2">
         {/* Notifications */}
-        <Button intent="ghost" size="sm" className="relative">
+        <Button intent="ghost" size="sm" className="relative hover:bg-gray-100">
           <BellIcon />
           <Badge 
             className="
-              absolute -top-1 -right-1 h-4 w-4 p-0 
-              text-[var(--font-size-xs)] 
-              bg-[var(--color-error)] text-white
+              absolute -top-1 -right-1 h-5 w-5 p-0 
+              text-xs font-medium
+              bg-red-500 text-white border-2 border-white
+              flex items-center justify-center
             "
           >
             3
@@ -242,13 +243,13 @@ function EnterpriseHeader({
         </Button>
 
         {/* User Menu */}
-        <Button intent="ghost" size="sm">
+        <Button intent="ghost" size="sm" className="hover:bg-gray-100">
           <UserIcon />
         </Button>
 
         {/* Settings Link */}
         <Link href="/settings">
-          <Button intent="ghost" size="sm">
+          <Button intent="ghost" size="sm" className="hover:bg-gray-100 font-medium">
             Settings
           </Button>
         </Link>
@@ -280,17 +281,16 @@ function EnterpriseSidebar({
         />
       )}
       
-      {/* Sidebar */}
+      {/* Mobile-First Responsive Sidebar */}
       <aside className={`
         fixed top-16 left-0 h-[calc(100vh-4rem)] z-50
-        bg-[var(--color-surface)] border-r border-[var(--color-border)]
-        transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]
-        shadow-[var(--shadow-lg)]
+        bg-white border-r border-gray-200
+        transition-all duration-300 ease-out
         ${collapsed ? 'w-16' : 'w-64'}
-        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-        md:translate-x-0 md:relative md:top-0 md:shadow-none
+        ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
+        md:translate-x-0 md:relative md:top-0 md:shadow-sm
       `}>
-        <nav className="p-4 space-y-2 h-full overflow-y-auto">
+        <nav className="p-3 sm:p-4 space-y-1 h-full overflow-y-auto">
           {items.map((item) => {
             const active = pathname.startsWith(item.path);
             const Icon = item.icon;
@@ -301,20 +301,21 @@ function EnterpriseSidebar({
                 href={item.path}
                 onClick={() => onMobileClose()}
                 className={`
-                  group flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-lg)]
-                  text-[var(--font-size-sm)] font-[var(--font-weight-medium)]
-                  transition-all duration-[var(--duration-fast)] ease-[var(--ease-out)]
+                  group flex items-center gap-3 px-3 py-3 sm:py-3 rounded-xl
+                  text-sm font-medium
+                  transition-all duration-200 ease-out
+                  min-h-[44px] // Touch-friendly minimum height
                   ${active 
-                    ? 'bg-[var(--color-primary)] text-[var(--color-primary-foreground)] shadow-[var(--shadow-sm)]' 
-                    : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-hover-surface)] hover:text-[var(--color-text)]'
+                    ? 'bg-blue-600 text-white shadow-md transform scale-[1.02]' 
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200'
                   }
-                  ${collapsed ? 'justify-center' : 'justify-start'}
+                  ${collapsed ? 'justify-center md:justify-center' : 'justify-start'}
                 `}
                 title={collapsed ? item.label : undefined}
               >
                 {Icon && (
                   <Icon className={`
-                    h-5 w-5 flex-shrink-0 transition-transform duration-[var(--duration-fast)]
+                    h-5 w-5 flex-shrink-0 transition-transform duration-200
                     ${active ? 'scale-110' : 'group-hover:scale-105'}
                   `} />
                 )}
@@ -324,7 +325,7 @@ function EnterpriseSidebar({
                   </span>
                 )}
                 {active && !collapsed && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--color-primary-foreground)] opacity-75" />
+                  <div className="ml-auto w-2 h-2 rounded-full bg-white/80" />
                 )}
               </Link>
             );
@@ -332,9 +333,9 @@ function EnterpriseSidebar({
         </nav>
         
         {/* Sidebar Footer */}
-        <div className="border-t border-[var(--color-border)] p-4">
+        <div className="border-t border-gray-200 p-4">
           {!collapsed && (
-            <div className="text-[var(--font-size-xs)] text-[var(--color-text-muted)] text-center">
+            <div className="text-xs text-gray-500 text-center font-medium">
               Powered by Detailor
             </div>
           )}

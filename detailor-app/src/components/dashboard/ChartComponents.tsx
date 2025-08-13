@@ -27,7 +27,7 @@ export interface ChartProps {
   showTooltip?: boolean;
 }
 
-// Simple Bar Chart Component
+// Premium Bar Chart Component with Animations
 export function BarChart({ 
   data, 
   title, 
@@ -41,14 +41,17 @@ export function BarChart({
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
   return (
-    <Card className={className}>
+    <Card className={twMerge('border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-white animate-fade-scale hover-lift', className)}>
       {(title || description) && (
-        <CardHeader>
-          {title && <CardTitle>{title}</CardTitle>}
-          {description && <CardDescription>{description}</CardDescription>}
+        <CardHeader className="border-b border-gray-100 bg-gray-50">
+          {title && <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+            {title}
+          </CardTitle>}
+          {description && <CardDescription className="text-gray-600 mt-1">{description}</CardDescription>}
         </CardHeader>
       )}
-      <CardContent>
+      <CardContent className="p-6">
         <div className="relative" style={{ height }}>
           {/* Chart Area */}
           <div className="flex items-end justify-between h-full gap-2 pb-8 pr-4">
@@ -66,7 +69,7 @@ export function BarChart({
                   {/* Tooltip */}
                   {isHovered && (
                     <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-10">
-                      <div className="bg-[var(--color-slate-900)] text-white px-3 py-2 rounded-[var(--radius-md)] text-[var(--font-size-sm)] font-[var(--font-weight-medium)] shadow-[var(--shadow-lg)]">
+                      <div className="bg-[var(--color-slate-900)] text-white px-3 py-2 rounded-[var(--radius-md)] text-[var(--font-size-sm)] font-medium shadow-[var(--shadow-lg)]">
                         <div>{item.label}</div>
                         <div className="text-[var(--color-slate-300)]">{item.value.toLocaleString()}</div>
                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[var(--color-slate-900)]" />
@@ -86,7 +89,7 @@ export function BarChart({
                   />
                   
                   {/* Label */}
-                  <div className="mt-2 text-[var(--font-size-xs)] text-[var(--color-text-muted)] text-center font-[var(--font-weight-medium)] min-h-[2rem] flex items-center">
+                  <div className="mt-2 text-xs text-gray-500 text-center font-medium min-h-[2rem] flex items-center">
                     {item.label}
                   </div>
                 </div>
@@ -114,7 +117,7 @@ export function BarChart({
               return (
                 <div
                   key={i}
-                  className="text-[var(--font-size-xs)] text-[var(--color-text-muted)] font-[var(--font-weight-medium)]"
+                  className="text-xs text-gray-500 font-medium"
                 >
                   {value.toLocaleString()}
                 </div>
@@ -125,14 +128,14 @@ export function BarChart({
 
         {/* Legend */}
         {showLegend && data.some(d => d.color) && (
-          <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-[var(--color-border)]">
+          <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-200">
             {data.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div 
-                  className="w-3 h-3 rounded-sm"
-                  style={{ backgroundColor: item.color || 'var(--color-primary)' }}
+                  className="w-3 h-3 rounded-sm shadow-sm"
+                  style={{ backgroundColor: item.color || '#3B82F6' }}
                 />
-                <span className="text-[var(--font-size-sm)] text-[var(--color-text-secondary)]">
+                <span className="text-sm text-gray-600 font-medium">
                   {item.label}
                 </span>
               </div>
@@ -144,7 +147,7 @@ export function BarChart({
   );
 }
 
-// Simple Line Chart Component
+// Premium Line Chart Component with Animations
 export function LineChart({ 
   data, 
   title, 
@@ -173,14 +176,17 @@ export function LineChart({
   };
 
   return (
-    <Card className={className}>
+    <Card className={twMerge('border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-white animate-fade-scale hover-lift', className)}>
       {(title || description) && (
-        <CardHeader>
-          {title && <CardTitle>{title}</CardTitle>}
-          {description && <CardDescription>{description}</CardDescription>}
+        <CardHeader className="border-b border-gray-100 bg-gray-50">
+          {title && <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            {title}
+          </CardTitle>}
+          {description && <CardDescription className="text-gray-600 mt-1">{description}</CardDescription>}
         </CardHeader>
       )}
-      <CardContent>
+      <CardContent className="p-6">
         <div className="relative" style={{ height }}>
           {/* SVG Chart */}
           <div className="relative h-full pb-8 pr-4">
@@ -209,8 +215,8 @@ export function LineChart({
               {/* Area under curve */}
               <defs>
                 <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.05" />
+                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.05" />
                 </linearGradient>
               </defs>
               
@@ -223,7 +229,7 @@ export function LineChart({
               <path
                 d={generatePath()}
                 fill="none"
-                stroke="var(--color-primary)"
+                stroke="#3B82F6"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -263,7 +269,7 @@ export function LineChart({
                     bottom: `${((data[hoveredIndex].value - minValue) / range) * 100}%`
                   }}
                 >
-                  <div className="bg-[var(--color-slate-900)] text-white px-3 py-2 rounded-[var(--radius-md)] text-[var(--font-size-sm)] font-[var(--font-weight-medium)] shadow-[var(--shadow-lg)]">
+                  <div className="bg-[var(--color-slate-900)] text-white px-3 py-2 rounded-[var(--radius-md)] text-[var(--font-size-sm)] font-medium shadow-[var(--shadow-lg)]">
                     <div>{data[hoveredIndex].label}</div>
                     <div className="text-[var(--color-slate-300)]">{data[hoveredIndex].value.toLocaleString()}</div>
                     <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[var(--color-slate-900)]" />
@@ -278,7 +284,7 @@ export function LineChart({
             {data.map((item, index) => (
               <div
                 key={index}
-                className="text-[var(--font-size-xs)] text-[var(--color-text-muted)] font-[var(--font-weight-medium)]"
+                className="text-xs text-gray-500 font-medium"
               >
                 {item.label}
               </div>
@@ -292,7 +298,7 @@ export function LineChart({
               return (
                 <div
                   key={i}
-                  className="text-[var(--font-size-xs)] text-[var(--color-text-muted)] font-[var(--font-weight-medium)]"
+                  className="text-xs text-gray-500 font-medium"
                 >
                   {value.toLocaleString()}
                 </div>
@@ -305,7 +311,7 @@ export function LineChart({
   );
 }
 
-// Donut/Pie Chart Component
+// Premium Donut Chart Component with Animations
 export function DonutChart({ 
   data, 
   title, 
@@ -332,8 +338,8 @@ export function DonutChart({
     };
   });
 
-  const radius = 80;
-  const innerRadius = 50;
+  const radius = 85;
+  const innerRadius = 55;
   const centerX = 100;
   const centerY = 100;
 
@@ -367,14 +373,17 @@ export function DonutChart({
   }
 
   return (
-    <Card className={className}>
+    <Card className={twMerge('border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white', className)}>
       {(title || description) && (
-        <CardHeader>
-          {title && <CardTitle>{title}</CardTitle>}
-          {description && <CardDescription>{description}</CardDescription>}
+        <CardHeader className="border-b border-gray-100 bg-gray-50">
+          {title && <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+            {title}
+          </CardTitle>}
+          {description && <CardDescription className="text-gray-600 mt-1">{description}</CardDescription>}
         </CardHeader>
       )}
-      <CardContent>
+      <CardContent className="p-6">
         <div className="flex flex-col lg:flex-row items-center gap-8">
           {/* Chart */}
           <div className="relative">
@@ -402,10 +411,10 @@ export function DonutChart({
             <div className="absolute inset-0 flex items-center justify-center">
               {centerContent || (
                 <div className="text-center">
-                  <div className="text-[var(--font-size-2xl)] font-[var(--font-weight-bold)] text-[var(--color-text)]">
+                  <div className="text-2xl font-bold text-gray-900">
                     {total.toLocaleString()}
                   </div>
-                  <div className="text-[var(--font-size-sm)] text-[var(--color-text-muted)]">
+                  <div className="text-sm text-gray-600 font-medium">
                     Total
                   </div>
                 </div>
@@ -420,8 +429,8 @@ export function DonutChart({
                 <div
                   key={index}
                   className={`
-                    flex items-center justify-between p-3 rounded-[var(--radius-md)] transition-colors cursor-pointer
-                    ${hoveredIndex === index ? 'bg-[var(--color-hover-surface)]' : ''}
+                    flex items-center justify-between p-3 rounded-lg transition-all duration-200 cursor-pointer
+                    ${hoveredIndex === index ? 'bg-gray-50 shadow-sm' : 'hover:bg-gray-50'}
                   `}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
@@ -431,15 +440,15 @@ export function DonutChart({
                       className="w-4 h-4 rounded-sm"
                       style={{ backgroundColor: segment.color || `hsl(${index * 137.5 % 360}, 70%, 60%)` }}
                     />
-                    <span className="text-[var(--font-size-sm)] font-[var(--font-weight-medium)] text-[var(--color-text)]">
+                    <span className="text-sm font-medium text-gray-900">
                       {segment.label}
                     </span>
                   </div>
                   <div className="text-right">
-                    <div className="text-[var(--font-size-sm)] font-[var(--font-weight-semibold)] text-[var(--color-text)]">
+                    <div className="text-sm font-semibold text-gray-900">
                       {segment.value.toLocaleString()}
                     </div>
-                    <div className="text-[var(--font-size-xs)] text-[var(--color-text-muted)]">
+                    <div className="text-xs text-gray-500 font-medium">
                       {(segment.percentage * 100).toFixed(1)}%
                     </div>
                   </div>
@@ -453,19 +462,22 @@ export function DonutChart({
   );
 }
 
-// Chart Loading Skeleton
+// Modern Chart Loading Skeleton
 export function ChartSkeleton({ height = 300, className }: { height?: number; className?: string }) {
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="animate-pulse space-y-2">
-          <div className="h-5 bg-[var(--color-muted)] rounded w-32" />
-          <div className="h-4 bg-[var(--color-muted)] rounded w-48" />
+    <Card className={twMerge('border-gray-200 bg-white', className)}>
+      <CardHeader className="border-b border-gray-100 bg-gray-50">
+        <div className="animate-pulse space-y-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-gray-300 rounded-full" />
+            <div className="h-5 bg-gray-300 rounded w-32" />
+          </div>
+          <div className="h-4 bg-gray-200 rounded w-48" />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <div className="animate-pulse" style={{ height }}>
-          <div className="h-full bg-[var(--color-muted)] rounded" />
+          <div className="h-full bg-gray-200 rounded-lg" />
         </div>
       </CardContent>
     </Card>

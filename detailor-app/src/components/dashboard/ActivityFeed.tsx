@@ -160,65 +160,68 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
   return (
     <div 
       className={`
-        group relative flex gap-4 p-4 rounded-[var(--radius-lg)] transition-all
-        ${activity.onClick ? 'cursor-pointer hover:bg-[var(--color-hover-surface)]' : ''}
-        ${!activity.read ? 'bg-[var(--color-primary-50)] border-l-2 border-[var(--color-primary)]' : ''}
-        ${activity.priority === 'urgent' ? 'ring-1 ring-[var(--color-error)] ring-opacity-50' : ''}
+        group relative flex gap-4 p-4 rounded-xl transition-all duration-200
+        ${activity.onClick ? 'cursor-pointer hover:bg-gray-50 hover:shadow-sm' : ''}
+        ${!activity.read ? 'bg-blue-50 border-l-4 border-blue-500' : 'border-l-4 border-transparent'}
+        ${activity.priority === 'urgent' ? 'ring-1 ring-red-200 bg-red-50' : ''}
       `}
       onClick={activity.onClick}
     >
-      {/* Timeline indicator */}
+      {/* Modern Timeline indicator */}
       <div className="flex flex-col items-center">
         <div 
-          className="flex items-center justify-center w-8 h-8 rounded-full shadow-sm"
+          className="flex items-center justify-center w-10 h-10 rounded-full shadow-sm transition-all duration-200 group-hover:scale-110"
           style={{ backgroundColor: activityColor, color: 'white' }}
         >
           <IconComponent />
         </div>
-        <div className="w-px h-full bg-[var(--color-border)] mt-2 group-last:hidden" />
+        <div className="w-px h-full bg-gray-200 mt-2 group-last:hidden" />
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <h4 className="text-[var(--font-size-sm)] font-[var(--font-weight-semibold)] text-[var(--color-text)] truncate">
+            <div className="flex items-center gap-2 mb-2">
+              <h4 className="text-sm font-semibold text-gray-900 truncate">
                 {activity.title}
               </h4>
               {activity.priority && activity.priority !== 'low' && (
                 <Badge 
                   variant={activity.priority === 'urgent' ? 'error' : 'warning'}
                   size="sm"
+                  className="font-medium px-2 py-0.5"
                 >
                   {activity.priority}
                 </Badge>
               )}
               {!activity.read && (
-                <div className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
               )}
             </div>
             
-            <p className="text-[var(--font-size-sm)] text-[var(--color-text-secondary)] mb-2 line-clamp-2">
+            <p className="text-sm text-gray-700 mb-3 line-clamp-2">
               {activity.description}
             </p>
 
             {/* Metadata */}
             {activity.metadata && (
-              <div className="flex flex-wrap gap-3 text-[var(--font-size-xs)] text-[var(--color-text-muted)]">
+              <div className="flex flex-wrap gap-3 text-xs text-gray-600">
                 {activity.metadata.bookingReference && (
-                  <span>Ref: {activity.metadata.bookingReference}</span>
+                  <span className="bg-gray-100 px-2 py-1 rounded font-medium">
+                    {activity.metadata.bookingReference}
+                  </span>
                 )}
                 {activity.metadata.customerName && (
-                  <span>{activity.metadata.customerName}</span>
+                  <span className="font-medium">{activity.metadata.customerName}</span>
                 )}
                 {activity.metadata.amount && (
-                  <span className="font-[var(--font-weight-medium)]">
+                  <span className="font-semibold text-green-600">
                     {activity.metadata.currency || '£'}{activity.metadata.amount.toFixed(2)}
                   </span>
                 )}
                 {activity.metadata.rating && (
-                  <span className="flex items-center gap-1">
+                  <span className="flex items-center gap-1 font-medium">
                     ⭐ {activity.metadata.rating}/5
                   </span>
                 )}
@@ -226,20 +229,20 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-[var(--font-size-xs)] text-[var(--color-text-muted)]">
-            <time>{formatRelativeTime(activity.timestamp)}</time>
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <time className="font-medium">{formatRelativeTime(activity.timestamp)}</time>
           </div>
         </div>
 
-        {/* User info */}
+        {/* User info - Mobile Optimized */}
         {showAvatar && activity.user && (
           <div className="flex items-center gap-2 mt-3">
             <Avatar size="sm">
-              <AvatarFallback className="text-[var(--font-size-xs)]">
+              <AvatarFallback className="text-xs">
                 {activity.user.initials}
               </AvatarFallback>
             </Avatar>
-            <span className="text-[var(--font-size-xs)] text-[var(--color-text-muted)]">
+            <span className="text-xs text-gray-500 truncate">
               {activity.user.name}
             </span>
           </div>
@@ -247,9 +250,13 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
 
         {/* Quick actions */}
         {activity.actionable && (
-          <div className="flex gap-2 mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button size="sm" intent="ghost">View</Button>
-            <Button size="sm" intent="ghost">Mark as Read</Button>
+          <div className="flex gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-all duration-200">
+            <Button size="sm" intent="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium">
+              View
+            </Button>
+            <Button size="sm" intent="ghost" className="text-gray-600 hover:text-gray-700 hover:bg-gray-100 font-medium">
+              Mark Read
+            </Button>
           </div>
         )}
       </div>
@@ -289,20 +296,23 @@ export function ActivityFeed({
   }
 
   return (
-    <Card className={className}>
+    <Card className={twMerge('border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white', className)}>
       {showHeader && (
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 bg-gray-50">
           <div className="flex items-center gap-3">
-            <CardTitle>{title}</CardTitle>
+            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              {title}
+            </CardTitle>
             {unreadCount > 0 && (
-              <Badge variant="primary" size="sm">
+              <Badge variant="primary" size="sm" className="bg-blue-100 text-blue-700 border-blue-200 font-medium px-2.5 py-1">
                 {unreadCount} new
               </Badge>
             )}
           </div>
           <div className="flex gap-2">
             {unreadCount > 0 && onMarkAllRead && (
-              <Button size="sm" intent="ghost" onClick={onMarkAllRead}>
+              <Button size="sm" intent="ghost" onClick={onMarkAllRead} className="text-gray-600 hover:text-gray-900 hover:bg-gray-100">
                 Mark all read
               </Button>
             )}
@@ -310,35 +320,41 @@ export function ActivityFeed({
         </CardHeader>
       )}
 
-      <CardContent className={showHeader ? '' : 'pt-6'}>
+      <CardContent className={`p-6 ${showHeader ? '' : 'pt-6'}`}>
         {displayedActivities.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-[var(--color-muted)] flex items-center justify-center">
-              <svg className="w-6 h-6 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <p className="text-[var(--color-text-muted)] text-[var(--font-size-sm)]">
-              No recent activity to show
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
+            <p className="text-gray-600 text-sm">
+              Recent activity will appear here
             </p>
           </div>
         ) : (
-          <div className="space-y-1">
-            {displayedActivities.map((activity) => (
-              <ActivityItemComponent 
+          <div className="space-y-2 stagger-children">
+            {displayedActivities.map((activity, index) => (
+              <div 
                 key={activity.id} 
-                activity={activity} 
-                showAvatar={showAvatar}
-              />
+                className="animate-fade-scale"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <ActivityItemComponent 
+                  activity={activity} 
+                  showAvatar={showAvatar}
+                />
+              </div>
             ))}
           </div>
         )}
 
         {/* Load More Button */}
         {maxItems && activities.length > maxItems && onLoadMore && (
-          <div className="mt-6 text-center">
-            <Button intent="ghost" size="sm" onClick={onLoadMore}>
-              Load More Activity
+          <div className="mt-6 text-center border-t border-gray-100 pt-4">
+            <Button intent="ghost" size="sm" onClick={onLoadMore} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium">
+              Load More Activity →
             </Button>
           </div>
         )}
@@ -347,27 +363,33 @@ export function ActivityFeed({
   );
 }
 
-// Activity Feed Loading Skeleton
+// Modern Activity Feed Loading Skeleton
 export function ActivityFeedSkeleton({ className }: { className?: string }) {
   return (
-    <Card className={className}>
-      <CardHeader>
+    <Card className={twMerge('border-gray-200 bg-white', className)}>
+      <CardHeader className="border-b border-gray-100 bg-gray-50">
         <div className="flex items-center justify-between">
-          <div className="h-6 bg-[var(--color-muted)] rounded w-32 animate-pulse" />
-          <div className="h-5 bg-[var(--color-muted)] rounded w-16 animate-pulse" />
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" />
+            <div className="h-6 bg-gray-300 rounded w-32 animate-pulse" />
+          </div>
+          <div className="h-5 bg-gray-200 rounded w-16 animate-pulse" />
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-6">
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex gap-4 p-4 animate-pulse">
-              <div className="w-8 h-8 bg-[var(--color-muted)] rounded-full" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 bg-[var(--color-muted)] rounded w-3/4" />
-                <div className="h-3 bg-[var(--color-muted)] rounded w-1/2" />
-                <div className="h-3 bg-[var(--color-muted)] rounded w-1/4" />
+            <div key={i} className="flex gap-4 p-4 rounded-xl animate-pulse">
+              <div className="w-10 h-10 bg-gray-200 rounded-full" />
+              <div className="flex-1 space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-3/4" />
+                <div className="h-3 bg-gray-200 rounded w-1/2" />
+                <div className="flex gap-2">
+                  <div className="h-3 bg-gray-200 rounded w-16" />
+                  <div className="h-3 bg-gray-200 rounded w-12" />
+                </div>
               </div>
-              <div className="h-3 bg-[var(--color-muted)] rounded w-12" />
+              <div className="h-3 bg-gray-200 rounded w-12" />
             </div>
           ))}
         </div>
