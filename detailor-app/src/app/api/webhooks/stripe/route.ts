@@ -4,6 +4,12 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import crypto from 'node:crypto';
+
+function generateTempPassword(): string {
+  const bytes = crypto.randomBytes(12).toString('hex');
+  return `${bytes}Aa1!`;
+}
 
 type Plan = 'starter' | 'pro' | 'business' | 'enterprise';
 
@@ -128,107 +134,253 @@ export async function POST(req: Request) {
       const subscriptionId = (session.subscription as string) || null;
       const priceId = (session.line_items?.data?.[0]?.price?.id as string) || (session?.metadata?.price_id as string) || null;
       const email = session.customer_details?.email || session.customer_email || '';
+      
+      if (!email) {
+        console.error('[webhook] No email found in checkout session', session.id);
+        return NextResponse.json({ received: true, error: 'No email' }, { status: 200 });
+      }
+
       const plan = planFromPriceId(priceId) as Plan;
       const flags = featureFlagsForPlan(plan);
-      // Upsert tenant
-      const { data: existingTenant } = await admin.from('tenants').select('id').eq('contact_email', email).maybeSingle();
-      const tenantPayload: { plan: Plan; feature_flags: Record<string, unknown>; status: string; is_demo: boolean; contact_email: string } = { plan, feature_flags: flags as Record<string, unknown>, status: 'active', is_demo: false, contact_email: email };
-      let tenantId = existingTenant?.id as string | undefined;
-      if (tenantId) {
-        await admin.from('tenants').update(tenantPayload).eq('id', tenantId);
-      } else {
-        const ins = await admin.from('tenants').upsert(tenantPayload, { onConflict: 'contact_email' }).select('id').single();
-        tenantId = ins.data?.id as string | undefined;
-      }
-      // Upsert subscription
-      if (tenantId && subscriptionId) {
-        const subPayload: {
-          tenant_id: string;
-          stripe_customer_id: string | null;
-          stripe_subscription_id: string | null;
-          price_id: string | null;
-          status: string;
-          current_period_end: string | null;
-        } = {
-          tenant_id: tenantId,
-          stripe_customer_id: customerId,
-          stripe_subscription_id: subscriptionId,
-          price_id: priceId,
-          status: 'active',
-          current_period_end: null,
-        };
-        await admin.from('subscriptions').upsert(subPayload, { onConflict: 'stripe_subscription_id' });
-      }
-      // Link or invite profile (assign admin to tenant owner)
-      if (tenantId && email) {
-        const { data: prof } = await admin.from('profiles').select('id').eq('email', email).maybeSingle();
-        if (prof?.id) {
-          await admin.from('profiles').update({ tenant_id: tenantId, role: 'admin' }).eq('id', prof.id);
+
+      console.log(`[webhook] Processing checkout completion for ${email}, plan: ${plan}`);
+
+      // Create complete user setup atomically
+      try {
+        // First, check if user already exists
+        const { data: usersList } = await admin.auth.admin.listUsers();
+        const existingUser = usersList.users.find(u => u.email === email);
+        let userId = existingUser?.id;
+        let userCreated = false;
+
+        if (!existingUser) {
+          // Create user with proper email confirmation flow
+          const tempPassword = generateTempPassword();
+          console.log(`[webhook] Creating new user for ${email}`);
+          
+          const createResult = await admin.auth.admin.createUser({
+            email,
+            password: tempPassword,
+            email_confirm: false, // This will generate confirmation token
+            user_metadata: {
+              stripe_customer_id: customerId,
+              stripe_session_id: session.id,
+              plan,
+              created_via: 'stripe_webhook'
+            },
+          });
+
+          if (createResult.error) {
+            console.error('[webhook] Failed to create user:', createResult.error);
+            throw new Error(`Failed to create user: ${createResult.error.message}`);
+          }
+
+          userId = createResult.data.user.id;
+          userCreated = true;
+          console.log(`[webhook] User created successfully: ${userId}`);
         } else {
-          await admin.from('tenant_invites').insert({ email, tenant_id: tenantId, role: 'admin' });
+          console.log(`[webhook] User already exists: ${userId}`);
         }
+
+        if (!userId) {
+          throw new Error('No user ID available');
+        }
+
+        // Create or update tenant
+        const { data: existingTenant } = await admin.from('tenants').select('id, contact_email').eq('contact_email', email).maybeSingle();
+        const tenantPayload = { 
+          legal_name: email.split('@')[0] || 'New Business',
+          trading_name: null,
+          contact_email: email,
+          plan, 
+          feature_flags: flags as Record<string, unknown>, 
+          status: 'active', 
+          brand_theme: {},
+          business_prefs: {}
+        };
+
+        let tenantId = existingTenant?.id as string | undefined;
+        if (tenantId) {
+          console.log(`[webhook] Updating existing tenant: ${tenantId}`);
+          await admin.from('tenants').update({ plan, feature_flags: flags, status: 'active' }).eq('id', tenantId);
+        } else {
+          console.log(`[webhook] Creating new tenant for ${email}`);
+          const tenantResult = await admin.from('tenants').insert(tenantPayload).select('id').single();
+          if (tenantResult.error) {
+            console.error('[webhook] Failed to create tenant:', tenantResult.error);
+            throw new Error(`Failed to create tenant: ${tenantResult.error.message}`);
+          }
+          tenantId = tenantResult.data?.id;
+          console.log(`[webhook] Tenant created: ${tenantId}`);
+        }
+
+        if (!tenantId) {
+          throw new Error('Failed to create or find tenant');
+        }
+
+        // Create or update profile with proper tenant link
+        console.log(`[webhook] Creating/updating profile for user ${userId}`);
+        const profileResult = await admin.from('profiles').upsert({ 
+          id: userId, 
+          email, 
+          tenant_id: tenantId, 
+          role: 'admin',
+          full_name: null,
+          phone: null
+        }, { onConflict: 'id' });
+
+        if (profileResult.error) {
+          console.error('[webhook] Failed to create/update profile:', profileResult.error);
+          throw new Error(`Failed to create profile: ${profileResult.error.message}`);
+        }
+
+        console.log(`[webhook] Profile created/updated successfully for ${email}`);
+
+        // Create subscription record
+        if (subscriptionId) {
+          console.log(`[webhook] Creating subscription record: ${subscriptionId}`);
+          const subPayload = {
+            tenant_id: tenantId,
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId,
+            price_id: priceId,
+            status: 'active',
+            current_period_end: null,
+          };
+          
+          const subResult = await admin.from('subscriptions').upsert(subPayload, { onConflict: 'stripe_subscription_id' });
+          if (subResult.error) {
+            console.error('[webhook] Failed to create subscription:', subResult.error);
+            throw new Error(`Failed to create subscription: ${subResult.error.message}`);
+          }
+          console.log(`[webhook] Subscription record created`);
+        }
+
+        // Seed default configurations (best-effort, don't fail if these error)
+        try {
+          console.log(`[webhook] Seeding default configurations for tenant ${tenantId}`);
+          
+          // Pricing config
+          await admin.from('pricing_configs').upsert({ tenant_id: tenantId, currency: 'gbp' }, { onConflict: 'tenant_id' });
+          
+          // Default services
+          const { data: existingServices } = await admin.from('services').select('id').eq('tenant_id', tenantId).limit(1);
+          if (!existingServices || existingServices.length === 0) {
+            await admin.from('services').insert([
+              { tenant_id: tenantId, name: 'Exterior Wash', visible: true, duration_minutes: 60, base_price: 25 },
+              { tenant_id: tenantId, name: 'Interior Clean', visible: true, duration_minutes: 45, base_price: 35 },
+            ]);
+          }
+          
+          // Default email template
+          const { data: existingTemplate } = await admin.from('templates').select('id').eq('tenant_id', tenantId).eq('key', 'booking.confirmation').limit(1);
+          if (!existingTemplate || existingTemplate.length === 0) {
+            await admin.from('templates').insert([{ 
+              tenant_id: tenantId, 
+              key: 'booking.confirmation', 
+              channel: 'email', 
+              active: true,
+              subject: 'Booking Confirmed',
+              body: 'Your booking has been confirmed.'
+            }]);
+          }
+
+          console.log(`[webhook] Default configurations seeded successfully`);
+        } catch (seedError) {
+          console.warn('[webhook] Failed to seed default configurations (non-critical):', (seedError as Error).message);
+        }
+
+        // If we created a new user, they will need to confirm their email
+        // The confirmation token was generated when we set email_confirm: false
+        if (userCreated && userId) {
+          console.log(`[webhook] User created with email confirmation required: ${email}`);
+          // User will receive automatic confirmation email from Supabase
+        }
+
+        console.log(`[webhook] Checkout processing completed successfully for ${email}`);
+
+      } catch (setupError) {
+        console.error('[webhook] Failed to create complete user setup:', (setupError as Error).message);
+        
+        // Log detailed error information for debugging
+        console.error('[webhook] Checkout session details:', {
+          session_id: session.id,
+          email,
+          customer_id: customerId,
+          subscription_id: subscriptionId,
+          plan,
+        });
+        
+        // Don't throw - return success to avoid Stripe retries for non-recoverable errors
+        return NextResponse.json({ 
+          received: true, 
+          error: 'Setup failed', 
+          details: (setupError as Error).message 
+        }, { status: 200 });
       }
-      // Seed default configs (best-effort)
-      if (tenantId) {
-        await admin.from('pricing_configs').upsert({ tenant_id: tenantId, currency: 'gbp' });
-        await admin.from('services').insert([
-          { tenant_id: tenantId, name: 'Exterior Wash', visible: true },
-          { tenant_id: tenantId, name: 'Interior Clean', visible: true },
-        ]);
-        await admin.from('templates').insert([{ tenant_id: tenantId, key: 'booking.confirmation', channel: 'email', active: true }]);
-      }
-    }
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session;
+
+      // Handle invoice payments and add-on purchases
       const appInvoiceId = (session.metadata as Record<string, string> | null | undefined)?.['app_invoice_id'];
       const addonSku = (session.metadata as Record<string, string> | null | undefined)?.['addon_sku'];
+      
       if (appInvoiceId && session.payment_status === 'paid') {
         // Apply payment to our invoice and ledger
-        const invRes = await admin.from('invoices').select('id, tenant_id, booking_id, total, paid_amount, balance').eq('id', appInvoiceId).maybeSingle();
-        const inv = invRes.data as { id: string; tenant_id: string; booking_id?: string | null; total: number; paid_amount: number; balance: number } | null;
-        if (inv) {
-          const paidNow = Number(session.amount_total ? session.amount_total / 100 : inv.balance);
-          const newPaid = Number(inv.paid_amount || 0) + paidNow;
-          const newBalance = Math.max(0, Number(inv.total || 0) - newPaid);
-          await admin
-            .from('invoices')
-            .update({ paid_amount: newPaid, balance: newBalance })
-            .eq('id', inv.id)
-            .eq('tenant_id', inv.tenant_id);
-          await admin.from('payments').insert({
-            tenant_id: inv.tenant_id,
-            booking_id: inv.booking_id ?? null,
-            invoice_id: inv.id,
-            provider: 'stripe',
-            amount: paidNow,
-            currency: 'GBP',
-            external_txn_id: session.payment_intent as string,
-            status: 'succeeded',
-          });
-          if (inv.booking_id) {
-            await admin.from('bookings').update({ payment_status: 'paid' }).eq('id', inv.booking_id).eq('tenant_id', inv.tenant_id);
+        try {
+          console.log(`[webhook] Processing invoice payment for ${appInvoiceId}`);
+          const invRes = await admin.from('invoices').select('id, tenant_id, booking_id, total, paid_amount, balance').eq('id', appInvoiceId).maybeSingle();
+          const inv = invRes.data as { id: string; tenant_id: string; booking_id?: string | null; total: number; paid_amount: number; balance: number } | null;
+          if (inv) {
+            const paidNow = Number(session.amount_total ? session.amount_total / 100 : inv.balance);
+            const newPaid = Number(inv.paid_amount || 0) + paidNow;
+            const newBalance = Math.max(0, Number(inv.total || 0) - newPaid);
+            await admin
+              .from('invoices')
+              .update({ paid_amount: newPaid, balance: newBalance })
+              .eq('id', inv.id)
+              .eq('tenant_id', inv.tenant_id);
+            await admin.from('payments').insert({
+              tenant_id: inv.tenant_id,
+              booking_id: inv.booking_id ?? null,
+              invoice_id: inv.id,
+              provider: 'stripe',
+              amount: paidNow,
+              currency: 'GBP',
+              external_txn_id: session.payment_intent as string,
+              status: 'succeeded',
+            });
+            if (inv.booking_id) {
+              await admin.from('bookings').update({ payment_status: 'paid' }).eq('id', inv.booking_id).eq('tenant_id', inv.tenant_id);
+            }
+            console.log(`[webhook] Invoice payment processed successfully`);
           }
+        } catch (invoiceError) {
+          console.error('[webhook] Failed to process invoice payment:', (invoiceError as Error).message);
         }
       }
+      
       // Handle add-on one-time purchases (SMS packs, storage)
       if (addonSku && (session.payment_status === 'paid' || session.payment_status === 'no_payment_required')) {
-        const admin = getSupabaseAdmin();
-        const customerId = session.customer as string;
-        const { data: existingSub } = await admin.from('subscriptions').select('tenant_id').eq('stripe_customer_id', customerId).maybeSingle();
-        const tenantId = existingSub?.tenant_id as string | undefined;
-        if (tenantId) {
-          const { data: tenantRec } = await admin.from('tenants').select('feature_flags').eq('id', tenantId).single();
-          const ff = (tenantRec?.feature_flags as Record<string, unknown>) || {};
-          if (addonSku.startsWith('sms')) {
-            const amount = parseInt(addonSku.replace('sms', ''), 10) || 0;
-            const current = Number(ff.sms_credits || 0);
-            ff.sms_credits = current + amount;
+        try {
+          console.log(`[webhook] Processing addon purchase: ${addonSku}`);
+          const { data: existingSub } = await admin.from('subscriptions').select('tenant_id').eq('stripe_customer_id', customerId).maybeSingle();
+          const tenantId = existingSub?.tenant_id as string | undefined;
+          if (tenantId) {
+            const { data: tenantRec } = await admin.from('tenants').select('feature_flags').eq('id', tenantId).single();
+            const ff = (tenantRec?.feature_flags as Record<string, unknown>) || {};
+            if (addonSku.startsWith('sms')) {
+              const amount = parseInt(addonSku.replace('sms', ''), 10) || 0;
+              const current = Number(ff.sms_credits || 0);
+              ff.sms_credits = current + amount;
+            }
+            if (addonSku === 'storage_5gb') {
+              const current = Number(ff.storage_gb || 0);
+              ff.storage_gb = current + 5;
+            }
+            await admin.from('tenants').update({ feature_flags: ff }).eq('id', tenantId);
+            console.log(`[webhook] Addon processed successfully: ${addonSku}`);
           }
-          if (addonSku === 'storage_5gb') {
-            const current = Number(ff.storage_gb || 0);
-            ff.storage_gb = current + 5;
-          }
-          await admin.from('tenants').update({ feature_flags: ff }).eq('id', tenantId);
+        } catch (addonError) {
+          console.error('[webhook] Failed to process addon:', (addonError as Error).message);
         }
       }
     }

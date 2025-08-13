@@ -105,19 +105,39 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
       if (res.error) {
         // Handle specific Supabase errors
         if (res.error.message.includes('already registered')) {
-          setError('An account with this email already exists. Try signing in instead.');
+          setError('An account with this email already exists. Try the "I already have an account" option above.');
+        } else if (res.error.message.includes('Email already exists')) {
+          setError('This email is already in use. Try the "I already have an account" option above.');
         } else {
           setError(`Account creation failed: ${res.error.message}`);
         }
         return;
       }
 
-      // Try to persist session with retries
-      const ok = await persistSession();
-      if (ok) {
-        window.location.href = '/onboarding';
+      if (!res.data.user) {
+        setError('Account creation failed. Please try again.');
+        return;
+      }
+
+      // Check if user needs email confirmation
+      if (!res.data.session && res.data.user && !res.data.user.email_confirmed_at) {
+        // User created but needs email confirmation
+        setError(null); // Clear any existing errors
+        setSubmitting(false);
+        alert('Account created! Please check your email for a confirmation link, then return to sign in.');
+        return;
+      }
+
+      // If we have a session, try to persist it
+      if (res.data.session) {
+        const ok = await persistSession();
+        if (ok) {
+          window.location.href = '/onboarding';
+        } else {
+          setError('Account created but session setup failed. Please try signing in.');
+        }
       } else {
-        setError('Account created but session setup failed. Please try refreshing the page.');
+        setError('Account created but unable to sign in. Please check your email for confirmation.');
       }
     } catch (error) {
       console.error('[WelcomeHandoff] Account creation error:', error);
@@ -299,6 +319,8 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
             
             try {
               const sid = new URLSearchParams(window.location.search).get('session_id');
+              console.log('[WelcomeHandoff] Attempting bootstrap for existing account');
+              
               const boot = await fetch('/api/session/bootstrap', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -306,12 +328,19 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
               });
               const bj = await boot.json();
               
-              if (!bj.ok) { 
-                setError(bj.error || 'Failed to initialize session'); 
-                return; 
+              console.log('[WelcomeHandoff] Bootstrap response:', bj);
+              
+              if (!bj.ok) {
+                if (bj.code === 'USER_NOT_FOUND_AFTER_CHECKOUT') {
+                  setError('Your account is still being set up. Please wait a moment and try again, or contact support if this persists.');
+                } else {
+                  setError(bj.error || 'Failed to access your account');
+                }
+                return;
               }
               
               if (bj.access_token) {
+                console.log('[WelcomeHandoff] Setting session with access token');
                 await fetch('/api/session/set', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -325,9 +354,16 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
                 return;
               }
               
-              setError('Account exists. Please sign in to continue.');
+              if (bj.exists && bj.needsSetup) {
+                setError('Your account exists but setup is incomplete. Our system is working to complete your setup. Please try again in a few moments.');
+              } else if (bj.exists) {
+                setError('Account exists but we cannot sign you in automatically. Please try the email confirmation flow or contact support.');
+              } else {
+                setError('Unable to access your account. Please try creating a new account below.');
+              }
             } catch (e) {
-              setError((e as Error).message);
+              console.error('[WelcomeHandoff] Bootstrap error:', e);
+              setError('Connection failed. Please check your internet connection and try again.');
             } finally {
               setSubmitting(false);
             }
