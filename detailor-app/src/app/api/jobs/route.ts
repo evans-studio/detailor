@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -7,7 +8,7 @@ export async function GET(req: Request) {
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role, id').eq('id', user.id).single();
-    if (!profile) throw new Error('No profile');
+    if (!profile) return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'No profile', undefined, 404);
     const url = new URL(req.url);
     const day = url.searchParams.get('day');
     const status = url.searchParams.get('status');
@@ -21,9 +22,9 @@ export async function GET(req: Request) {
     if (profile.role === 'staff') query = query.eq('staff_profile_id', profile.id);
     const { data, error } = await query;
     if (error) throw error;
-    return NextResponse.json({ ok: true, jobs: data });
+    return createSuccessResponse({ jobs: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/jobs' }, 400);
   }
 }
 

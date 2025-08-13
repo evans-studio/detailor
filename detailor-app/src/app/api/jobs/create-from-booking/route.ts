@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -12,9 +13,11 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { booking_id } = schema.parse(body);
     const { data: profile } = await admin.from('profiles').select('tenant_id, role, id').eq('id', user.id).single();
-    if (!profile || !['admin','staff'].includes(profile.role)) throw new Error('Forbidden');
+    if (!profile || !['admin','staff'].includes(profile.role)) {
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Insufficient permissions', { required_roles: ['admin','staff'] }, 403);
+    }
     const { data: booking } = await admin.from('bookings').select('*').eq('id', booking_id).eq('tenant_id', profile.tenant_id).single();
-    if (!booking) throw new Error('Booking not found');
+    if (!booking) return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Booking not found', { booking_id }, 404);
     const { data, error } = await admin
       .from('jobs')
       .insert({ tenant_id: profile.tenant_id, booking_id: booking_id, staff_profile_id: null, status: 'not_started', checklist: '[]' })
@@ -22,9 +25,9 @@ export async function POST(req: Request) {
       .single();
     if (error) throw error;
     await admin.from('job_activity').insert({ tenant_id: profile.tenant_id, job_id: data.id, actor_profile_id: profile.id, event: 'created', payload: {} });
-    return NextResponse.json({ ok: true, job: data });
+    return createSuccessResponse({ job: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/jobs/create-from-booking' }, 400);
   }
 }
 
