@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -26,7 +27,7 @@ export async function GET(req: Request) {
         .eq('tenant_id', profile.tenant_id)
         .single();
       if (error) throw error;
-      return NextResponse.json({ ok: true, customer: data });
+      return createSuccessResponse({ customer: data });
     }
     // Customer self access
     const { data, error } = await admin
@@ -36,9 +37,9 @@ export async function GET(req: Request) {
       .eq('auth_user_id', user.id)
       .single();
     if (error) throw error;
-    return NextResponse.json({ ok: true, customer: data });
+    return createSuccessResponse({ customer: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/customers/[id]' }, 400);
   }
 }
 
@@ -49,7 +50,9 @@ export async function PATCH(req: Request) {
     const id = req.url.split('/').pop() as string;
     const payload = updateSchema.parse(await req.json());
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || !['staff','admin'].includes(profile.role)) throw new Error('Forbidden');
+    if (!profile || !['staff','admin'].includes(profile.role)) {
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Insufficient permissions', { required_roles: ['staff','admin'] }, 403);
+    }
     const { data, error } = await admin
       .from('customers')
       .update(payload)
@@ -58,9 +61,9 @@ export async function PATCH(req: Request) {
       .select('*')
       .single();
     if (error) throw error;
-    return NextResponse.json({ ok: true, customer: data });
+    return createSuccessResponse({ customer: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'PATCH /api/customers/[id]' }, 400);
   }
 }
 

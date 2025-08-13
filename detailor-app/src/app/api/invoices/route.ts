@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { z } from 'zod';
@@ -30,7 +31,7 @@ export async function GET(req: Request) {
     } else {
       // Customer self-scope: filter invoices by booking.customer_id
       const { data: selfCust } = await admin.from('customers').select('id').eq('auth_user_id', user.id).single();
-      if (!selfCust) return NextResponse.json({ ok: true, invoices: [] });
+    if (!selfCust) return createSuccessResponse({ invoices: [] });
       if (bookingId) {
         const resp = await admin
           .from('invoices')
@@ -55,9 +56,9 @@ export async function GET(req: Request) {
       }
     }
     if (error) throw error;
-    return NextResponse.json({ ok: true, invoices: data });
+    return createSuccessResponse({ invoices: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/invoices' }, 400);
   }
 }
 
@@ -68,7 +69,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const payload = createSchema.parse(body);
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile) throw new Error('No profile');
+    if (!profile) return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'No profile', undefined, 404);
     const balance = Math.max(0, payload.total - (payload.paid_amount ?? 0));
     // Generate invoice number if not supplied
     let number = payload.number;
@@ -82,9 +83,9 @@ export async function POST(req: Request) {
       .select('*')
       .single();
     if (error) throw error;
-    return NextResponse.json({ ok: true, invoice: data });
+    return createSuccessResponse({ invoice: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/invoices' }, 400);
   }
 }
 

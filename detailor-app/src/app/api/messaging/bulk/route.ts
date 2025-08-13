@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -16,7 +17,9 @@ export async function POST(req: Request) {
     const admin = getSupabaseAdmin();
     const payload = schema.parse(await req.json());
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || !['admin','staff'].includes(profile.role)) throw new Error('Forbidden');
+    if (!profile || !['admin','staff'].includes(profile.role)) {
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Insufficient permissions', { required_roles: ['admin','staff'] }, 403);
+    }
 
     const { data: tenant } = await admin.from('tenants').select('is_demo').eq('id', profile.tenant_id).single();
     const isDemo = Boolean(tenant?.is_demo);
@@ -35,7 +38,7 @@ export async function POST(req: Request) {
 
     // In demo, don't actually send; pretend success
     if (isDemo) {
-      return NextResponse.json({ ok: true, sent: recipients.length, demo: true });
+      return createSuccessResponse({ sent: recipients.length, demo: true });
     }
 
     let sent = 0;
@@ -49,9 +52,9 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, sent });
+    return createSuccessResponse({ sent });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/messaging/bulk' }, 400);
   }
 }
 
