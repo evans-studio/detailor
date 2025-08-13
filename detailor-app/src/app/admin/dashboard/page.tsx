@@ -16,6 +16,7 @@ type KPIs = {
 
 type Booking = { id: string; start_at: string; service_name?: string; customer_name?: string; };
 type Activity = { id: string; message: string; created_at: string };
+type JobRow = { id: string; status: string; started_at?: string | null; completed_at?: string | null; bookings?: { reference?: string; start_at?: string }; customers?: { name?: string } };
 
 export default function AdminDashboard() {
   const { data: kpis } = useQuery({
@@ -45,6 +46,15 @@ export default function AdminDashboard() {
       const json = await res.json();
       return json.activities || [];
     },
+  });
+  const { data: activeJobs = [] } = useQuery<JobRow[]>({
+    queryKey: ['jobs', { scope: 'active' }],
+    queryFn: async () => {
+      const res = await fetch('/api/jobs?status=in_progress');
+      const json = await res.json();
+      return json.data?.jobs || json.jobs || [];
+    },
+    refetchInterval: 10000,
   });
 
   return (
@@ -100,6 +110,31 @@ export default function AdminDashboard() {
                         <div className="text-[var(--color-text-muted)] text-sm">{new Date(a.created_at).toLocaleString()}</div>
                       </div>
                     ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>Live Jobs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {activeJobs.length === 0 ? (
+                  <div className="text-[var(--color-text-muted)]">No active jobs</div>
+                ) : (
+                  <div className="space-y-2">
+                    {activeJobs.map((j) => {
+                      const started = j.started_at ? new Date(j.started_at) : null;
+                      const elapsedMin = started ? Math.max(0, Math.round((Date.now() - started.getTime())/60000)) : 0;
+                      return (
+                        <div key={j.id} className="flex items-center justify-between border-b border-[var(--color-border)] py-2">
+                          <div className="text-[var(--color-text)]">
+                            {j.customers?.name || 'Customer'} • {j.bookings?.reference || 'Booking'}
+                          </div>
+                          <div className="text-[var(--color-text-muted)] text-sm">{elapsedMin} min</div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>

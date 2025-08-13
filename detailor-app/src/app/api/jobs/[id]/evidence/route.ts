@@ -19,14 +19,19 @@ export async function GET(req: Request) {
     const { pathname } = new URL(req.url);
     const jobId = pathname.split('/').slice(-2)[0];
     const { admin, tenantId } = await resolveTenantAndAuthorize(jobId, user.id);
-    // List evidence files
+    // Prefer DB-backed media with kind tagging
+    const { data: media } = await admin
+      .from('job_media')
+      .select('id, kind, url, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('job_id', jobId)
+      .order('created_at', { ascending: false });
     await admin.storage.createBucket('evidence', { public: false }).catch(() => {});
-    const list = await admin.storage.from('evidence').list(`${tenantId}/${jobId}`, { limit: 100 });
-    const files = (list.data || []);
-    const items: Array<{ name: string; url: string }> = [];
-    for (const f of files) {
-      const signed = await admin.storage.from('evidence').createSignedUrl(`${tenantId}/${jobId}/${f.name}`, 60 * 10);
-      if (signed.data?.signedUrl) items.push({ name: f.name, url: signed.data.signedUrl });
+    const items: Array<{ name: string; url: string; kind: string }> = [];
+    for (const m of media || []) {
+      const path = m.url; // stored as tenantId/jobId/filename
+      const signed = await admin.storage.from('evidence').createSignedUrl(path, 60 * 10);
+      if (signed.data?.signedUrl) items.push({ name: path.split('/').pop() || 'file', url: signed.data.signedUrl, kind: (m as any).kind });
     }
     return createSuccessResponse({ items });
   } catch (e: unknown) {
@@ -45,6 +50,7 @@ export async function POST(req: Request) {
 
     const form = await req.formData();
     const files = form.getAll('files');
+    const kind = String(form.get('kind') || 'other');
     await admin.storage.createBucket('evidence', { public: false }).catch(() => {});
     const uploaded: string[] = [];
 
@@ -84,6 +90,8 @@ export async function POST(req: Request) {
       const res = await admin.storage.from('evidence').upload(path, buffer, { contentType, upsert: false });
       if (res.error) throw res.error;
       uploaded.push(name);
+      // Record media in DB with kind tagging
+      await admin.from('job_media').insert({ tenant_id: tenantId, job_id: jobId, kind: ['before','after','other'].includes(kind) ? kind : 'other', url: path });
     }
     return createSuccessResponse({ uploaded });
   } catch (e: unknown) {

@@ -12,6 +12,7 @@ const schema = z.object({
   signature_data_url: z.string().optional(),
   assign_to_me: z.boolean().optional(),
   qc_passed: z.boolean().optional(),
+  staff_profile_id: z.string().uuid().nullable().optional(),
 });
 
 export async function PATCH(req: Request) {
@@ -34,6 +35,9 @@ export async function PATCH(req: Request) {
     // Optional self-assignment for staff
     if (payload.assign_to_me && profile.role === 'staff') {
       updates.staff_profile_id = profile.id;
+    }
+    if (payload.staff_profile_id !== undefined && profile.role === 'admin') {
+      updates.staff_profile_id = payload.staff_profile_id;
     }
     // QC flag stored on job if desired
     if (payload.qc_passed !== undefined) updates.qc_passed = payload.qc_passed;

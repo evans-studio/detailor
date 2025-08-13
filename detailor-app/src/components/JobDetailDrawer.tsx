@@ -15,6 +15,9 @@ export function JobDetailDrawer({ open, onOpenChange, jobId, onUpdated }: { open
   const [materialCost, setMaterialCost] = React.useState<number>(0);
   const [materials, setMaterials] = React.useState<Array<{ name: string; quantity: number; unit_cost: number }>>([]);
   const [signature, setSignature] = React.useState<string | null>(null);
+  const [qcPassed, setQcPassed] = React.useState<boolean>(false);
+  const [assignee, setAssignee] = React.useState<string>('');
+  const [staffOptions, setStaffOptions] = React.useState<Array<{ id: string; name: string }>>([]);
   React.useEffect(() => {
     (async () => {
       if (!jobId) return;
@@ -24,14 +27,26 @@ export function JobDetailDrawer({ open, onOpenChange, jobId, onUpdated }: { open
         setNotes(json?.job?.notes || '');
         const cl = (json?.job?.checklist || []) as Array<{ label: string; done: boolean }>;
         setChecklist(Array.isArray(cl) ? cl : []);
+        setQcPassed(Boolean(json?.job?.qc_passed));
+        setAssignee(json?.job?.staff_profile_id || '');
       } catch {}
     })();
   }, [jobId]);
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/profiles?role=staff');
+        const json = await res.json();
+        const list = (json.data?.profiles || json.profiles || []).map((p: any) => ({ id: p.id, name: p.full_name || p.email || 'Staff' }));
+        setStaffOptions(list);
+      } catch {}
+    })();
+  }, []);
   async function save() {
     if (!jobId) return;
     setSaving(true);
     try {
-      const body = { notes, checklist, materials, signature_data_url: signature };
+      const body = { notes, checklist, materials, signature_data_url: signature, qc_passed: qcPassed, staff_profile_id: assignee } as any;
       const doFetch = async () => fetch(`/api/jobs/${jobId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       try {
         const res = await doFetch();
@@ -48,6 +63,18 @@ export function JobDetailDrawer({ open, onOpenChange, jobId, onUpdated }: { open
     <Sheet open={open} onOpenChange={onOpenChange}>
       <div className="grid gap-3">
         <div className="text-[var(--font-size-lg)] font-semibold">Job Detail</div>
+        <div className="grid gap-2">
+          <div className="font-medium">Dispatch</div>
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--font-size-sm)] text-[var(--color-text-muted)]">Assignee</span>
+            <select className="border rounded px-2 py-1" value={assignee} onChange={(e) => setAssignee(e.target.value)}>
+              <option value="">Unassigned</option>
+              {staffOptions.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <div className="grid gap-2">
           <div className="font-medium">Checklist</div>
           {checklist.length === 0 ? <div className="text-[var(--color-text-muted)]">No checklist.</div> : (
@@ -66,6 +93,10 @@ export function JobDetailDrawer({ open, onOpenChange, jobId, onUpdated }: { open
           )}
         </div>
         <EvidenceUpload jobId={jobId} />
+        <div className="flex items-center gap-2">
+          <input id="qc" type="checkbox" checked={qcPassed} onChange={(e) => setQcPassed(e.target.checked)} />
+          <label htmlFor="qc">QC Passed</label>
+        </div>
         <div className="grid gap-2">
           <div className="font-medium">Materials Used</div>
           <div className="flex gap-2 items-center">
