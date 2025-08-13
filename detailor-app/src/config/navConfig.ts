@@ -23,6 +23,7 @@ export const navItems: NavItem[] = [
   { label: 'Payments', path: '/payments', icon: CreditCard, roles: ['admin', 'staff', 'super_admin'], section: 'Finance' },
   { label: 'Analytics', path: '/admin/analytics', icon: FileText, roles: ['admin', 'staff', 'super_admin'], section: 'Finance' },
   { label: 'Messages', path: '/admin/messages', icon: MessageCircle, roles: ['admin', 'staff', 'super_admin'], section: 'Comms' },
+  { label: 'Reviews', path: '/admin/reviews', icon: MessageCircle, roles: ['admin', 'staff', 'super_admin'], section: 'Comms' },
   { label: 'Customer Home', path: '/customer/dashboard', icon: Home, roles: ['customer'] },
   { label: 'My Account', path: '/customer/account', icon: Settings, roles: ['customer'] },
   { label: 'Settings', path: '/admin/settings', icon: Settings, roles: ['admin', 'super_admin'] },
