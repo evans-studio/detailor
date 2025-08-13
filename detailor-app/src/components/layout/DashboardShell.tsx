@@ -8,28 +8,25 @@ import { Button } from '@/ui/button';
 import { NotificationsProvider } from '@/lib/notifications';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { Badge } from '@/ui/badge';
+import { SkipLink, ScreenReaderOnly, useFocusTrap } from '@/components/ui/AccessibilityUtils';
 
 // Enterprise icons (you can replace with lucide-react)
-const MenuIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className }) => (
-  <svg className={className ?? 'h-5 w-5'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+const MenuIcon = () => (
+  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
   </svg>
 );
 
-const SearchIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className }) => (
-  <svg className={className ?? 'h-4 w-4'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-  </svg>
-);
+// Removed unused SearchIcon component
 
-const BellIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className }) => (
-  <svg className={className ?? 'h-4 w-4'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+const BellIcon = () => (
+  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-3.5-3.5a50.002 50.002 0 00-4.5-4.5L11 7H8a2 2 0 00-2 2v5a2 2 0 002 2h1a2 2 0 00-1 2 2 2 0 002 2v0a2 2 0 002-2z" />
   </svg>
 );
 
-const UserIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className }) => (
-  <svg className={className ?? 'h-4 w-4'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+const UserIcon = () => (
+  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
   </svg>
 );
@@ -85,6 +82,9 @@ export function DashboardShell({
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
+      {/* Skip to main content link for keyboard navigation */}
+      <SkipLink />
+      
       {/* Enterprise Header */}
       <EnterpriseHeader 
         tenantName={tenantName}
@@ -103,15 +103,25 @@ export function DashboardShell({
         />
         
         {/* Main Content Area */}
-        <main className={`
-          flex-1 overflow-auto bg-[var(--color-bg)]
-          transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]
-          ${sidebarCollapsed ? 'ml-16' : 'ml-64'} 
-          md:ml-0
-        `}>
+        <main 
+          id="main-content"
+          className={`
+            flex-1 overflow-auto bg-[var(--color-bg)]
+            transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]
+            ${sidebarCollapsed ? 'ml-16' : 'ml-64'} 
+            md:ml-0
+          `}
+          role="main"
+          aria-label="Main content"
+        >
           <div className="p-6 pb-20 md:pb-6 max-w-[1600px] mx-auto">
             <NotificationsProvider>
-              {resolvedRole ? children : <LoadingSkeleton rows={6} />}
+              {resolvedRole ? children : (
+                <div role="status" aria-label="Loading content">
+                  <LoadingSkeleton rows={6} />
+                  <ScreenReaderOnly>Loading dashboard content, please wait...</ScreenReaderOnly>
+                </div>
+              )}
             </NotificationsProvider>
           </div>
         </main>
@@ -133,12 +143,16 @@ function EnterpriseHeader({
   onSidebarToggle: () => void;
 }) {
   return (
-    <header className="
-      h-16 bg-[var(--color-surface)] border-b border-[var(--color-border)]
-      flex items-center justify-between px-6
-      shadow-[var(--shadow-sm)]
-      sticky top-0 z-40
-    ">
+    <header 
+      className="
+        h-16 bg-[var(--color-surface)] border-b border-[var(--color-border)]
+        flex items-center justify-between px-6
+        shadow-[var(--shadow-sm)]
+        sticky top-0 z-40
+      "
+      role="banner"
+      aria-label="Main navigation header"
+    >
       {/* Left Section */}
       <div className="flex items-center gap-4">
         {/* Mobile Menu Button */}
@@ -147,9 +161,12 @@ function EnterpriseHeader({
           size="sm"
           onClick={onMobileMenu}
           className="md:hidden"
-          aria-label="Toggle mobile menu"
+          aria-label="Open mobile navigation menu"
+          aria-expanded="false"
+          aria-controls="mobile-navigation"
         >
           <MenuIcon />
+          <ScreenReaderOnly>Menu</ScreenReaderOnly>
         </Button>
         
         {/* Desktop Sidebar Toggle */}
@@ -158,9 +175,12 @@ function EnterpriseHeader({
           size="sm"
           onClick={onSidebarToggle}
           className="hidden md:inline-flex"
-          aria-label="Toggle sidebar"
+          aria-label="Toggle navigation sidebar"
+          aria-expanded="true"
+          aria-controls="desktop-navigation"
         >
           <MenuIcon />
+          <ScreenReaderOnly>Toggle Sidebar</ScreenReaderOnly>
         </Button>
         
         {/* Brand */}
@@ -189,7 +209,9 @@ function EnterpriseHeader({
           rounded-[var(--radius-lg)] transition-colors
           focus-within:bg-[var(--color-surface)] focus-within:border-[var(--color-primary)]
         ">
-          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]" />
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z" />
+          </svg>
           <input
             type="text"
             placeholder="Search..."

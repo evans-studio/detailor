@@ -626,7 +626,7 @@ export function EnterpriseCustomerGrid({
 
       {/* Customer Grid/Table */}
       {viewMode === 'cards' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 stagger-children">
           {filteredCustomers.map((customer) => (
             <CustomerCard
               key={customer.id}
@@ -720,7 +720,7 @@ function CustomerGridSkeleton() {
       </Card>
 
       {/* Cards skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 stagger-children">
         {[...Array(6)].map((_, i) => (
           <Card key={i}>
             <CardContent className="p-6">

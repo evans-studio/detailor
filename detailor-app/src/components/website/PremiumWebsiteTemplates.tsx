@@ -198,7 +198,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
         
         <div className="relative max-w-7xl mx-auto px-6 py-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
+            <div className="space-y-8 animate-slide-in-left">
               <div className="space-y-4">
                 <Badge 
                   className="text-white font-medium shadow-sm"
@@ -225,7 +225,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                   {content.hero?.cta_text || 'Book Your Detail'}
                 </Button>
                 <Button 
-                  intent="outline" 
+                  intent="secondary" 
                   size="lg"
                   className="font-semibold text-lg px-8 py-4 border-2 hover:bg-gray-50 transition-all"
                   style={{ borderColor: primaryColor, color: primaryColor }}
@@ -260,7 +260,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
             </div>
 
             {/* Hero Image/Video */}
-            <div className="relative">
+            <div className="relative animate-slide-in-right animate-delay-200">
               {content.hero?.video_url ? (
                 <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl">
                   <iframe 
@@ -310,7 +310,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8 stagger-children">
             {(content.services?.featured || []).map((service, index) => (
               <Card key={index} className="group hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden">
                 {service.image_url && (
@@ -384,7 +384,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8 stagger-children">
               {content.testimonials.slice(0, 6).map((testimonial, index) => (
                 <Card key={index} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                   <CardContent className="p-6 space-y-4">

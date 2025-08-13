@@ -232,12 +232,12 @@ function ServiceSelectionStep({
           Select the perfect detailing package for your vehicle
         </p>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 stagger-children">
           {services.map((service) => (
             <Card 
               key={service.id} 
               className={`
-                relative cursor-pointer transition-all duration-200 hover:shadow-[var(--shadow-md)]
+                relative cursor-pointer card-hover focus-ring ripple-container
                 ${selectedService === service.id 
                   ? 'ring-2 ring-[var(--color-primary)] border-[var(--color-primary)]' 
                   : 'hover:border-[var(--color-primary)]/30'

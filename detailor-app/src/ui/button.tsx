@@ -6,24 +6,26 @@ const buttonStyles = cva(
   [
     // Base styles for enterprise button
     'group relative inline-flex items-center justify-center gap-[var(--space-2)]',
-    'font-medium text-center whitespace-nowrap select-none',
+    'font-medium text-center whitespace-nowrap select-none overflow-hidden',
     'border border-transparent',
     'transition-all duration-[var(--duration-button)] ease-[var(--ease-out)]',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-focus-ring)] focus-visible:ring-offset-2',
     'focus-visible:ring-offset-[var(--color-bg)]',
     'disabled:pointer-events-none disabled:opacity-50',
-    // Hover and active states
+    // Hover and active states with enhanced animations
     'active:scale-[0.98] active:transition-transform active:duration-75',
+    'will-change-transform',
   ],
   {
     variants: {
       intent: {
-        // Primary - Brand authority
+        // Primary - Brand authority with enhanced hover
         primary: [
           'bg-[var(--color-primary)] text-[var(--color-primary-foreground)]',
           'shadow-[var(--shadow-sm)]',
-          'hover:bg-[var(--color-primary-600)] hover:shadow-[var(--shadow-md)]',
+          'hover:bg-[var(--color-primary-600)] hover:shadow-[var(--shadow-lg)] hover:-translate-y-0.5',
           'focus-visible:ring-[var(--color-primary-300)]',
+          'transform transition-transform',
         ],
         // Secondary - Elegant alternative
         secondary: [
@@ -157,7 +159,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     disabled,
     ...props 
   }, ref) => {
-    const isDisabled: boolean = Boolean(disabled) || Boolean(loading);
+    const isDisabled = Boolean(disabled) || Boolean(loading);
     
     return (
       <button 

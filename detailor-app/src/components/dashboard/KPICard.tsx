@@ -9,9 +9,9 @@ import { twMerge } from 'tailwind-merge';
 // Enterprise KPI Card Variants
 const kpiCardStyles = cva(
   [
-    'relative overflow-hidden transition-all duration-[var(--duration-normal)]',
-    'hover:shadow-[var(--shadow-lg)] hover:-translate-y-0.5',
-    'group cursor-pointer',
+    'relative overflow-hidden ripple-container focus-ring',
+    'card-hover group cursor-pointer animate-scale-in',
+    'will-change-transform',
   ],
   {
     variants: {
@@ -146,11 +146,36 @@ export function KPICard({
     };
   }, [previousValue, trendPercentage, trend, trendLabel]);
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (onClick) {
+      // Add ripple effect
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple-effect';
+      ripple.style.left = `${x}px`;
+      ripple.style.top = `${y}px`;
+      e.currentTarget.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 600);
+      
+      onClick();
+    }
+  };
+
   return (
     <Card 
       className={twMerge(kpiCardStyles({ variant, size }))}
-      onClick={onClick}
+      onClick={handleClick}
       variant={onClick ? 'interactive' : 'elevated'}
+      tabIndex={onClick ? 0 : undefined}
+      role={onClick ? 'button' : undefined}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          handleClick(e as any);
+        }
+      }}
     >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-10">
@@ -164,12 +189,12 @@ export function KPICard({
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className={`
-              p-2 rounded-[var(--radius-md)] 
+              p-2 rounded-[var(--radius-md)] transition-smooth
               ${isColored 
                 ? 'bg-white/20 text-white' 
                 : 'bg-[var(--color-primary)]/10 text-[var(--color-primary)]'
               }
-              transition-transform group-hover:scale-110
+              group-hover:scale-110 group-hover:rotate-3 animate-delay-100
             `}>
               <IconComponent className="h-5 w-5" />
             </div>
@@ -269,7 +294,7 @@ export function KPICard({
 export function KPIGrid({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className={twMerge(
-      'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6',
+      'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 stagger-children',
       className
     )}>
       {children}
@@ -282,17 +307,17 @@ export function KPICardSkeleton({ count = 4 }: { count?: number }) {
   return (
     <KPIGrid>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="animate-pulse">
-          <Card className="min-h-[140px]">
+        <div key={i} className="animate-scale-in" style={{ animationDelay: `${i * 0.1}s` }}>
+          <Card className="min-h-[140px] animate-pulse">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 bg-[var(--color-muted)] rounded-[var(--radius-md)]" />
-                <div className="h-4 bg-[var(--color-muted)] rounded w-24" />
+                <div className="w-9 h-9 skeleton rounded-[var(--radius-md)]" />
+                <div className="h-4 skeleton rounded w-24" />
               </div>
-              <div className="h-10 bg-[var(--color-muted)] rounded w-20 mb-4" />
+              <div className="h-10 skeleton rounded w-20 mb-4" />
               <div className="flex items-center justify-between">
-                <div className="h-6 bg-[var(--color-muted)] rounded w-16" />
-                <div className="h-3 bg-[var(--color-muted)] rounded w-12" />
+                <div className="h-6 skeleton rounded w-16" />
+                <div className="h-3 skeleton rounded w-12" />
               </div>
             </CardContent>
           </Card>
