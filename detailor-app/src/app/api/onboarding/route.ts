@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { getUserFromRequest } from '@/lib/authServer';
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     // Use authenticated user email as canonical; upsert to avoid duplicates
     const { user } = await getUserFromRequest(req);
     const userEmail = user?.email as string | undefined;
-    if (!userEmail) throw new Error('Authenticated user email is required');
+    if (!userEmail) return createErrorResponse(API_ERROR_CODES.UNAUTHORIZED, 'Authenticated user email is required', undefined, 401);
 
     const existing = await admin.from('tenants').select('id').eq('contact_email', userEmail).maybeSingle();
     let tenantId: string | undefined = existing.data?.id as string | undefined;
@@ -78,9 +79,9 @@ export async function POST(req: Request) {
       console.error('Failed to send welcome email:', emailError);
     }
 
-    return NextResponse.json({ ok: true, tenant_id: tenantId, invite });
+    return createSuccessResponse({ tenant_id: tenantId, invite });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'POST /api/onboarding' }, 400);
   }
 }
 

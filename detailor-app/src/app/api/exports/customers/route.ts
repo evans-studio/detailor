@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
 
     // Gating by tier
     if (plan === 'starter') {
-      return NextResponse.json({ ok: false, error: 'Exports not available on Starter plan.' }, { status: 403 });
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Exports not available on Starter plan.', { plan }, 403);
     }
 
     // Frequency limits: Pro weekly, Business daily, Enterprise unlimited
@@ -32,10 +33,10 @@ export async function GET(req: Request) {
       .maybeSingle();
     const lastAt = usage?.last_export_at ? new Date(usage.last_export_at) : null;
     if (plan === 'pro' && lastAt && (now.getTime() - lastAt.getTime()) < 7 * 24 * 3600 * 1000) {
-      return NextResponse.json({ ok: false, error: 'Pro exports available weekly. Please try later or upgrade.' }, { status: 429 });
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Pro exports available weekly. Please try later or upgrade.', undefined, 429);
     }
     if (plan === 'business' && lastAt && (now.getTime() - lastAt.getTime()) < 24 * 3600 * 1000) {
-      return NextResponse.json({ ok: false, error: 'Business exports available daily. Please try later.' }, { status: 429 });
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Business exports available daily. Please try later.', undefined, 429);
     }
 
     // Fetch data
@@ -55,7 +56,7 @@ export async function GET(req: Request) {
     const csv = [header, ...lines].join('\n');
     return new NextResponse(csv, { headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="customers.csv"' } });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/exports/customers' }, 400);
   }
 }
 

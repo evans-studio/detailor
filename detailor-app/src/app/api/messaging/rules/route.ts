@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -15,16 +16,18 @@ export async function GET(req: Request) {
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || !['staff','admin'].includes(profile.role)) throw new Error('Forbidden');
+    if (!profile || !['staff','admin'].includes(profile.role)) {
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Insufficient permissions', { required_roles: ['staff','admin'] }, 403);
+    }
     const { data: tenant } = await admin
       .from('tenants')
       .select('business_prefs')
       .eq('id', profile.tenant_id)
       .single();
     const rules = (tenant?.business_prefs as Record<string, unknown> | null)?.['messaging_rules'] as Record<string, unknown> | undefined;
-    return NextResponse.json({ ok: true, rules: rules || {} });
+    return createSuccessResponse({ rules: rules || {} });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/messaging/rules' }, 400);
   }
 }
 
@@ -35,15 +38,17 @@ export async function PATCH(req: Request) {
     const incoming = await req.json();
     const payload = schema.partial().parse(incoming);
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || profile.role !== 'admin') throw new Error('Forbidden');
+    if (!profile || profile.role !== 'admin') {
+      return createErrorResponse(API_ERROR_CODES.ADMIN_ONLY, 'Only admin can update messaging rules', undefined, 403);
+    }
     const { data: tenant } = await admin.from('tenants').select('business_prefs').eq('id', profile.tenant_id).single();
     const prefs = (tenant?.business_prefs as Record<string, unknown>) || {};
     const merged = { ...(prefs['messaging_rules'] as Record<string, unknown> || {}), ...payload };
     const next = { ...prefs, messaging_rules: merged } as Record<string, unknown>;
     await admin.from('tenants').update({ business_prefs: next }).eq('id', profile.tenant_id);
-    return NextResponse.json({ ok: true, rules: merged });
+    return createSuccessResponse({ rules: merged });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'PATCH /api/messaging/rules' }, 400);
   }
 }
 

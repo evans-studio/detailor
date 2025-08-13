@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import Stripe from 'stripe';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -10,12 +11,12 @@ export async function POST(req: Request) {
     const { session_id } = body as { session_id?: string };
     
     if (!session_id) {
-      return NextResponse.json({ ok: false, error: 'Missing session_id' }, { status: 400 });
+      return createErrorResponse(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 'Missing session_id', { field: 'session_id' }, 400);
     }
 
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
     if (!secret) {
-      return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
+      return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'Server not configured', undefined, 500);
     }
 
     const stripe = new Stripe(secret);
@@ -26,7 +27,7 @@ export async function POST(req: Request) {
     // Allow trials or no immediate payment for subscription trials
     const allowedStatuses = new Set(['paid', 'no_payment_required']);
     if (session.mode === 'subscription' && !allowedStatuses.has(session.payment_status || '')) {
-      return NextResponse.json({ ok: false, error: 'Checkout not completed' }, { status: 400 });
+      return createErrorResponse(API_ERROR_CODES.PAYMENT_ERROR, 'Checkout not completed', { payment_status: session.payment_status }, 400);
     }
 
     // Auto-create a Subscription Schedule to transition from intro -> standard for monthly intros
@@ -78,8 +79,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ 
-      ok: true, 
+    return createSuccessResponse({ 
       session: {
         id: session.id,
         payment_status: session.payment_status,
@@ -92,6 +92,6 @@ export async function POST(req: Request) {
     });
 
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/payments/verify-session' }, 400);
   }
 }
