@@ -42,7 +42,7 @@ export default function StaffTodayPage() {
   }
   React.useEffect(() => { load(); }, [day]);
   // Realtime job updates
-  useRealtimeAdminUpdates('tenant', true);
+  useRealtimeAdminUpdates('detail-flow', true);
   async function start(id: string) { await fetch(`/api/jobs/${id}/start`, { method: 'POST' }); await load(); }
   async function complete(id: string) { await fetch(`/api/jobs/${id}/complete`, { method: 'POST' }); await load(); }
   return (

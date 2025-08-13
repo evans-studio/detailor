@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const { data: job } = await admin.from('jobs').select('*').eq('id', id).eq('tenant_id', profile.tenant_id).single();
     if (!job) return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Job not found', { id }, 404);
     if (profile.role === 'staff' && job.staff_profile_id !== profile.id) return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Forbidden', undefined, 403);
-    await admin.from('jobs').update({ status: 'completed', notes: notes ?? job.notes }).eq('id', id).eq('tenant_id', profile.tenant_id);
+    await admin.from('jobs').update({ status: 'completed', notes: notes ?? job.notes, completed_at: new Date().toISOString() }).eq('id', id).eq('tenant_id', profile.tenant_id);
     await admin.from('job_activity').insert({ tenant_id: profile.tenant_id, job_id: id, actor_profile_id: profile.id, event: 'completed', payload: {} });
     return createSuccessResponse({});
   } catch (e: unknown) {

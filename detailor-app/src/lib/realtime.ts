@@ -113,8 +113,41 @@ export function subscribeInvoices(
   };
 }
 
+export type SupaJob = {
+  id: string;
+  tenant_id: string;
+  booking_id: string;
+  staff_profile_id: string | null;
+  status: 'not_started' | 'in_progress' | 'completed' | 'paid';
+  started_at?: string | null;
+  completed_at?: string | null;
+};
+
+export function subscribeJobs(
+  tenantId: string,
+  onChange: (event: { type: 'INSERT' | 'UPDATE' | 'DELETE'; record: SupaJob }) => void
+) {
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+  );
+  const channel = client
+    .channel('jobs-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'jobs', filter: `tenant_id=eq.${tenantId}` }, (payload) => {
+      onChange({ type: payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE', record: payload.new as unknown as SupaJob });
+    })
+    .subscribe();
+  return () => {
+    client.removeChannel(channel);
+  };
+}
+
 export function wireRealtimeInvalidations(tenantId: string, queryClient: QueryClient) {
   const unsubBookings = subscribeBookings(tenantId, () => {
+    queryClient.invalidateQueries({ queryKey: ['bookings'] });
+  });
+  const unsubJobs = subscribeJobs(tenantId, () => {
+    queryClient.invalidateQueries({ queryKey: ['jobs'] });
     queryClient.invalidateQueries({ queryKey: ['bookings'] });
   });
   const unsubPayments = subscribePayments(tenantId, () => {
@@ -127,6 +160,7 @@ export function wireRealtimeInvalidations(tenantId: string, queryClient: QueryCl
   });
   return () => {
     unsubBookings();
+    unsubJobs();
     unsubPayments();
     unsubInvoices();
   };
