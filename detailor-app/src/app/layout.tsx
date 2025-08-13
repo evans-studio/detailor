@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { NotificationsProvider } from "@/lib/notifications";
 import { BrandLoader } from "@/lib/brand-loader";
+import { BrandProvider } from "@/lib/BrandProvider";
 import { QueryProvider } from "@/lib/query-client";
 import { RealtimeBridge } from "@/components/RealtimeBridge";
 import { AuthProvider } from "@/lib/auth-context";
@@ -44,9 +45,11 @@ export default function RootLayout({
         <ThemeProvider paletteName="Master">
           <QueryProvider>
             <AuthProvider>
-              <BrandLoader />
-              <RealtimeBridge />
-              <NotificationsProvider>{children}</NotificationsProvider>
+              <BrandProvider>
+                <BrandLoader />
+                <RealtimeBridge />
+                <NotificationsProvider>{children}</NotificationsProvider>
+              </BrandProvider>
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

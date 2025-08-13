@@ -18,10 +18,11 @@ export function useTenantBrand(tenantId?: string) {
       setLoading(true);
       try {
         const url = tenantId ? `/api/brand?tenant_id=${tenantId}` : '/api/brand';
-        const res = await fetch(url);
+        const res = await fetch(url, { cache: 'no-store' });
         const json = await res.json();
-        if (json.ok) setPalette(json.palette);
-        else setError(json.error || 'Failed to load palette');
+        const palette = json?.data?.palette || json?.palette;
+        if (res.ok && palette) setPalette(palette);
+        else setError(json?.error?.message || 'Failed to load palette');
       } catch (e) {
         setError((e as Error).message);
       } finally {
