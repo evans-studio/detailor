@@ -15,6 +15,7 @@ export type NavItem = {
 export const navItems: NavItem[] = [
   { label: 'Home', path: '/admin/dashboard', icon: Home, roles: ['admin', 'staff', 'super_admin'] },
   { label: 'Bookings', path: '/admin/bookings', icon: Calendar, roles: ['admin', 'staff', 'super_admin'], section: 'Operations' },
+  { label: 'Staff', path: '/admin/staff', icon: Users, roles: ['admin', 'super_admin'], section: 'Operations' },
   { label: 'My Bookings', path: '/bookings/me', icon: Calendar, roles: ['customer'], section: 'Operations' },
   { label: 'Quotes', path: '/admin/quotes', icon: FileText, roles: ['admin', 'staff', 'super_admin'], section: 'Operations' },
   { label: 'Customers', path: '/admin/customers', icon: Users, roles: ['admin', 'staff', 'super_admin'], section: 'CRM' },

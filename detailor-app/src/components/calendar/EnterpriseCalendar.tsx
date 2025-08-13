@@ -31,6 +31,8 @@ export interface CalendarProps {
   onEventClick?: (event: CalendarEvent) => void;
   onEventDrop?: (event: CalendarEvent, newStart: Date, newEnd: Date) => void;
   view?: 'month' | 'week' | 'day';
+  resources?: Array<{ id: string; name: string }>;
+  resourceAccessor?: (event: CalendarEvent) => string | undefined;
   className?: string;
   showHeader?: boolean;
   showNavigation?: boolean;
@@ -48,6 +50,8 @@ export function EnterpriseCalendar({
   onEventClick,
   onEventDrop,
   view = 'month',
+  resources,
+  resourceAccessor,
   className,
   showHeader = true,
   showNavigation = true,
@@ -111,6 +115,8 @@ export function EnterpriseCalendar({
         onEventDrop={onEventDrop}
         workingHours={workingHours}
         className={className}
+        resources={resources}
+        resourceAccessor={resourceAccessor}
         draggedEvent={draggedEvent}
         setDraggedEvent={setDraggedEvent}
       />
@@ -445,6 +451,10 @@ function WeekView({
   onEventDrop, // eslint-disable-line @typescript-eslint/no-unused-vars
   workingHours,
   className,
+  resources,
+  resourceAccessor,
+  draggedEvent,
+  setDraggedEvent,
 }: {
   currentDate: Date;
   events: CalendarEvent[];
@@ -453,6 +463,8 @@ function WeekView({
   onEventDrop?: (event: CalendarEvent, newStart: Date, newEnd: Date) => void;
   workingHours: { start: number; end: number };
   className?: string;
+  resources?: Array<{ id: string; name: string }>;
+  resourceAccessor?: (event: CalendarEvent) => string | undefined;
   draggedEvent: CalendarEvent | null;
   setDraggedEvent: (event: CalendarEvent | null) => void;
 }) {
@@ -512,12 +524,30 @@ function WeekView({
               {weekDays.map((day) => {
                 const slotDate = new Date(day);
                 slotDate.setHours(hour, 0, 0, 0);
-                const slotEvents = events.filter(event => {
-                  const eventHour = event.start.getHours();
-                  const eventDate = event.start.toDateString();
-                  return eventDate === day.toDateString() && eventHour === hour;
-                });
+                const eventsForDayHour = events.filter(event => event.start.toDateString() === day.toDateString() && event.start.getHours() === hour);
 
+                if (resources && resources.length > 0 && resourceAccessor) {
+                  return (
+                    <div key={`${day.toISOString()}-${hour}`} className="bg-[var(--color-surface)] p-1 border-b border-[var(--color-border)] min-h-[60px]">
+                      <div className="grid" style={{ gridTemplateColumns: `repeat(${resources.length}, minmax(0, 1fr))` }}>
+                        {resources.map((r) => {
+                          const slotEvents = eventsForDayHour.filter((e) => resourceAccessor(e) === r.id);
+                          return (
+                            <div key={`${day.toISOString()}-${hour}-${r.id}`} className="p-1 hover:bg-[var(--color-hover-surface)] cursor-pointer" onClick={() => onDateClick?.(slotDate)}>
+                              {slotEvents.map((event) => (
+                                <div key={event.id} className="text-[var(--font-size-xs)] p-1 rounded bg-[var(--color-primary)] text-[var(--color-primary-foreground)] mb-1 cursor-pointer hover:opacity-90" onClick={(e) => { e.stopPropagation(); onEventClick?.(event); }}>
+                                  {event.title}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                }
+
+                const slotEvents = eventsForDayHour;
                 return (
                   <div
                     key={`${day.toISOString()}-${hour}`}
