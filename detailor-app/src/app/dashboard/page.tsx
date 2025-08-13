@@ -435,7 +435,6 @@ export default function EnterpriseDashboard() {
                           </div>
                         </div>
                       ))}
-                    </div>
                       {jobsToday.length > 5 && (
                         <div className="text-center pt-4 sm:pt-6 border-t border-gray-100">
                           <Link href="/admin/bookings">

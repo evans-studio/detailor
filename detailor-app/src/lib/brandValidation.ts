@@ -19,7 +19,7 @@ export const brandValidation = {
       detailorTheme.colors.warning,
       detailorTheme.colors.accent,
     ];
-    return allValidColors.includes(color);
+    return allValidColors.includes(color as any);
   },
 
   /**
