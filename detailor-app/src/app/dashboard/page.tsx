@@ -30,7 +30,7 @@ interface RevenueChartData {
   monthly_comparison: Array<{ month: string; revenue: number; growth: number }>;
 }
 
-export default function EnterpriseDashboard() {
+export default function AdminDashboardAlias() {
   // KPI Data
   const { data: kpis, isLoading: kpisLoading } = useQuery({
     queryKey: ['kpis'],

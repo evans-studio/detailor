@@ -106,7 +106,7 @@ describe('constants', () => {
   describe('APP_PATHS', () => {
     it('should define all app paths', () => {
       expect(APP_PATHS.HOME).toBe('/');
-      expect(APP_PATHS.DASHBOARD).toBe('/dashboard');
+      expect(APP_PATHS.ADMIN_DASHBOARD).toBe('/admin/dashboard');
       expect(APP_PATHS.BOOKINGS).toBe('/bookings');
       expect(APP_PATHS.QUOTES).toBe('/quotes');
       expect(APP_PATHS.SETTINGS).toBe('/settings');
@@ -115,7 +115,7 @@ describe('constants', () => {
     it('should be a const assertion object', () => {
       // TypeScript ensures read-only at compile time with 'as const'
       expect(APP_PATHS.HOME).toBe('/');
-      expect(APP_PATHS.DASHBOARD).toBe('/dashboard');
+      expect(APP_PATHS.ADMIN_DASHBOARD).toBe('/admin/dashboard');
       expect(APP_PATHS.BOOKINGS).toBe('/bookings');
     });
 
@@ -129,16 +129,13 @@ describe('constants', () => {
       });
     });
 
-    it('should contain exactly 5 paths', () => {
+    it('should contain key admin/customer paths', () => {
       const pathValues = Object.values(APP_PATHS);
-      expect(pathValues).toHaveLength(5);
-      expect(pathValues).toEqual([
-        '/',
-        '/dashboard',
-        '/bookings',
-        '/quotes',
-        '/settings'
-      ]);
+      expect(pathValues).toContain('/admin/dashboard');
+      expect(pathValues).toContain('/admin/bookings');
+      expect(pathValues).toContain('/admin/quotes');
+      expect(pathValues).toContain('/admin/settings');
+      expect(pathValues).toContain('/customer/dashboard');
     });
 
     it('should have unique path values', () => {

@@ -69,9 +69,21 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Redirect bare root to marketing site
+  // Redirect bare root to marketing site on marketing host only
   if (isRootHost && (pathname === '/' || pathname === '')) {
     return NextResponse.redirect(marketingUrl);
+  }
+
+  // Normalize legacy routes to System Bible spec
+  if (pathname === '/dashboard') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/admin/dashboard';
+    return NextResponse.redirect(url);
+  }
+  if (pathname === '/admin') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/admin/dashboard';
+    return NextResponse.redirect(url);
   }
 
   // Always allow API routes; API handlers perform their own auth via tokens/cookies

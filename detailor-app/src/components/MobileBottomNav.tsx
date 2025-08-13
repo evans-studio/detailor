@@ -10,9 +10,9 @@ export function MobileBottomNav({ role = 'customer' }: { role?: 'customer' | 'ad
         { label: 'Account', href: '/customer/account' },
       ]
     : [
-        { label: 'Today', href: '/dashboard' },
+        { label: 'Dashboard', href: '/admin/dashboard' },
         { label: 'Customers', href: '/admin/customers' },
-        { label: 'Settings', href: '/settings' },
+        { label: 'Settings', href: '/admin/settings' },
       ];
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--color-border)] bg-[var(--color-surface)] p-2 md:hidden">

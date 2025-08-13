@@ -261,7 +261,7 @@ export default function OnboardingPage() {
             <div className="text-[var(--color-text-muted)] mb-6">Your business is now ready to accept bookings. You can customize more settings later.</div>
           </div>
           <a 
-            href="/dashboard" 
+            href="/admin/dashboard" 
             className="inline-block rounded-[var(--radius-md)] bg-[var(--color-primary)] px-6 py-3 text-[var(--color-primary-foreground)] font-medium hover:opacity-90 transition-opacity"
           >
             Go to Dashboard

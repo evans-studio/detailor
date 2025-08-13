@@ -22,9 +22,9 @@ export default function SignInPage() {
   React.useEffect(() => {
     if (!loading && isAuthenticated && user) {
       if (user.role === 'admin') {
-        router.push('/dashboard');
+        router.push('/admin/dashboard');
       } else if (user.role === 'staff') {
-        router.push('/dashboard');
+        router.push('/admin/dashboard');
       } else if (user.role === 'customer') {
         router.push('/customer/dashboard');
       }

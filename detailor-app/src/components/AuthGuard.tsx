@@ -35,7 +35,7 @@ export function AuthGuard({
       if (user.role === 'customer') {
         router.push('/customer/dashboard');
       } else {
-        router.push('/dashboard');
+        router.push('/admin/dashboard');
       }
       return;
     }

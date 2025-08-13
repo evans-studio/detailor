@@ -21,10 +21,12 @@ export type BookingStatus = typeof BOOKING_STATUS[keyof typeof BOOKING_STATUS];
 
 export const APP_PATHS = {
   HOME: '/',
-  DASHBOARD: '/dashboard',
-  BOOKINGS: '/bookings',
-  QUOTES: '/quotes',
-  SETTINGS: '/settings',
+  ADMIN_DASHBOARD: '/admin/dashboard',
+  ADMIN_BOOKINGS: '/admin/bookings',
+  ADMIN_QUOTES: '/admin/quotes',
+  ADMIN_SETTINGS: '/admin/settings',
+  CUSTOMER_DASHBOARD: '/customer/dashboard',
+  CUSTOMER_BOOKINGS: '/bookings/me',
 } as const;
 
 
