@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 // Detailor Default Brand Palette
@@ -48,7 +49,7 @@ export async function GET(req: Request) {
     const base = DEFAULT_DETAILOR_PALETTE;
 
     if (!tenantId) {
-      return NextResponse.json({ ok: true, palette: base });
+      return createSuccessResponse({ palette: base });
     }
 
     const admin = getSupabaseAdmin();
@@ -57,7 +58,7 @@ export async function GET(req: Request) {
       .select('brand_theme')
       .eq('id', tenantId)
       .single();
-    if (error || !tenant) return NextResponse.json({ ok: true, palette: base });
+    if (error || !tenant) return createSuccessResponse({ palette: base });
 
     // Merge brand_theme over base palette (shallow)
     const merged: Record<string, unknown> = { ...base };
@@ -71,9 +72,9 @@ export async function GET(req: Request) {
         }
       }
     }
-    return NextResponse.json({ ok: true, palette: merged });
+    return createSuccessResponse({ palette: merged });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/brand' }, 400);
   }
 }
 

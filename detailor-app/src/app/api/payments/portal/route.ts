@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import Stripe from 'stripe';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -25,7 +26,7 @@ export async function GET(req: Request) {
     });
     return NextResponse.redirect(session.url, { status: 303 });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/payments/portal' }, 400);
   }
 }
 

@@ -1,9 +1,9 @@
 export const runtime = 'nodejs';
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { sanitizeText, sanitizeEmail, sanitizePhone, checkRateLimit } from '@/lib/security';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 
 const createSchema = z.object({
   name: z.string().min(1),
@@ -36,15 +36,34 @@ export async function GET(req: Request) {
       if (createdFrom) query = query.gte('created_at', createdFrom);
       if (createdTo) query = query.lte('created_at', createdTo);
       const { data, error } = await query.order('created_at');
-      if (error) throw error;
-      return NextResponse.json({ ok: true, customers: data });
+      if (error) {
+        return createErrorResponse(
+          API_ERROR_CODES.DATABASE_ERROR,
+          'Failed to fetch customers',
+          { db_error: error.message },
+          500
+        );
+      }
+      return createSuccessResponse(data);
     }
     // Fallback: try self customer
     const { data, error } = await admin.from('customers').select('*').eq('auth_user_id', user.id).order('created_at');
-    if (error) throw error;
-    return NextResponse.json({ ok: true, customers: data });
+    if (error) {
+      return createErrorResponse(
+        API_ERROR_CODES.DATABASE_ERROR,
+        'Failed to fetch customer data',
+        { db_error: error.message },
+        500
+      );
+    }
+    return createSuccessResponse(data);
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      (error as Error).message,
+      { endpoint: 'GET /api/customers' },
+      400
+    );
   }
 }
 
@@ -55,7 +74,12 @@ export async function POST(req: Request) {
     // Rate limiting
     const ip = req.headers.get('x-forwarded-for') || 'unknown';
     if (!checkRateLimit(`customer-create-${user.id}-${ip}`, 10, 60000)) {
-      return NextResponse.json({ ok: false, error: 'Rate limit exceeded' }, { status: 429 });
+      return createErrorResponse(
+        API_ERROR_CODES.RATE_LIMITED,
+        'Rate limit exceeded',
+        { limit: 10, window: '60s' },
+        429
+      );
     }
     
     const admin = getSupabaseAdmin();
@@ -71,29 +95,75 @@ export async function POST(req: Request) {
     
     // Validate sanitized inputs
     if (!sanitizedPayload.name) {
-      throw new Error('Invalid name provided');
+      return createErrorResponse(
+        API_ERROR_CODES.INVALID_INPUT,
+        'Invalid name provided',
+        { field: 'name' },
+        400
+      );
     }
     
     if (payload.email && !sanitizedPayload.email) {
-      throw new Error('Invalid email format');
+      return createErrorResponse(
+        API_ERROR_CODES.INVALID_INPUT,
+        'Invalid email format',
+        { field: 'email' },
+        400
+      );
     }
     
     if (payload.phone && !sanitizedPayload.phone) {
-      throw new Error('Invalid phone number format');
+      return createErrorResponse(
+        API_ERROR_CODES.INVALID_INPUT,
+        'Invalid phone number format',
+        { field: 'phone' },
+        400
+      );
     }
     
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || !['staff', 'admin'].includes(profile.role)) throw new Error('Forbidden');
+    if (!profile || !['staff', 'admin'].includes(profile.role)) {
+      return createErrorResponse(
+        API_ERROR_CODES.FORBIDDEN,
+        'Insufficient permissions to create customers',
+        { required_roles: ['staff', 'admin'] },
+        403
+      );
+    }
     
     const { data, error } = await admin
       .from('customers')
       .insert({ tenant_id: profile.tenant_id, ...sanitizedPayload })
       .select('*')
       .single();
-    if (error) throw error;
-    return NextResponse.json({ ok: true, customer: data });
+      
+    if (error) {
+      // Handle duplicate email constraint
+      if (error.code === '23505') {
+        return createErrorResponse(
+          API_ERROR_CODES.DUPLICATE_ENTRY,
+          'A customer with this email already exists',
+          { field: 'email' },
+          409
+        );
+      }
+      
+      return createErrorResponse(
+        API_ERROR_CODES.DATABASE_ERROR,
+        'Failed to create customer',
+        { db_error: error.message },
+        500
+      );
+    }
+    
+    return createSuccessResponse(data);
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      (error as Error).message,
+      { endpoint: 'POST /api/customers' },
+      400
+    );
   }
 }
 

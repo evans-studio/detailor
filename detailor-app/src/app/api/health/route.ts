@@ -37,17 +37,21 @@ export async function GET() {
   const healthy = envLoaded && dbConnected && emailConfigured && stripeConfigured;
 
   return NextResponse.json({
-    ok: healthy,
-    timestamp,
-    status: healthy ? 'healthy' : 'degraded',
-    checks: {
-      environment: envLoaded,
-      database: dbConnected,
-      email: emailConfigured,
-      payments: stripeConfigured,
-      monitoring: sentryConfigured,
+    success: healthy,
+    data: {
+      status: healthy ? 'healthy' : 'degraded',
+      checks: {
+        environment: envLoaded,
+        database: dbConnected,
+        email: emailConfigured,
+        payments: stripeConfigured,
+        monitoring: sentryConfigured,
+      },
+      version: process.env.npm_package_version || '1.0.0',
     },
-    version: process.env.npm_package_version || '1.0.0',
+    meta: {
+      timestamp,
+    }
   }, { 
     status: healthy ? 200 : 503 
   });

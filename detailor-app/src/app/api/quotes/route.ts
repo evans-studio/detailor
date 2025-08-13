@@ -29,16 +29,16 @@ export async function GET(req: Request) {
         .eq('tenant_id', profile.tenant_id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return NextResponse.json({ ok: true, quotes: data });
+      return NextResponse.json({ success: true, data: data, meta: { timestamp: new Date().toISOString() } });
     }
     const { data, error } = await admin
       .from('quotes')
       .select('*')
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return NextResponse.json({ ok: true, quotes: data });
+    return NextResponse.json({ success: true, data: data, meta: { timestamp: new Date().toISOString() } });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return NextResponse.json({ success: false, error: { code: 'QUOTES_ERROR', message: (error as Error).message } , meta: { timestamp: new Date().toISOString() } }, { status: 400 });
   }
 }
 
@@ -98,9 +98,9 @@ export async function POST(req: Request) {
       .select('*')
       .single();
     if (error) throw error;
-    return NextResponse.json({ ok: true, quote });
+    return NextResponse.json({ success: true, data: quote, meta: { timestamp: new Date().toISOString() } });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return NextResponse.json({ success: false, error: { code: 'QUOTES_CREATE_ERROR', message: (error as Error).message }, meta: { timestamp: new Date().toISOString() } }, { status: 400 });
   }
 }
 

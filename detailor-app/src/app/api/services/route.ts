@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 
 export async function GET(req: Request) {
   try {
@@ -14,12 +14,35 @@ export async function GET(req: Request) {
       const { data: cust } = await admin.from('customers').select('tenant_id').eq('auth_user_id', user.id).single();
       tenantId = cust?.tenant_id as string | undefined;
     }
-    if (!tenantId) throw new Error('No tenant context');
+    
+    if (!tenantId) {
+      return createErrorResponse(
+        API_ERROR_CODES.FORBIDDEN,
+        'No tenant context found',
+        { hint: 'User must be associated with a tenant via profile or customer record' },
+        403
+      );
+    }
+    
     const { data, error } = await admin.from('services').select('*').eq('tenant_id', tenantId).order('name');
-    if (error) throw error;
-    return NextResponse.json({ ok: true, services: data });
+    
+    if (error) {
+      return createErrorResponse(
+        API_ERROR_CODES.DATABASE_ERROR,
+        'Failed to fetch services',
+        { db_error: error.message },
+        500
+      );
+    }
+    
+    return createSuccessResponse(data);
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      (e as Error).message,
+      { endpoint: 'GET /api/services' },
+      400
+    );
   }
 }
 

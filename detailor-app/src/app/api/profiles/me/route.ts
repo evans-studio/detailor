@@ -1,7 +1,7 @@
 export const runtime = 'nodejs';
-import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 
 export async function GET(req: Request) {
   try {
@@ -12,10 +12,24 @@ export async function GET(req: Request) {
       .select('*')
       .eq('id', user.id)
       .single();
-    if (error || !profile) throw error ?? new Error('Profile not found');
-    return NextResponse.json({ ok: true, profile });
+      
+    if (error || !profile) {
+      return createErrorResponse(
+        API_ERROR_CODES.RECORD_NOT_FOUND,
+        'Profile not found',
+        { hint: 'Ensure sb-access-token cookie is present and not expired' },
+        401
+      );
+    }
+    
+    return createSuccessResponse(profile);
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message, hint: 'Ensure sb-access-token cookie is present and not expired' }, { status: 401 });
+    return createErrorResponse(
+      API_ERROR_CODES.UNAUTHORIZED,
+      (error as Error).message,
+      { hint: 'Ensure sb-access-token cookie is present and not expired' },
+      401
+    );
   }
 }
 

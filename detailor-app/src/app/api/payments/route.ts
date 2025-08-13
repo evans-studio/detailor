@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { z } from 'zod';
@@ -27,9 +28,9 @@ export async function GET(req: Request) {
     if (bookingId) query = query.eq('booking_id', bookingId);
     const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw error;
-    return NextResponse.json({ ok: true, payments: data });
+    return createSuccessResponse({ payments: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/payments' }, 400);
   }
 }
 
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
         cancel_url: `${appUrl}/billing`,
          metadata: { app: 'detailor', addon_sku: String(body.addon_sku || ''), price_id: String(body.price_id || '') },
       });
-      return NextResponse.json({ ok: true, url: session.url });
+      return createSuccessResponse({ url: session.url });
     }
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
     if (!profile) throw new Error('No profile');
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
         .select('*')
         .single();
       if (error) throw error;
-      return NextResponse.json({ ok: true, payment: data });
+      return createSuccessResponse({ payment: data });
     }
     const { data, error } = await admin
       .from('payments')
@@ -82,9 +83,9 @@ export async function POST(req: Request) {
         await admin.from('bookings').update({ payment_status: newStatus }).eq('id', data.booking_id).eq('tenant_id', profile.tenant_id);
       }
     }
-    return NextResponse.json({ ok: true, payment: data });
+    return createSuccessResponse({ payment: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/payments' }, 400);
   }
 }
 

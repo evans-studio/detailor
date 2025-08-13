@@ -1,9 +1,9 @@
 export const runtime = 'nodejs';
-import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { sendBookingNotificationToAdmin } from '@/lib/email';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 
 const createSchema = z.object({
   customer_id: z.string().uuid(),
@@ -40,17 +40,37 @@ export async function GET(req: Request) {
       // customer path: self-scope
       query = admin.from('bookings').select('*').eq('customer_id', selfCustomer.id);
     } else {
-      throw new Error('No profile or customer context');
+      return createErrorResponse(
+        API_ERROR_CODES.FORBIDDEN,
+        'No profile or customer context found',
+        { hint: 'User must have a valid profile or customer record' },
+        403
+      );
     }
+    
     if (status) query = query.eq('status', status);
     if (from) query = query.gte('start_at', from);
     if (to) query = query.lte('start_at', to);
     if (q) query = query.ilike('reference', `%${q}%`);
     const { data, error } = await query.order('start_at', { ascending: true });
-    if (error) throw error;
-    return NextResponse.json({ ok: true, bookings: data });
+    
+    if (error) {
+      return createErrorResponse(
+        API_ERROR_CODES.DATABASE_ERROR,
+        'Failed to fetch bookings',
+        { db_error: error.message },
+        500
+      );
+    }
+    
+    return createSuccessResponse(data);
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      (error as Error).message,
+      { endpoint: 'GET /api/bookings' },
+      400
+    );
   }
 }
 
@@ -178,9 +198,14 @@ export async function POST(req: Request) {
       console.error('Failed to send admin notification email:', emailError);
     }
 
-    return NextResponse.json({ ok: true, booking: data });
+    return createSuccessResponse({ booking: data });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      (error as Error).message,
+      { endpoint: 'POST /api/bookings' },
+      400
+    );
   }
 }
 

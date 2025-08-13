@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -24,7 +25,9 @@ export async function POST(req: Request) {
     const admin = getSupabaseAdmin();
     const payload = schema.parse(await req.json());
     const { data: profile } = await admin.from('profiles').select('tenant_id, role, email').eq('id', user.id).single();
-    if (!profile || !['staff','admin'].includes(profile.role)) throw new Error('Forbidden');
+    if (!profile || !['staff','admin'].includes(profile.role)) {
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Insufficient permissions', { required_roles: ['staff','admin'] }, 403);
+    }
     // Enforce SMS/email messaging limits: if using email only, bypass; if SMS enabled, check credits
     const { data: tenant } = await admin.from('tenants').select('feature_flags').eq('id', profile.tenant_id).single();
     const ff = (tenant?.feature_flags as Record<string, unknown>) || {};
@@ -32,7 +35,7 @@ export async function POST(req: Request) {
     if (payload.channel === 'sms' && (ff.sms_notifications === true || ff.sms_notifications === 'addon')) {
       const credits = Number(ff.sms_credits || 0);
       if (credits <= 0) {
-        return NextResponse.json({ ok: false, error: 'Insufficient SMS credits. Please purchase a pack to continue.' }, { status: 402 });
+        return createErrorResponse(API_ERROR_CODES.LIMIT_EXCEEDED, 'Insufficient SMS credits. Please purchase a pack to continue.', { credits }, 402);
       }
       // Deduct 1 credit up-front to prevent negative balances
       await admin.rpc('increment_tenant_counter', { tenant_id_input: profile.tenant_id, counter_key: 'sms_credits', increment_by: -1 });
@@ -40,7 +43,7 @@ export async function POST(req: Request) {
     // Demo tenants: route to sink (do not actually send)
     const { data: t } = await admin.from('tenants').select('is_demo').eq('id', profile.tenant_id).single();
     if (t?.is_demo) {
-      return NextResponse.json({ ok: true, messageId: 'demo-sink' });
+      return createSuccessResponse({ messageId: 'demo-sink' });
     }
     const res = await sendTenantEmail({
       tenantId: profile.tenant_id,
@@ -55,9 +58,9 @@ export async function POST(req: Request) {
     });
 
     // TODO: when SMS sending is implemented, if provider fails, refund the 1 credit by calling increment_tenant_counter with +1
-    return NextResponse.json(res);
+    return NextResponse.json({ success: true, data: res, meta: { timestamp: new Date().toISOString() } });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/messages/send' }, 400);
   }
 }
 

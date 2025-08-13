@@ -33,7 +33,17 @@ export async function GET(req: Request) {
       .single();
     
     if (!profile || !['staff', 'admin'].includes(profile.role)) {
-      throw new Error('Forbidden');
+      return NextResponse.json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Insufficient permissions to access work patterns.',
+          details: { required_roles: ['staff', 'admin'] }
+        },
+        meta: {
+          timestamp: new Date().toISOString()
+        }
+      }, { status: 403 });
     }
 
     try {
@@ -46,37 +56,59 @@ export async function GET(req: Request) {
       if (error) {
         console.warn('Work patterns table error, using defaults:', error);
         return NextResponse.json({
-          ok: true,
-          patterns: generateDefaultPatterns(profile.tenant_id),
-          warning: 'Using default work patterns - database table not available'
+          success: true,
+          data: generateDefaultPatterns(profile.tenant_id),
+          meta: {
+            timestamp: new Date().toISOString(),
+            warning: 'Using default work patterns - database table not available'
+          }
         });
       }
 
       // If no patterns exist, return defaults
       if (!data || data.length === 0) {
         return NextResponse.json({
-          ok: true,
-          patterns: generateDefaultPatterns(profile.tenant_id),
-          info: 'No work patterns configured - showing defaults'
+          success: true,
+          data: generateDefaultPatterns(profile.tenant_id),
+          meta: {
+            timestamp: new Date().toISOString(),
+            info: 'No work patterns configured - showing defaults'
+          }
         });
       }
 
-      return NextResponse.json({ ok: true, patterns: data });
+      return NextResponse.json({
+        success: true,
+        data: data,
+        meta: {
+          timestamp: new Date().toISOString()
+        }
+      });
 
     } catch (dbError) {
       console.warn('Database error getting work patterns:', dbError);
       return NextResponse.json({
-        ok: true,
-        patterns: generateDefaultPatterns(profile.tenant_id),
-        warning: 'Using default work patterns due to database error'
+        success: true,
+        data: generateDefaultPatterns(profile.tenant_id),
+        meta: {
+          timestamp: new Date().toISOString(),
+          warning: 'Using default work patterns due to database error'
+        }
       });
     }
 
   } catch (error: unknown) {
     console.error('Work patterns API error:', error);
     return NextResponse.json({
-      ok: false,
-      error: (error as Error).message
+      success: false,
+      error: {
+        code: 'WORK_PATTERNS_ERROR',
+        message: (error as Error).message,
+        details: { endpoint: 'GET /api/admin/availability/work-patterns' }
+      },
+      meta: {
+        timestamp: new Date().toISOString()
+      }
     }, { status: 400 });
   }
 }
@@ -88,16 +120,60 @@ export async function POST(req: Request) {
     const payload = upsertSchema.parse(body);
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || profile.role !== 'admin') throw new Error('Admin only');
+    
+    if (!profile || profile.role !== 'admin') {
+      return NextResponse.json({
+        success: false,
+        error: {
+          code: 'ADMIN_ONLY',
+          message: 'Only admin users can create work patterns.',
+          details: { required_role: 'admin' }
+        },
+        meta: {
+          timestamp: new Date().toISOString()
+        }
+      }, { status: 403 });
+    }
+    
     const { data, error } = await admin
       .from('work_patterns')
       .upsert({ tenant_id: profile.tenant_id, ...payload }, { onConflict: 'tenant_id,weekday' })
       .select('*')
       .single();
-    if (error) throw error;
-    return NextResponse.json({ ok: true, pattern: data });
+      
+    if (error) {
+      return NextResponse.json({
+        success: false,
+        error: {
+          code: 'DATABASE_ERROR',
+          message: 'Failed to create/update work pattern.',
+          details: { db_error: error.message }
+        },
+        meta: {
+          timestamp: new Date().toISOString()
+        }
+      }, { status: 500 });
+    }
+    
+    return NextResponse.json({
+      success: true,
+      data: data,
+      meta: {
+        timestamp: new Date().toISOString()
+      }
+    });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return NextResponse.json({
+      success: false,
+      error: {
+        code: 'WORK_PATTERN_CREATE_ERROR',
+        message: (error as Error).message,
+        details: { endpoint: 'POST /api/admin/availability/work-patterns' }
+      },
+      meta: {
+        timestamp: new Date().toISOString()
+      }
+    }, { status: 400 });
   }
 }
 

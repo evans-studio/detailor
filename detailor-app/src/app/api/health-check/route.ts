@@ -71,19 +71,23 @@ export async function GET() {
   const coreHealthy = checks.environment && checks.database && checks.profiles_table && checks.tenants_table;
   
   return NextResponse.json({
-    ok: true, // Always return ok=true since we have fallbacks for missing components
-    timestamp,
-    status: coreHealthy ? 'healthy' : 'degraded',
-    message: coreHealthy 
-      ? 'All core systems operational' 
-      : 'Core systems degraded but fallbacks available',
-    checks,
-    fallbacks: {
-      services: !checks.services_table ? 'Sample services data available' : null,
-      work_patterns: !checks.work_patterns_table ? 'Default work patterns available' : null,
-      analytics: !checks.analytics_rpcs ? 'Sample analytics data available' : null,
+    success: true, // Always return success=true since we have fallbacks for missing components
+    data: {
+      status: coreHealthy ? 'healthy' : 'degraded',
+      message: coreHealthy 
+        ? 'All core systems operational' 
+        : 'Core systems degraded but fallbacks available',
+      checks,
+      fallbacks: {
+        services: !checks.services_table ? 'Sample services data available' : null,
+        work_patterns: !checks.work_patterns_table ? 'Default work patterns available' : null,
+        analytics: !checks.analytics_rpcs ? 'Sample analytics data available' : null,
+      },
+      version: process.env.npm_package_version || '1.0.0',
     },
-    version: process.env.npm_package_version || '1.0.0',
+    meta: {
+      timestamp,
+    }
   }, { 
     status: 200 // Always return 200 since fallbacks ensure the app works
   });

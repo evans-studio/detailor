@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -12,7 +13,7 @@ const bodySchema = z.object({
 
 export async function POST(req: Request) {
   if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ ok: false, error: 'Disabled in production' }, { status: 403 });
+    return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Disabled in production', undefined, 403);
   }
   
   try {
@@ -26,10 +27,7 @@ export async function POST(req: Request) {
     const userExists = existingUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
     
     if (userExists) {
-      return NextResponse.json({ 
-        ok: false, 
-        error: `User with email ${email} already exists` 
-      }, { status: 400 });
+      return createErrorResponse(API_ERROR_CODES.DUPLICATE_ENTRY, `User with email ${email} already exists`, { field: 'email' }, 400);
     }
     
     // Create user in Supabase Auth
@@ -82,8 +80,7 @@ export async function POST(req: Request) {
       }
     }
     
-    return NextResponse.json({
-      ok: true,
+    return createSuccessResponse({
       user: {
         id: authData.user.id,
         email: authData.user.email,
@@ -94,10 +91,7 @@ export async function POST(req: Request) {
     });
     
   } catch (error: unknown) {
-    return NextResponse.json({ 
-      ok: false, 
-      error: (error as Error).message 
-    }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, (error as Error).message, undefined, 400);
   }
 }
 

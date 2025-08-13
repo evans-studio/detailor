@@ -1,16 +1,17 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import Stripe from 'stripe';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
     const { price_id, email } = body as { price_id?: string; email?: string };
-    if (!price_id) return NextResponse.json({ ok: false, error: 'Missing price_id' }, { status: 400 });
+    if (!price_id) return createErrorResponse(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 'Missing price_id', { field: 'price_id' }, 400);
 
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
-    if (!secret) return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
+    if (!secret) return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'Server not configured', undefined, 500);
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk';
     const stripe = new Stripe(secret);
@@ -30,9 +31,9 @@ export async function POST(req: Request) {
       metadata: { app: 'detailor', price_id },
     });
 
-    return NextResponse.json({ ok: true, url: session.url, id: session.id });
+    return createSuccessResponse({ url: session.url, id: session.id });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/payments/checkout' }, 400);
   }
 }
 
@@ -41,10 +42,10 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const price_id = searchParams.get('price_id') || undefined;
     const email = searchParams.get('email') || undefined;
-    if (!price_id) return NextResponse.json({ ok: false, error: 'Missing price_id' }, { status: 400 });
+    if (!price_id) return createErrorResponse(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 'Missing price_id', { field: 'price_id' }, 400);
 
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
-    if (!secret) return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
+    if (!secret) return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'Server not configured', undefined, 500);
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk';
     const stripe = new Stripe(secret);
@@ -61,9 +62,9 @@ export async function GET(req: Request) {
       metadata: { app: 'detailor', price_id },
     });
     if (session.url) return NextResponse.redirect(session.url, { status: 303 });
-    return NextResponse.json({ ok: false, error: 'No checkout URL' }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.EXTERNAL_SERVICE_ERROR, 'No checkout URL', undefined, 400);
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/payments/checkout' }, 400);
   }
 }
 

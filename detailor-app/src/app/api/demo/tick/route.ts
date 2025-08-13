@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export const runtime = 'nodejs';
@@ -22,9 +23,9 @@ export async function POST() {
         await admin.from('bookings').update({ status: next }).eq('id', b.id).eq('tenant_id', tenant.id);
       }
     }
-    return NextResponse.json({ ok: true });
+    return createSuccessResponse({});
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/demo/tick' }, 400);
   }
 }
 

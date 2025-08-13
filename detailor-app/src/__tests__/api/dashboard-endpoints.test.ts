@@ -120,24 +120,37 @@ describe('Dashboard API Fallback Functions', () => {
   describe('API Error Handling', () => {
     it('should have consistent error response structure', () => {
       const errorResponse = {
-        ok: false,
-        error: 'Test error message'
+        success: false,
+        error: {
+          code: 'TEST_ERROR',
+          message: 'Test error message',
+          details: {}
+        },
+        meta: {
+          timestamp: new Date().toISOString()
+        }
       };
 
       const successWithWarningResponse = {
-        ok: true,
+        success: true,
         data: {},
-        warning: 'Using sample data due to database error'
+        meta: {
+          timestamp: new Date().toISOString(),
+          warning: 'Using sample data due to database error'
+        }
       };
 
-      expect(errorResponse).toHaveProperty('ok');
+      expect(errorResponse).toHaveProperty('success');
       expect(errorResponse).toHaveProperty('error');
-      expect(errorResponse.ok).toBe(false);
+      expect(errorResponse.success).toBe(false);
+      expect(errorResponse.error).toHaveProperty('code');
+      expect(errorResponse.error).toHaveProperty('message');
+      expect(errorResponse.error).toHaveProperty('details');
       
-      expect(successWithWarningResponse).toHaveProperty('ok');
+      expect(successWithWarningResponse).toHaveProperty('success');
       expect(successWithWarningResponse).toHaveProperty('data');
-      expect(successWithWarningResponse).toHaveProperty('warning');
-      expect(successWithWarningResponse.ok).toBe(true);
+      expect(successWithWarningResponse).toHaveProperty('meta');
+      expect(successWithWarningResponse.success).toBe(true);
     });
   });
 });

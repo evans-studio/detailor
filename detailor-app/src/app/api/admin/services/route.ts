@@ -58,7 +58,19 @@ export async function GET(req: Request) {
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || !['staff', 'admin'].includes(profile.role)) throw new Error('Forbidden');
+    if (!profile || !['staff', 'admin'].includes(profile.role)) {
+      return NextResponse.json({
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Insufficient permissions to access services.',
+          details: { required_roles: ['staff', 'admin'] }
+        },
+        meta: {
+          timestamp: new Date().toISOString()
+        }
+      }, { status: 403 });
+    }
     
     try {
       const { data, error } = await admin.from('services').select('*').eq('tenant_id', profile.tenant_id).order('name');
@@ -66,37 +78,59 @@ export async function GET(req: Request) {
       if (error) {
         console.warn('Services table error, using sample data:', error);
         return NextResponse.json({
-          ok: true,
-          services: generateSampleServices(profile.tenant_id),
-          warning: 'Using sample services - database table not available'
+          success: true,
+          data: generateSampleServices(profile.tenant_id),
+          meta: {
+            timestamp: new Date().toISOString(),
+            warning: 'Using sample services - database table not available'
+          }
         });
       }
 
       // If no services exist, return sample services
       if (!data || data.length === 0) {
         return NextResponse.json({
-          ok: true,
-          services: generateSampleServices(profile.tenant_id),
-          info: 'No services configured - showing sample services'
+          success: true,
+          data: generateSampleServices(profile.tenant_id),
+          meta: {
+            timestamp: new Date().toISOString(),
+            info: 'No services configured - showing sample services'
+          }
         });
       }
 
-      return NextResponse.json({ ok: true, services: data });
+      return NextResponse.json({
+        success: true,
+        data: data,
+        meta: {
+          timestamp: new Date().toISOString()
+        }
+      });
 
     } catch (dbError) {
       console.warn('Database error getting services:', dbError);
       return NextResponse.json({
-        ok: true,
-        services: generateSampleServices(profile.tenant_id),
-        warning: 'Using sample services due to database error'
+        success: true,
+        data: generateSampleServices(profile.tenant_id),
+        meta: {
+          timestamp: new Date().toISOString(),
+          warning: 'Using sample services due to database error'
+        }
       });
     }
 
   } catch (error: unknown) {
     console.error('Services API error:', error);
     return NextResponse.json({
-      ok: false,
-      error: (error as Error).message
+      success: false,
+      error: {
+        code: 'SERVICES_ERROR',
+        message: (error as Error).message,
+        details: { endpoint: 'GET /api/admin/services' }
+      },
+      meta: {
+        timestamp: new Date().toISOString()
+      }
     }, { status: 400 });
   }
 }
@@ -108,7 +142,19 @@ export async function POST(req: Request) {
     const payload = bodySchema.parse(body);
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || profile.role !== 'admin') throw new Error('Admin only');
+    if (!profile || profile.role !== 'admin') {
+      return NextResponse.json({
+        success: false,
+        error: {
+          code: 'ADMIN_ONLY',
+          message: 'Only admin users can create services.',
+          details: { required_role: 'admin' }
+        },
+        meta: {
+          timestamp: new Date().toISOString()
+        }
+      }, { status: 403 });
+    }
 
     try {
       // Check services limit for the tenant
@@ -120,7 +166,17 @@ export async function POST(req: Request) {
         const currentCount = currentServices?.length || 0;
         
         if (currentCount >= servicesLimit) {
-          throw new Error(`Service limit reached (${servicesLimit}). Upgrade to Pro for more services.`);
+          return NextResponse.json({
+            success: false,
+            error: {
+              code: 'SERVICE_LIMIT_REACHED',
+              message: `Service limit reached (${servicesLimit}). Upgrade to Pro for more services.`,
+              details: { current_count: currentCount, limit: servicesLimit }
+            },
+            meta: {
+              timestamp: new Date().toISOString()
+            }
+          }, { status: 403 });
         }
       }
 
@@ -133,7 +189,17 @@ export async function POST(req: Request) {
         .single();
       
       if (existingService) {
-        throw new Error(`A service named "${payload.name}" already exists. Please choose a different name.`);
+        return NextResponse.json({
+          success: false,
+          error: {
+            code: 'SERVICE_NAME_EXISTS',
+            message: `A service named "${payload.name}" already exists. Please choose a different name.`,
+            details: { service_name: payload.name }
+          },
+          meta: {
+            timestamp: new Date().toISOString()
+          }
+        }, { status: 409 });
       }
 
       const { data, error } = await admin
@@ -145,20 +211,54 @@ export async function POST(req: Request) {
       if (error) {
         // Handle specific constraint violations with better error messages
         if (error.code === '23505' && error.message?.includes('services_tenant_id_name_key')) {
-          throw new Error(`A service named "${payload.name}" already exists. Please choose a different name.`);
+          return NextResponse.json({
+            success: false,
+            error: {
+              code: 'SERVICE_NAME_EXISTS',
+              message: `A service named "${payload.name}" already exists. Please choose a different name.`,
+              details: { service_name: payload.name, constraint: 'unique_name' }
+            },
+            meta: {
+              timestamp: new Date().toISOString()
+            }
+          }, { status: 409 });
         }
-        throw error;
+        
+        return NextResponse.json({
+          success: false,
+          error: {
+            code: 'DATABASE_ERROR',
+            message: 'Failed to create service due to database error.',
+            details: { db_error: error.message }
+          },
+          meta: {
+            timestamp: new Date().toISOString()
+          }
+        }, { status: 500 });
       }
       
-      return NextResponse.json({ ok: true, service: data });
+      return NextResponse.json({
+        success: true,
+        data: data,
+        meta: {
+          timestamp: new Date().toISOString()
+        }
+      });
 
     } catch (dbError: any) {
       // If services table doesn't exist, return a helpful error
       if (dbError.message?.includes('relation "services" does not exist') || 
           dbError.code === '42P01') {
         return NextResponse.json({
-          ok: false,
-          error: 'Services table not set up yet. Please contact support to initialize your database.'
+          success: false,
+          error: {
+            code: 'SERVICES_TABLE_MISSING',
+            message: 'Services table not set up yet. Please contact support to initialize your database.',
+            details: { db_code: dbError.code }
+          },
+          meta: {
+            timestamp: new Date().toISOString()
+          }
         }, { status: 503 });
       }
       
@@ -168,7 +268,17 @@ export async function POST(req: Request) {
     
   } catch (error: unknown) {
     console.error('Services POST API error:', error);
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return NextResponse.json({
+      success: false,
+      error: {
+        code: 'SERVICES_CREATE_ERROR',
+        message: (error as Error).message,
+        details: { endpoint: 'POST /api/admin/services' }
+      },
+      meta: {
+        timestamp: new Date().toISOString()
+      }
+    }, { status: 400 });
   }
 }
 

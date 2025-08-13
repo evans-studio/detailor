@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import Stripe from 'stripe';
 
 export async function POST(req: Request) {
@@ -15,12 +16,12 @@ export async function POST(req: Request) {
     };
     
     if (!amount || amount < 50) {
-      return NextResponse.json({ ok: false, error: 'Invalid amount' }, { status: 400 });
+      return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'Invalid amount', { min: 50 }, 400);
     }
 
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
     if (!secret) {
-      return NextResponse.json({ ok: false, error: 'Server not configured' }, { status: 500 });
+      return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'Server not configured', undefined, 500);
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk';
@@ -56,8 +57,8 @@ export async function POST(req: Request) {
       },
     });
 
-    return NextResponse.json({ ok: true, url: session.url, id: session.id });
+    return createSuccessResponse({ url: session.url, id: session.id });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/payments/checkout-booking' }, 400);
   }
 }

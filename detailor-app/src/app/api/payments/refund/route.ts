@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import Stripe from 'stripe';
 import { getUserFromRequest } from '@/lib/authServer';
@@ -20,7 +21,7 @@ export async function POST(req: Request) {
     // Rate limiting for refunds (sensitive operation)
     const ip = req.headers.get('x-forwarded-for') || 'unknown';
     if (!checkRateLimit(`refund-${user.id}-${ip}`, 5, 300000)) { // 5 refunds per 5 minutes
-      return NextResponse.json({ ok: false, error: 'Rate limit exceeded' }, { status: 429 });
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Rate limit exceeded', { limit: 5, window: '5m' }, 429);
     }
     
     const admin = getSupabaseAdmin();
@@ -164,8 +165,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ 
-      ok: true, 
+    return createSuccessResponse({ 
       payment: data,
       refund: {
         amount: refundAmount,
@@ -174,7 +174,7 @@ export async function POST(req: Request) {
       }
     });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/payments/refund' }, 400);
   }
 }
 

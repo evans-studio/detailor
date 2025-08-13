@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function GET(req: Request) {
@@ -9,7 +10,7 @@ export async function GET(req: Request) {
     const email = searchParams.get('email');
     
     if (!email) {
-      return NextResponse.json({ ok: false, error: 'Email parameter required' }, { status: 400 });
+      return createErrorResponse(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 'Email parameter required', { field: 'email' }, 400);
     }
 
     const admin = getSupabaseAdmin();
@@ -89,11 +90,11 @@ export async function GET(req: Request) {
       issues: state.analysis.issues
     });
 
-    return NextResponse.json({ ok: true, state });
+    return createSuccessResponse({ state });
 
   } catch (e) {
     console.error('[debug] Error checking user state:', (e as Error).message);
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/debug/user-state' }, 500);
   }
 }
 
@@ -103,7 +104,7 @@ export async function POST(req: Request) {
     const { email, action } = body;
     
     if (!email) {
-      return NextResponse.json({ ok: false, error: 'Email required' }, { status: 400 });
+      return createErrorResponse(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 'Email required', { field: 'email' }, 400);
     }
 
     const admin = getSupabaseAdmin();
@@ -122,19 +123,16 @@ export async function POST(req: Request) {
       }
       
       if (tenant && !profile) {
-        return NextResponse.json({ 
-          ok: false, 
-          error: 'Cannot create profile without user ID. User must be created first.' 
-        });
+        return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'Cannot create profile without user ID. User must be created first.', undefined, 400);
       }
       
-      return NextResponse.json({ ok: true, message: 'Fixed available issues' });
+      return createSuccessResponse({ message: 'Fixed available issues' });
     }
     
-    return NextResponse.json({ ok: false, error: 'Invalid action' }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'Invalid action', undefined, 400);
 
   } catch (e) {
     console.error('[debug] Error fixing user state:', (e as Error).message);
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 500 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/debug/user-state' }, 500);
   }
 }

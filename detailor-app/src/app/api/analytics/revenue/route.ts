@@ -70,8 +70,15 @@ export async function GET(req: Request) {
     
     if (!featureFlags.analytics) {
       return NextResponse.json({
-        ok: false,
-        error: 'Analytics not available on your plan.'
+        success: false,
+        error: {
+          code: 'ANALYTICS_NOT_AVAILABLE',
+          message: 'Analytics not available on your plan.',
+          details: { required_feature: 'analytics' }
+        },
+        meta: {
+          timestamp: new Date().toISOString()
+        }
       }, { status: 403 });
     }
 
@@ -113,8 +120,11 @@ export async function GET(req: Request) {
     }
 
     return NextResponse.json({
-      ok: true,
-      data: revenueData
+      success: true,
+      data: revenueData,
+      meta: {
+        timestamp: new Date().toISOString()
+      }
     });
 
   } catch (error) {
@@ -124,9 +134,12 @@ export async function GET(req: Request) {
     const sampleData = generateSampleRevenueData();
     
     return NextResponse.json({
-      ok: true,
+      success: true,
       data: sampleData,
-      warning: 'Using sample data due to: ' + (error as Error).message
+      meta: {
+        timestamp: new Date().toISOString(),
+        warning: 'Using sample data due to: ' + (error as Error).message
+      }
     });
   }
 }

@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (!profile || !['admin', 'staff'].includes(profile.role)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Forbidden', { required_roles: ['admin','staff'] }, 403);
     }
 
     const activities: ActivityItem[] = [];
@@ -153,17 +154,10 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, limit);
 
-    return NextResponse.json({
-      ok: true,
-      activities: sortedActivities,
-      count: sortedActivities.length
-    });
+    return createSuccessResponse({ activities: sortedActivities, count: sortedActivities.length });
 
   } catch (error) {
     console.error('Error fetching activities:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'Internal server error', undefined, 500);
   }
 }

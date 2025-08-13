@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -8,7 +9,7 @@ const bodySchema = z.object({ email: z.string().email() });
 
 export async function POST(req: Request) {
   if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ ok: false, error: 'Disabled in production' }, { status: 403 });
+    return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Disabled in production', undefined, 403);
   }
   
   try {
@@ -33,8 +34,7 @@ export async function POST(req: Request) {
       profile = profileData;
     }
     
-    return NextResponse.json({
-      ok: true,
+    return createSuccessResponse({
       debug: {
         email: email.toLowerCase().trim(),
         userExists: !!userExists,
@@ -54,13 +54,9 @@ export async function POST(req: Request) {
     });
     
   } catch (error: unknown) {
-    return NextResponse.json({ 
-      ok: false, 
-      error: (error as Error).message,
-      debug: {
-        supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      }
-    }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, {
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    }, 400);
   }
 }
