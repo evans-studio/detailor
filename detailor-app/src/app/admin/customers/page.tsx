@@ -37,8 +37,9 @@ export default function AdminCustomersPage() {
       if (q) qs.set('q', q);
       if (status !== 'all') qs.set('status', status);
       if (segment !== 'all') qs.set('segment', segment);
-      const data = await api<{ ok: boolean; customers: Customer[] }>(`/api/customers${qs.toString() ? `?${qs.toString()}` : ''}`);
-      return data.customers || [];
+      const res = await fetch(`/api/customers${qs.toString() ? `?${qs.toString()}` : ''}`, { cache: 'no-store' });
+      const json = await res.json();
+      return json.data || json.customers || [];
     },
     refetchInterval: 60000, // Real-time updates
   });
