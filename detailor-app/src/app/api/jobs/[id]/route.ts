@@ -13,6 +13,7 @@ const schema = z.object({
   assign_to_me: z.boolean().optional(),
   qc_passed: z.boolean().optional(),
   staff_profile_id: z.string().uuid().nullable().optional(),
+  inventory_usage: z.array(z.object({ item_id: z.string().uuid(), quantity: z.number().positive() })).optional(),
 });
 
 export async function PATCH(req: Request) {
@@ -52,6 +53,18 @@ export async function PATCH(req: Request) {
     // Log materials as activity (no schema change)
     if (payload.materials && payload.materials.length > 0) {
       await admin.from('job_activity').insert({ tenant_id: profile.tenant_id, job_id: id, actor_profile_id: profile.id, event: 'materials_logged', payload: { materials: payload.materials } });
+    }
+    // Record inventory usage and decrement stock
+    if (payload.inventory_usage && payload.inventory_usage.length > 0) {
+      for (const u of payload.inventory_usage) {
+        const { error: rpcErr } = await admin.rpc('decrement_inventory_stock', { item_id_input: u.item_id, qty: u.quantity });
+        if (rpcErr) {
+          const { data: item } = await admin.from('inventory_items').select('stock').eq('id', u.item_id).single();
+          const newStock = Math.max(0, Number(item?.stock || 0) - u.quantity);
+          await admin.from('inventory_items').update({ stock: newStock }).eq('id', u.item_id);
+        }
+      }
+      await admin.from('job_activity').insert({ tenant_id: profile.tenant_id, job_id: id, actor_profile_id: profile.id, event: 'inventory_used', payload: { usage: payload.inventory_usage } });
     }
     // Log signature capture as activity (data URL reference)
     if (payload.signature_data_url) {

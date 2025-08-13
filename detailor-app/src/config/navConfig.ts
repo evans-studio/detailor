@@ -19,6 +19,7 @@ export const navItems: NavItem[] = [
   { label: 'My Bookings', path: '/bookings/me', icon: Calendar, roles: ['customer'], section: 'Operations' },
   { label: 'Quotes', path: '/admin/quotes', icon: FileText, roles: ['admin', 'staff', 'super_admin'], section: 'Operations' },
   { label: 'Customers', path: '/admin/customers', icon: Users, roles: ['admin', 'staff', 'super_admin'], section: 'CRM' },
+  { label: 'Inventory', path: '/admin/inventory', icon: FileText, roles: ['admin', 'super_admin'], section: 'Operations' },
   { label: 'Payments', path: '/payments', icon: CreditCard, roles: ['admin', 'staff', 'super_admin'], section: 'Finance' },
   { label: 'Analytics', path: '/admin/analytics', icon: FileText, roles: ['admin', 'staff', 'super_admin'], section: 'Finance' },
   { label: 'Messages', path: '/admin/messages', icon: MessageCircle, roles: ['admin', 'staff', 'super_admin'], section: 'Comms' },
