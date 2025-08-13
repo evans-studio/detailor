@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { sendTenantEmail } from '@/lib/messaging';
+import { sendTenantSMS } from '@/lib/messaging-sms';
 
 const channelSchema = z.enum(['email','sms']);
 
@@ -45,17 +46,27 @@ export async function POST(req: Request) {
     if (t?.is_demo) {
       return createSuccessResponse({ messageId: 'demo-sink' });
     }
-    const res = await sendTenantEmail({
-      tenantId: profile.tenant_id,
-      to: payload.to,
-      subject: payload.subject,
-      html: payload.html,
-      text: payload.text,
-      templateKey: payload.template_key,
-      bookingId: payload.booking_id,
-      customerId: payload.customer_id,
-      idempotencyKey: payload.idempotency_key,
-    });
+    const res = payload.channel === 'sms'
+      ? await sendTenantSMS({
+          tenantId: profile.tenant_id,
+          to: payload.to,
+          body: payload.text || payload.html || '',
+          templateKey: payload.template_key,
+          bookingId: payload.booking_id,
+          customerId: payload.customer_id,
+          idempotencyKey: payload.idempotency_key,
+        })
+      : await sendTenantEmail({
+          tenantId: profile.tenant_id,
+          to: payload.to,
+          subject: payload.subject,
+          html: payload.html,
+          text: payload.text,
+          templateKey: payload.template_key,
+          bookingId: payload.booking_id,
+          customerId: payload.customer_id,
+          idempotencyKey: payload.idempotency_key,
+        });
 
     // TODO: when SMS sending is implemented, if provider fails, refund the 1 credit by calling increment_tenant_counter with +1
     return NextResponse.json({ success: true, data: res, meta: { timestamp: new Date().toISOString() } });
