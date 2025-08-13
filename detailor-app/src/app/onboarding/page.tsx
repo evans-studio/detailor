@@ -48,7 +48,7 @@ export default function OnboardingPage() {
     base_duration_min: z.coerce.number().int('Duration must be whole minutes').min(15, 'Minimum is 15 minutes').multipleOf(15, 'Use 15-minute increments'),
   });
 
-  // Availability Info
+  // Availability Info - Updated to match API structure
   const [availabilityForm, setAvailabilityForm] = React.useState({
     monday_start: '09:00',
     monday_end: '17:00',
@@ -63,7 +63,8 @@ export default function OnboardingPage() {
     saturday_start: '09:00',
     saturday_end: '15:00',
     sunday_closed: true,
-    capacity_per_slot: 1
+    slot_duration_min: 60, // Added missing required field
+    capacity: 1 // Renamed from capacity_per_slot to match API
   });
 
   // Branding Info
@@ -112,29 +113,72 @@ export default function OnboardingPage() {
           break;
 
         case 'availability':
-          // Set up basic availability
-          const availabilityRes = await fetch('/api/admin/availability/work-patterns', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              monday_start: availabilityForm.monday_start,
-              monday_end: availabilityForm.monday_end,
-              tuesday_start: availabilityForm.tuesday_start,
-              tuesday_end: availabilityForm.tuesday_end,
-              wednesday_start: availabilityForm.wednesday_start,
-              wednesday_end: availabilityForm.wednesday_end,
-              thursday_start: availabilityForm.thursday_start,
-              thursday_end: availabilityForm.thursday_end,
-              friday_start: availabilityForm.friday_start,
-              friday_end: availabilityForm.friday_end,
-              saturday_start: availabilityForm.saturday_start,
-              saturday_end: availabilityForm.saturday_end,
-              sunday_closed: availabilityForm.sunday_closed,
-              capacity_per_slot: availabilityForm.capacity_per_slot
-            })
-          });
-          const availabilityData = await availabilityRes.json();
-          if (!availabilityData.ok) throw new Error(availabilityData.error);
+          // Validate required fields first
+          if (!availabilityForm.slot_duration_min || availabilityForm.slot_duration_min < 15) {
+            throw new Error('Please select an appointment duration of at least 15 minutes');
+          }
+          
+          if (!availabilityForm.capacity || availabilityForm.capacity < 1) {
+            throw new Error('Please set booking capacity to at least 1');
+          }
+          
+          // Set up basic availability - Convert form data to API structure
+          const workPatterns = [
+            { weekday: 1, start_time: availabilityForm.monday_start, end_time: availabilityForm.monday_end, slot_duration_min: availabilityForm.slot_duration_min, capacity: availabilityForm.capacity },
+            { weekday: 2, start_time: availabilityForm.tuesday_start, end_time: availabilityForm.tuesday_end, slot_duration_min: availabilityForm.slot_duration_min, capacity: availabilityForm.capacity },
+            { weekday: 3, start_time: availabilityForm.wednesday_start, end_time: availabilityForm.wednesday_end, slot_duration_min: availabilityForm.slot_duration_min, capacity: availabilityForm.capacity },
+            { weekday: 4, start_time: availabilityForm.thursday_start, end_time: availabilityForm.thursday_end, slot_duration_min: availabilityForm.slot_duration_min, capacity: availabilityForm.capacity },
+            { weekday: 5, start_time: availabilityForm.friday_start, end_time: availabilityForm.friday_end, slot_duration_min: availabilityForm.slot_duration_min, capacity: availabilityForm.capacity },
+            { weekday: 6, start_time: availabilityForm.saturday_start, end_time: availabilityForm.saturday_end, slot_duration_min: availabilityForm.slot_duration_min, capacity: availabilityForm.capacity }
+          ];
+          
+          // Validate that at least one day has valid working hours
+          const validPatterns = workPatterns.filter(p => 
+            p.start_time && 
+            p.end_time && 
+            p.start_time < p.end_time &&
+            p.start_time.match(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/) &&
+            p.end_time.match(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
+          );
+          
+          if (validPatterns.length === 0) {
+            throw new Error('Please set at least one working day with valid hours (start time must be before end time)');
+          }
+          
+          // Send each work pattern individually (API expects individual objects)
+          let allPatternsCreated = true;
+          let lastError = null;
+          let patternsCreatedCount = 0;
+          
+          for (const pattern of validPatterns) {
+            try {
+              const patternRes = await fetch('/api/admin/availability/work-patterns', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(pattern)
+              });
+              const patternData = await patternRes.json();
+              if (!patternData.ok) {
+                lastError = patternData.error;
+                allPatternsCreated = false;
+                break;
+              }
+              patternsCreatedCount++;
+            } catch (e) {
+              lastError = (e as Error).message;
+              allPatternsCreated = false;
+              break;
+            }
+          }
+          
+          if (!allPatternsCreated && lastError) {
+            throw new Error(`Failed to set working hours: ${lastError}`);
+          }
+          
+          if (patternsCreatedCount === 0) {
+            throw new Error('No working hours were saved. Please check your time settings and try again.');
+          }
+          
           setHasAvailability(true);
           setCurrentStep('branding');
           break;
@@ -509,6 +553,56 @@ export default function OnboardingPage() {
               </div>
             </div>
 
+            {/* Booking Settings */}
+            <div className="border-t border-[var(--color-border)] pt-4 space-y-4">
+              <div className="text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-3">
+                Booking Settings
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
+                    Appointment Duration (minutes) *
+                  </label>
+                  <Select
+                    options={[
+                      { label: '15 minutes', value: '15' },
+                      { label: '30 minutes', value: '30' },
+                      { label: '45 minutes', value: '45' },
+                      { label: '1 hour', value: '60' },
+                      { label: '1 hour 30 min', value: '90' },
+                      { label: '2 hours', value: '120' }
+                    ]}
+                    value={availabilityForm.slot_duration_min.toString()}
+                    onValueChange={(value) => setAvailabilityForm({ ...availabilityForm, slot_duration_min: Number(value) })}
+                  />
+                  <div className="text-[var(--font-size-xs)] text-[var(--color-text-muted)] mt-1">
+                    How long each appointment slot should be
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
+                    Concurrent Bookings *
+                  </label>
+                  <Select
+                    options={[
+                      { label: '1 booking at a time', value: '1' },
+                      { label: '2 bookings at once', value: '2' },
+                      { label: '3 bookings at once', value: '3' },
+                      { label: '4 bookings at once', value: '4' },
+                      { label: '5 bookings at once', value: '5' }
+                    ]}
+                    value={availabilityForm.capacity.toString()}
+                    onValueChange={(value) => setAvailabilityForm({ ...availabilityForm, capacity: Number(value) })}
+                  />
+                  <div className="text-[var(--font-size-xs)] text-[var(--color-text-muted)] mt-1">
+                    How many jobs you can handle simultaneously
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {error && <div className="text-[var(--color-error)] text-[var(--font-size-sm)]">{error}</div>}
             
             <div className="flex justify-between pt-4">
@@ -517,7 +611,13 @@ export default function OnboardingPage() {
               </Button>
               <Button 
                 onClick={() => handleSubmit('availability')} 
-                disabled={submitting}
+                disabled={
+                  submitting || 
+                  !availabilityForm.slot_duration_min || 
+                  !availabilityForm.capacity ||
+                  availabilityForm.slot_duration_min < 15 ||
+                  availabilityForm.capacity < 1
+                }
               >
                 {submitting ? 'Setting availability...' : 'Continue'}
               </Button>
