@@ -8,6 +8,10 @@ const schema = z.object({
   status: z.enum(['not_started','in_progress','completed','paid']).optional(),
   notes: z.string().optional(),
   checklist: z.array(z.unknown()).optional(),
+  materials: z.array(z.object({ name: z.string(), quantity: z.number().nonnegative().default(1), unit_cost: z.number().nonnegative().default(0) })).optional(),
+  signature_data_url: z.string().optional(),
+  assign_to_me: z.boolean().optional(),
+  qc_passed: z.boolean().optional(),
 });
 
 export async function PATCH(req: Request) {
@@ -27,11 +31,29 @@ export async function PATCH(req: Request) {
     if (payload.status) updates.status = payload.status;
     if (payload.notes !== undefined) updates.notes = payload.notes;
     if (payload.checklist !== undefined) updates.checklist = payload.checklist as unknown[];
-    if (Object.keys(updates).length === 0) return createSuccessResponse({ job });
-    const { data, error } = await admin.from('jobs').update(updates).eq('id', id).eq('tenant_id', profile.tenant_id).select('*').single();
-    if (error) throw error;
-    await admin.from('job_activity').insert({ tenant_id: profile.tenant_id, job_id: id, actor_profile_id: profile.id, event: 'updated', payload: updates });
-    return createSuccessResponse({ job: data });
+    // Optional self-assignment for staff
+    if (payload.assign_to_me && profile.role === 'staff') {
+      updates.staff_profile_id = profile.id;
+    }
+    // QC flag stored on job if desired
+    if (payload.qc_passed !== undefined) updates.qc_passed = payload.qc_passed;
+    const needUpdate = Object.keys(updates).length > 0;
+    let updatedJob = job;
+    if (needUpdate) {
+      const { data, error } = await admin.from('jobs').update(updates).eq('id', id).eq('tenant_id', profile.tenant_id).select('*').single();
+      if (error) throw error;
+      updatedJob = data as typeof job;
+      await admin.from('job_activity').insert({ tenant_id: profile.tenant_id, job_id: id, actor_profile_id: profile.id, event: 'updated', payload: updates });
+    }
+    // Log materials as activity (no schema change)
+    if (payload.materials && payload.materials.length > 0) {
+      await admin.from('job_activity').insert({ tenant_id: profile.tenant_id, job_id: id, actor_profile_id: profile.id, event: 'materials_logged', payload: { materials: payload.materials } });
+    }
+    // Log signature capture as activity (data URL reference)
+    if (payload.signature_data_url) {
+      await admin.from('job_activity').insert({ tenant_id: profile.tenant_id, job_id: id, actor_profile_id: profile.id, event: 'signature_captured', payload: { data_url: payload.signature_data_url } });
+    }
+    return createSuccessResponse({ job: updatedJob });
   } catch (e: unknown) {
     return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'PATCH /api/jobs/[id]' }, 400);
   }

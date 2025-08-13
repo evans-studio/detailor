@@ -4,6 +4,7 @@ import { DashboardShell } from '@/components/layout/DashboardShell';
 import { RoleGuard } from '@/components/RoleGuard';
 import { Button } from '@/ui/button';
 import { JobDetailDrawer } from '@/components/JobDetailDrawer';
+import { useRealtimeAdminUpdates } from '@/lib/realtime';
 
 type JobRow = { 
   id: string; 
@@ -40,6 +41,8 @@ export default function StaffTodayPage() {
     setLoading(false);
   }
   React.useEffect(() => { load(); }, [day]);
+  // Realtime job updates
+  useRealtimeAdminUpdates('tenant', true);
   async function start(id: string) { await fetch(`/api/jobs/${id}/start`, { method: 'POST' }); await load(); }
   async function complete(id: string) { await fetch(`/api/jobs/${id}/complete`, { method: 'POST' }); await load(); }
   return (
