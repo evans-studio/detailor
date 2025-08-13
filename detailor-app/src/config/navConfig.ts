@@ -20,6 +20,7 @@ export const navItems: NavItem[] = [
   { label: 'Quotes', path: '/admin/quotes', icon: FileText, roles: ['admin', 'staff', 'super_admin'], section: 'Operations' },
   { label: 'Customers', path: '/admin/customers', icon: Users, roles: ['admin', 'staff', 'super_admin'], section: 'CRM' },
   { label: 'Payments', path: '/payments', icon: CreditCard, roles: ['admin', 'staff', 'super_admin'], section: 'Finance' },
+  { label: 'Analytics', path: '/admin/analytics', icon: FileText, roles: ['admin', 'staff', 'super_admin'], section: 'Finance' },
   { label: 'Messages', path: '/admin/messages', icon: MessageCircle, roles: ['admin', 'staff', 'super_admin'], section: 'Comms' },
   { label: 'Customer Home', path: '/customer/dashboard', icon: Home, roles: ['customer'] },
   { label: 'My Account', path: '/customer/account', icon: Settings, roles: ['customer'] },
