@@ -13,6 +13,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/ui/tabs';
 import Link from 'next/link';
 import { EnterpriseCalendar, type CalendarEvent } from '@/components/calendar/EnterpriseCalendar';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // Calendar helpers
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];

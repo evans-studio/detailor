@@ -16,11 +16,25 @@ export async function POST(req: Request) {
     if (!profile || !['admin','staff'].includes(profile.role)) {
       return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Insufficient permissions', { required_roles: ['admin','staff'] }, 403);
     }
-    const { data: booking } = await admin.from('bookings').select('*').eq('id', booking_id).eq('tenant_id', profile.tenant_id).single();
+    const { data: booking } = await admin
+      .from('bookings')
+      .select('*, services(name), tenants(feature_flags), customers(name), vehicles(make, model), addresses(address_line1, postcode)')
+      .eq('id', booking_id)
+      .eq('tenant_id', profile.tenant_id)
+      .single();
     if (!booking) return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Booking not found', { booking_id }, 404);
+    // Seed checklist from service default if available
+    const svc = booking?.services as { name?: string } | null;
+    const defaultChecklist: Array<{ label: string; done: boolean }> = svc?.name ? [
+      { label: `Prepare for ${svc.name}`, done: false },
+      { label: 'Protect interior surfaces', done: false },
+      { label: 'Pre-rinse exterior', done: false },
+      { label: 'Dry and inspect', done: false },
+    ] : [];
+
     const { data, error } = await admin
       .from('jobs')
-      .insert({ tenant_id: profile.tenant_id, booking_id: booking_id, staff_profile_id: null, status: 'not_started', checklist: '[]' })
+      .insert({ tenant_id: profile.tenant_id, booking_id: booking_id, staff_profile_id: null, status: 'not_started', checklist: defaultChecklist })
       .select('*')
       .single();
     if (error) throw error;
