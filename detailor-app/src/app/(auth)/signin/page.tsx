@@ -11,6 +11,8 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [debugInfo, setDebugInfo] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState(false);
   
   const client = React.useMemo(() => {
     return createClient(
@@ -25,9 +27,34 @@ export default function SignInPage() {
     setError('');
 
     try {
-      const res = await client.auth.signInWithPassword({ email, password });
+      // Trim and normalize email
+      const normalizedEmail = email.toLowerCase().trim();
+      
+      const res = await client.auth.signInWithPassword({ 
+        email: normalizedEmail, 
+        password 
+      });
+      
       if (res.error) {
-        setError(res.error.message);
+        // Provide more helpful error messages
+        let errorMessage = res.error.message;
+        
+        if (res.error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+        } else if (res.error.message.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and click the confirmation link before signing in.';
+        } else if (res.error.message.includes('Too many requests')) {
+          errorMessage = 'Too many failed attempts. Please wait a few minutes and try again.';
+        }
+        
+        setError(errorMessage);
+        
+        // Log additional debug info in development
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Auth error:', res.error);
+          console.log('Attempting with email:', normalizedEmail);
+        }
+        
         return;
       }
 
@@ -73,6 +100,24 @@ export default function SignInPage() {
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
+    }
+  }
+  
+  // Debug function for development
+  async function debugAccount() {
+    if (process.env.NODE_ENV !== 'development') return;
+    
+    try {
+      const res = await fetch('/api/dev/auth-debug', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.toLowerCase().trim() })
+      });
+      const data = await res.json();
+      setDebugInfo(data.debug);
+      setShowDebug(true);
+    } catch (e) {
+      console.error('Debug failed:', e);
     }
   }
 
@@ -208,8 +253,47 @@ export default function SignInPage() {
                   <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
-                  <p className="text-red-700 text-sm">{error}</p>
+                  <div className="flex-1">
+                    <p className="text-red-700 text-sm">{error}</p>
+                    {process.env.NODE_ENV === 'development' && email && (
+                      <button
+                        type="button"
+                        onClick={debugAccount}
+                        className="mt-2 text-xs text-red-600 underline hover:text-red-800"
+                      >
+                        Debug Account Info
+                      </button>
+                    )}
+                  </div>
                 </div>
+              </div>
+            )}
+            
+            {/* Debug Info Panel (Development Only) */}
+            {process.env.NODE_ENV === 'development' && showDebug && debugInfo && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-xs">
+                <h4 className="font-semibold text-yellow-800 mb-2">Debug Information:</h4>
+                <div className="space-y-1 text-yellow-700">
+                  <div><strong>Email:</strong> {debugInfo.email}</div>
+                  <div><strong>User Exists:</strong> {debugInfo.userExists ? 'Yes' : 'No'}</div>
+                  {debugInfo.userExists && (
+                    <>
+                      <div><strong>Email Confirmed:</strong> {debugInfo.emailConfirmed ? 'Yes' : 'No'}</div>
+                      <div><strong>User ID:</strong> {debugInfo.userId}</div>
+                      <div><strong>Last Sign In:</strong> {debugInfo.lastSignIn || 'Never'}</div>
+                      <div><strong>Role:</strong> {debugInfo.profile?.role || 'No profile'}</div>
+                    </>
+                  )}
+                  <div><strong>Supabase URL:</strong> {debugInfo.supabaseUrl}</div>
+                  <div><strong>Total Users:</strong> {debugInfo.totalUsers}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDebug(false)}
+                  className="mt-2 text-yellow-600 underline hover:text-yellow-800"
+                >
+                  Close Debug
+                </button>
               </div>
             )}
 

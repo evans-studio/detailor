@@ -49,12 +49,32 @@ export async function POST(req: Request) {
       }
     }
 
+    // Check if service name already exists for this tenant
+    const { data: existingService } = await admin
+      .from('services')
+      .select('id, name')
+      .eq('tenant_id', profile.tenant_id)
+      .ilike('name', payload.name)
+      .single();
+    
+    if (existingService) {
+      throw new Error(`A service named "${payload.name}" already exists. Please choose a different name.`);
+    }
+
     const { data, error } = await admin
       .from('services')
       .insert({ tenant_id: profile.tenant_id, ...payload })
       .select('*')
       .single();
-    if (error) throw error;
+    
+    if (error) {
+      // Handle specific constraint violations with better error messages
+      if (error.code === '23505' && error.message?.includes('services_tenant_id_name_key')) {
+        throw new Error(`A service named "${payload.name}" already exists. Please choose a different name.`);
+      }
+      throw error;
+    }
+    
     return NextResponse.json({ ok: true, service: data });
   } catch (error: unknown) {
     return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });

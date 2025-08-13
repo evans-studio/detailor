@@ -94,6 +94,24 @@ export default function OnboardingPage() {
         case 'service':
           // Validate and create first service (System Bible compliant)
           const validated = serviceSchema.parse(serviceForm);
+          
+          // First check if services already exist to avoid duplicates during repeated onboarding attempts
+          try {
+            const existingServicesRes = await fetch('/api/admin/services');
+            const existingServicesData = await existingServicesRes.json();
+            
+            if (existingServicesData.ok && existingServicesData.services?.length > 0) {
+              // Services already exist, skip creation and move to next step
+              setHasService(true);
+              setCurrentStep('availability');
+              notify({ title: 'Services already configured, continuing setup...' });
+              break;
+            }
+          } catch (e) {
+            // If checking existing services fails, continue with creation attempt
+            console.warn('Could not check existing services:', e);
+          }
+          
           const serviceRes = await fetch('/api/admin/services', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -107,7 +125,15 @@ export default function OnboardingPage() {
             }),
           });
           const serviceData = await serviceRes.json();
-          if (!serviceData.ok) throw new Error(serviceData.error);
+          if (!serviceData.ok) {
+            // Handle specific duplicate key constraint error with actionable message
+            if (serviceData.error?.includes('duplicate key value') || 
+                serviceData.error?.includes('already exists') ||
+                serviceData.error?.includes('services_tenant_id_name_key')) {
+              throw new Error(`A service named "${validated.name}" already exists. Please try a different name or continue to the next step if you already have services configured.`);
+            }
+            throw new Error(serviceData.error);
+          }
           setHasService(true);
           setCurrentStep('availability');
           break;
@@ -476,18 +502,31 @@ export default function OnboardingPage() {
               <Button intent="ghost" onClick={() => setCurrentStep('business')}>
                 Back
               </Button>
-              <Button
-                onClick={() => handleSubmit('service')}
-                disabled={
-                  submitting ||
-                  !serviceForm.name ||
-                  serviceForm.base_price < 0 ||
-                  serviceForm.base_duration_min < 15 ||
-                  serviceForm.base_duration_min % 15 !== 0
-                }
-              >
-                {submitting ? 'Creating service...' : 'Continue'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  intent="ghost"
+                  onClick={() => {
+                    setHasService(true);
+                    setCurrentStep('availability');
+                    notify({ title: 'Service step skipped - you can add services later from the admin panel' });
+                  }}
+                  disabled={submitting}
+                >
+                  Skip for Now
+                </Button>
+                <Button
+                  onClick={() => handleSubmit('service')}
+                  disabled={
+                    submitting ||
+                    !serviceForm.name ||
+                    serviceForm.base_price < 0 ||
+                    serviceForm.base_duration_min < 15 ||
+                    serviceForm.base_duration_min % 15 !== 0
+                  }
+                >
+                  {submitting ? 'Creating service...' : 'Continue'}
+                </Button>
+              </div>
             </div>
           </div>
         );
