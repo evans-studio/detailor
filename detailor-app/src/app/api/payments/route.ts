@@ -8,7 +8,7 @@ import Stripe from 'stripe';
 const createSchema = z.object({
   booking_id: z.string().uuid().optional(),
   invoice_id: z.string().uuid().optional(),
-  provider: z.enum(['stripe','paypal','cash']),
+  provider: z.enum(['stripe','paypal','cash','bank_transfer']),
   amount: z.number().positive(),
   currency: z.string().min(3).max(3).default('GBP'),
   status: z.enum(['requires_action','pending','succeeded','refunded','failed']).optional(),
@@ -76,12 +76,22 @@ export async function POST(req: Request) {
       .select('*')
       .single();
     if (error) throw error;
-    // If linked to a booking, update its payment_status best-effort
-    if (data?.booking_id) {
-      const newStatus = payload.status === 'succeeded' ? 'paid' : payload.status === 'refunded' ? 'refunded' : undefined;
-      if (newStatus) {
-        await admin.from('bookings').update({ payment_status: newStatus }).eq('id', data.booking_id).eq('tenant_id', profile.tenant_id);
+    // Reconcile with invoice and booking if present
+    if (data?.invoice_id) {
+      const invRes = await admin.from('invoices').select('id, tenant_id, total, paid_amount, booking_id').eq('id', data.invoice_id).single();
+      const inv = invRes.data as { id: string; tenant_id: string; total: number; paid_amount: number; booking_id?: string | null } | null;
+      if (inv) {
+        const newPaid = Number(inv.paid_amount || 0) + Number(payload.amount || 0);
+        const newBalance = Math.max(0, Number(inv.total || 0) - newPaid);
+        await admin.from('invoices').update({ paid_amount: newPaid, balance: newBalance }).eq('id', inv.id).eq('tenant_id', inv.tenant_id);
+        if (inv.booking_id && payload.status === 'succeeded') {
+          const newStatus = newBalance <= 0 ? 'paid' : 'deposit_paid';
+          await admin.from('bookings').update({ payment_status: newStatus }).eq('id', inv.booking_id).eq('tenant_id', inv.tenant_id);
+        }
       }
+    } else if (data?.booking_id && payload.status === 'succeeded') {
+      // Update booking status without invoice context
+      await admin.from('bookings').update({ payment_status: 'paid' }).eq('id', data.booking_id).eq('tenant_id', profile.tenant_id);
     }
     return createSuccessResponse({ payment: data });
   } catch (e: unknown) {

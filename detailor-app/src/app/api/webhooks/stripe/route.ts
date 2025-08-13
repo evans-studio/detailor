@@ -141,6 +141,55 @@ export async function POST(req: Request) {
         return NextResponse.json({ received: true, error: 'No email' }, { status: 200 });
       }
 
+      // If this was a service booking payment (not subscription), record payment + create/update invoice
+      if (session.metadata?.type === 'booking_payment') {
+        try {
+          const admin2 = getSupabaseAdmin();
+          const bookingRef = (session.metadata?.booking_reference as string) || '';
+          if (bookingRef && session.payment_status === 'paid') {
+            const bookingRes = await admin2.from('bookings').select('id, tenant_id, price_breakdown, payment_status').eq('reference', bookingRef).maybeSingle();
+            const booking = bookingRes.data as { id: string; tenant_id: string; price_breakdown?: { total?: number }; payment_status?: string } | null;
+            if (booking) {
+              // Upsert invoice (deposit or final payment)
+              const total = Math.round(Number(booking.price_breakdown?.total || 0) * 100) / 100;
+              // Create invoice if not exists for this booking
+              const invExisting = await admin2.from('invoices').select('id, total, paid_amount, balance').eq('booking_id', booking.id).eq('tenant_id', booking.tenant_id).maybeSingle();
+              let invoiceId = invExisting.data?.id as string | undefined;
+              if (!invoiceId) {
+                const numGen = await admin2.rpc('generate_invoice_number', { p_tenant_id: booking.tenant_id });
+                const createInv = await admin2.from('invoices').insert({ tenant_id: booking.tenant_id, booking_id: booking.id, number: String(numGen.data || ''), total, paid_amount: 0, balance: total }).select('id').single();
+                invoiceId = createInv.data?.id as string | undefined;
+              }
+              // Record payment
+              await admin2.from('payments').insert({
+                tenant_id: booking.tenant_id,
+                booking_id: booking.id,
+                invoice_id: invoiceId || null,
+                provider: 'stripe',
+                amount: Number(session.amount_total || 0) / 100,
+                currency: (session.currency || 'gbp').toUpperCase(),
+                external_txn_id: String(session.payment_intent || ''),
+                status: 'succeeded',
+              });
+              // Reconcile invoice
+              if (invoiceId) {
+                const invRes = await admin2.from('invoices').select('id, total, paid_amount').eq('id', invoiceId).single();
+                const inv = invRes.data as { id: string; total: number; paid_amount: number };
+                const newPaid = Number(inv.paid_amount || 0) + Number(session.amount_total || 0) / 100;
+                const newBalance = Math.max(0, Number(inv.total || 0) - newPaid);
+                await admin2.from('invoices').update({ paid_amount: newPaid, balance: newBalance }).eq('id', inv.id);
+                const newPaymentStatus = newBalance <= 0 ? 'paid' : 'deposit_paid';
+                await admin2.from('bookings').update({ payment_status: newPaymentStatus }).eq('id', booking.id).eq('tenant_id', booking.tenant_id);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[webhook] Failed to reconcile booking payment:', (err as Error).message);
+        }
+        // Continue without subscription handling for booking payments
+        return NextResponse.json({ received: true }, { status: 200 });
+      }
+
       const plan = planFromPriceId(priceId) as Plan;
       const flags = featureFlagsForPlan(plan);
 
