@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -16,7 +17,7 @@ export async function PATCH(req: Request) {
     const quoteId = pathname.split('/').pop() as string;
 
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile) throw new Error('No profile');
+    if (!profile) return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'No profile', undefined, 404);
 
     // Staff/Admin can set any status per RLS; customer can only accept their own issued quote
     const { data, error } = await admin
@@ -26,9 +27,9 @@ export async function PATCH(req: Request) {
       .select('*')
       .single();
     if (error) throw error;
-    return NextResponse.json({ ok: true, quote: data });
+    return createSuccessResponse({ quote: data });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'PATCH /api/quotes/[id]' }, 400);
   }
 }
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import React from 'react';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -10,7 +11,7 @@ export async function GET(req: Request) {
     const { pathname } = new URL(req.url);
     const id = pathname.split('/').pop() as string;
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile) throw new Error('No profile');
+    if (!profile) return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'No profile', undefined, 404);
     // Staff/Admin by tenant
     if (['staff','admin'].includes(profile.role)) {
       const { data, error } = await admin.from('invoices').select('*').eq('id', id).eq('tenant_id', profile.tenant_id).single();
@@ -21,11 +22,11 @@ export async function GET(req: Request) {
         const html = renderInvoiceHtml(data as Record<string, unknown>);
         return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
       }
-      return NextResponse.json({ ok: true, invoice: data });
+      return createSuccessResponse({ invoice: data });
     }
     // Customer self scope via booking join
     const { data: selfCust } = await admin.from('customers').select('id').eq('auth_user_id', user.id).single();
-    if (!selfCust) return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 });
+    if (!selfCust) return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Forbidden', undefined, 403);
     const { data, error } = await admin
       .from('invoices')
       .select('*, bookings!inner(customer_id)')
@@ -42,9 +43,9 @@ export async function GET(req: Request) {
       const html = renderInvoiceHtml(rest as Record<string, unknown>);
       return new NextResponse(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
     }
-    return NextResponse.json({ ok: true, invoice: rest });
+    return createSuccessResponse({ invoice: rest });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/invoices/[id]' }, 400);
   }
 }
 

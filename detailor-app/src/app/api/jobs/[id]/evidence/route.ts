@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -27,9 +28,9 @@ export async function GET(req: Request) {
       const signed = await admin.storage.from('evidence').createSignedUrl(`${tenantId}/${jobId}/${f.name}`, 60 * 10);
       if (signed.data?.signedUrl) items.push({ name: f.name, url: signed.data.signedUrl });
     }
-    return NextResponse.json({ ok: true, items });
+    return createSuccessResponse({ items });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/jobs/[id]/evidence' }, 400);
   }
 }
 
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
     const jobId = pathname.split('/').slice(-2)[0];
     const { admin, tenantId } = await resolveTenantAndAuthorize(jobId, user.id);
     const { data: tenant } = await admin.from('tenants').select('is_demo, feature_flags').eq('id', tenantId).single();
-    if (tenant?.is_demo) return NextResponse.json({ ok: false, error: 'Uploads disabled in demo.' }, { status: 400 });
+    if (tenant?.is_demo) return createErrorResponse(API_ERROR_CODES.FEATURE_NOT_AVAILABLE, 'Uploads disabled in demo.', undefined, 400);
 
     const form = await req.formData();
     const files = form.getAll('files');
@@ -55,9 +56,9 @@ export async function POST(req: Request) {
     for (const file of files) {
       if (!(file instanceof Blob)) continue;
       const size = (file as File).size || 0;
-      if (size > singleFileMax) {
-        return NextResponse.json({ ok: false, error: 'Each file must be ≤ 10MB. Please compress and retry.' }, { status: 400 });
-      }
+        if (size > singleFileMax) {
+          return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'Each file must be ≤ 10MB. Please compress and retry.', { max_bytes: singleFileMax }, 400);
+        }
       const arr = await file.arrayBuffer();
       let buffer = Buffer.from(arr);
       // Attempt simple recompression if available (dynamic import to satisfy linter)
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
         }
       }
       if (buffer.length > maxBytes) {
-        return NextResponse.json({ ok: false, error: 'Storage limit exceeded. Please upgrade your plan.' }, { status: 400 });
+        return createErrorResponse(API_ERROR_CODES.LIMIT_EXCEEDED, 'Storage limit exceeded. Please upgrade your plan.', { max_bytes: maxBytes }, 400);
       }
       const name = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
       const path = `${tenantId}/${jobId}/${name}`;
@@ -84,9 +85,9 @@ export async function POST(req: Request) {
       if (res.error) throw res.error;
       uploaded.push(name);
     }
-    return NextResponse.json({ ok: true, uploaded });
+    return createSuccessResponse({ uploaded });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/jobs/[id]/evidence' }, 400);
   }
 }
 

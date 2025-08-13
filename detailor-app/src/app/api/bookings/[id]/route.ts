@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { z } from 'zod';
@@ -46,16 +47,16 @@ export async function PATCH(req: Request) {
       if ((payload.start_at || payload.end_at) && startsAt - now < fourHoursMs) {
         // Best-effort rollback not implemented here; surface warning
         // In production, use a procedure to enforce and return error
-        return NextResponse.json({ ok: false, error: 'Too late to reschedule within 4 hours' }, { status: 400 });
+        return createErrorResponse(API_ERROR_CODES.OPERATION_NOT_ALLOWED, 'Too late to reschedule within 4 hours', undefined, 400);
       }
       if (payload.status === 'cancelled' && startsAt - now < fourHoursMs) {
-        return NextResponse.json({ ok: false, error: 'Too late to cancel within 4 hours' }, { status: 400 });
+        return createErrorResponse(API_ERROR_CODES.OPERATION_NOT_ALLOWED, 'Too late to cancel within 4 hours', undefined, 400);
       }
     }
     if (error) throw error;
-    return NextResponse.json({ ok: true, booking: data });
+    return createSuccessResponse({ booking: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'PATCH /api/bookings/[id]' }, 400);
   }
 }
 

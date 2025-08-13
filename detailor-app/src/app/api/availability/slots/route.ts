@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile) throw new Error('No profile');
+    if (!profile) return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'No profile', undefined, 404);
 
     const url = new URL(req.url);
     const daysParam = parseInt(url.searchParams.get('days') || '30', 10);
@@ -75,9 +76,9 @@ export async function GET(req: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, slots });
+    return createSuccessResponse({ slots });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'GET /api/availability/slots' }, 400);
   }
 }
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -12,11 +13,15 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { invoice_id, amount } = schema.parse(body);
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || !['admin','staff'].includes(profile.role)) throw new Error('Forbidden');
+    if (!profile || !['admin','staff'].includes(profile.role)) {
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Insufficient permissions', { required_roles: ['admin','staff'] }, 403);
+    }
     const { data: tenant } = await admin.from('tenants').select('is_demo').eq('id', profile.tenant_id).single();
-    if (!tenant?.is_demo) throw new Error('Demo-only endpoint');
+    if (!tenant?.is_demo) {
+      return createErrorResponse(API_ERROR_CODES.FEATURE_NOT_AVAILABLE, 'Demo-only endpoint', undefined, 403);
+    }
     const { data: invoice } = await admin.from('invoices').select('*').eq('id', invoice_id).eq('tenant_id', profile.tenant_id).single();
-    if (!invoice) throw new Error('Invoice not found');
+    if (!invoice) return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Invoice not found', { invoice_id }, 404);
     const amt = amount ?? Number(invoice.balance ?? 0);
     const newPaid = Number(invoice.paid_amount ?? 0) + amt;
     const newBalance = Math.max(0, Number(invoice.total ?? 0) - newPaid);
@@ -40,9 +45,9 @@ export async function POST(req: Request) {
         .eq('id', invoice.booking_id)
         .eq('tenant_id', profile.tenant_id);
     }
-    return NextResponse.json({ ok: true });
+    return createSuccessResponse({});
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/payments/mark-paid' }, 400);
   }
 }
 
