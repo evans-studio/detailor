@@ -5,7 +5,7 @@ import { createClient } from '@supabase/supabase-js';
 interface User {
   id: string;
   email: string;
-  role: 'admin' | 'staff' | 'customer';
+  role: 'admin' | 'staff' | 'customer' | 'super_admin';
 }
 
 interface AuthContextType {

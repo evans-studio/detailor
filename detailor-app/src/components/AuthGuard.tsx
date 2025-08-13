@@ -7,7 +7,7 @@ import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 interface AuthGuardProps {
   children: React.ReactNode;
   requireAuth?: boolean;
-  allowedRoles?: ('admin' | 'staff' | 'customer')[];
+  allowedRoles?: ('admin' | 'staff' | 'customer' | 'super_admin')[];
   redirectTo?: string;
 }
 

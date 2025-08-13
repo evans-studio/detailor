@@ -6,7 +6,7 @@ import { RoleGuard } from '@/components/RoleGuard';
 import { useQuery } from '@tanstack/react-query';
 import { KPICard, KPIGrid, KPICardSkeleton } from '@/components/dashboard/KPICard';
 import { BarChart, DonutChart, ChartSkeleton } from '@/components/dashboard/ChartComponents';
-import { ActivityFeed, generateSampleActivities } from '@/components/dashboard/ActivityFeed';
+import { ActivityFeed, type ActivityItem } from '@/components/dashboard/ActivityFeed';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/ui/card';
 import { Button } from '@/ui/button';
 import { Badge } from '@/ui/badge';
@@ -130,8 +130,16 @@ export default function EnterpriseDashboard() {
     };
   }, [revenueData]);
 
-  // Sample activity data
-  const sampleActivities = React.useMemo(() => generateSampleActivities(8), []);
+  // Recent Activity Data
+  const { data: activities = [] } = useQuery({
+    queryKey: ['recent-activities'],
+    queryFn: async (): Promise<ActivityItem[]> => {
+      const res = await fetch('/api/activities/recent?limit=8');
+      const json = await res.json();
+      return json.activities || [];
+    },
+    refetchInterval: 300000, // Refresh every 5 minutes
+  });
 
   const needsSetup = servicesCount === 0 || patternsCount === 0;
   const hasWarning = usage?.ok && usage.usage?.limit !== null && usage.usage?.warn;
@@ -143,10 +151,10 @@ export default function EnterpriseDashboard() {
           {/* Header - Mobile Optimized */}
           <div className="flex flex-col gap-4 sm:gap-6 md:flex-row md:items-center md:justify-between">
             <div className="text-center sm:text-left">
-              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 tracking-tight mb-1 sm:mb-2">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--color-text)] tracking-tight mb-1 sm:mb-2">
                 Dashboard
               </h1>
-              <p className="text-sm sm:text-base md:text-lg text-gray-600">
+              <p className="text-sm sm:text-base md:text-lg text-[var(--color-text-secondary)]">
                 Welcome back! Here's what's happening with your business today.
               </p>
             </div>
@@ -157,7 +165,7 @@ export default function EnterpriseDashboard() {
                 </Button>
               </Link>
               <Link href="/book/new" className="w-full sm:w-auto">
-                <Button intent="primary" className="w-full sm:w-auto h-12 md:h-11 px-4 sm:px-6 font-medium bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm md:text-base animate-pulse hover:animate-none button-press">
+                <Button intent="primary" className="w-full sm:w-auto h-12 md:h-11 px-4 sm:px-6 font-medium bg-[var(--color-primary)] hover:bg-[var(--color-primary-600)] shadow-md hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200 text-sm md:text-base animate-pulse hover:animate-none button-press">
                   New Booking
                 </Button>
               </Link>
@@ -175,15 +183,15 @@ export default function EnterpriseDashboard() {
                     </svg>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <h3 className="text-lg font-semibold text-[var(--color-text)] mb-2">
                       Complete Your Setup
                     </h3>
-                    <p className="text-gray-700 mb-4">
+                    <p className="text-[var(--color-text-secondary)] mb-4">
                       Finish configuring your business to start accepting bookings and maximize your revenue.
                     </p>
                     <div className="space-y-3 mb-6">
-                      <div className={`flex items-center gap-3 p-3 rounded-lg ${(servicesCount || 0) > 0 ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-700'}`}>
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${(servicesCount || 0) > 0 ? 'bg-green-500' : 'bg-gray-400'}`}>
+                      <div className={`flex items-center gap-3 p-3 rounded-lg ${(servicesCount || 0) > 0 ? 'bg-[var(--color-success-50)] text-[var(--color-success-900)]' : 'bg-[var(--color-muted)] text-[var(--color-text-secondary)]'}`}>
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${(servicesCount || 0) > 0 ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-subtle)]'}`}>
                           {(servicesCount || 0) > 0 ? (
                             <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -194,8 +202,8 @@ export default function EnterpriseDashboard() {
                         </div>
                         <span className="font-medium">Add your services and pricing</span>
                       </div>
-                      <div className={`flex items-center gap-3 p-3 rounded-lg ${(patternsCount || 0) > 0 ? 'bg-green-50 text-green-800' : 'bg-gray-50 text-gray-700'}`}>
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${(patternsCount || 0) > 0 ? 'bg-green-500' : 'bg-gray-400'}`}>
+                      <div className={`flex items-center gap-3 p-3 rounded-lg ${(patternsCount || 0) > 0 ? 'bg-[var(--color-success-50)] text-[var(--color-success-900)]' : 'bg-[var(--color-muted)] text-[var(--color-text-secondary)]'}`}>
+                        <div className={`w-5 h-5 rounded-full flex items-center justify-center ${(patternsCount || 0) > 0 ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-subtle)]'}`}>
                           {(patternsCount || 0) > 0 ? (
                             <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -210,14 +218,14 @@ export default function EnterpriseDashboard() {
                     <div className="flex gap-3">
                       {(servicesCount || 0) === 0 && (
                         <Link href="/admin/services">
-                          <Button intent="primary" size="sm" className="bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
+                          <Button intent="primary" size="sm" className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-600)] shadow-sm hover:shadow-md transform hover:-translate-y-0.5 transition-all duration-200">
                             Add Services
                           </Button>
                         </Link>
                       )}
                       {(patternsCount || 0) === 0 && (
                         <Link href="/admin/settings/booking">
-                          <Button intent="secondary" size="sm" className="border-gray-300 hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
+                          <Button intent="secondary" size="sm" className="border-[var(--color-border-strong)] hover:bg-[var(--color-hover-surface)] hover:border-[var(--color-border-strong)] transition-all duration-200">
                             Set Working Hours
                           </Button>
                         </Link>
@@ -349,19 +357,19 @@ export default function EnterpriseDashboard() {
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 md:gap-8 stagger-children">
             {/* Today's Jobs */}
             <div className="xl:col-span-2">
-              <Card className="border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
-                <CardHeader className="border-b border-gray-100 bg-gray-50 p-4 sm:p-6">
+              <Card className="border-[var(--color-border)] shadow-sm hover:shadow-md transition-shadow duration-200">
+                <CardHeader className="border-b border-[var(--color-border)] bg-[var(--color-muted)] p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="text-center sm:text-left">
-                      <CardTitle className="text-base sm:text-lg font-semibold text-gray-900 flex items-center justify-center sm:justify-start gap-2">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <CardTitle className="text-base sm:text-lg font-semibold text-[var(--color-text)] flex items-center justify-center sm:justify-start gap-2">
+                        <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full"></div>
                         Today's Schedule
                       </CardTitle>
-                      <CardDescription className="text-gray-600 mt-1 text-sm sm:text-base">
+                      <CardDescription className="text-[var(--color-text-secondary)] mt-1 text-sm sm:text-base">
                         {jobsToday.length} {jobsToday.length === 1 ? 'job' : 'jobs'} scheduled for today
                       </CardDescription>
                     </div>
-                    <Badge variant="primary" className="bg-blue-100 text-blue-700 border-blue-200 font-medium px-3 py-1 self-center sm:self-auto">
+                    <Badge variant="primary" className="bg-[var(--color-primary-100)] text-[var(--color-primary-700)] border-[var(--color-primary-200)] font-medium px-3 py-1 self-center sm:self-auto">
                       {jobsToday.length}
                     </Badge>
                   </div>
@@ -369,15 +377,15 @@ export default function EnterpriseDashboard() {
                 <CardContent className="p-4 sm:p-6">
                   {jobsToday.length === 0 ? (
                     <div className="text-center py-8 sm:py-12">
-                      <div className="w-16 sm:w-20 h-16 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-full bg-gray-100 flex items-center justify-center">
-                        <svg className="w-8 sm:w-10 h-8 sm:h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <div className="w-16 sm:w-20 h-16 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-full bg-[var(--color-muted)] flex items-center justify-center">
+                        <svg className="w-8 sm:w-10 h-8 sm:h-10 text-[var(--color-text-subtle)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       </div>
-                      <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No jobs scheduled</h3>
-                      <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">Get started by creating your first booking</p>
+                      <h3 className="text-base sm:text-lg font-medium text-[var(--color-text)] mb-2">No jobs scheduled</h3>
+                      <p className="text-sm sm:text-base text-[var(--color-text-secondary)] mb-4 sm:mb-6">Get started by creating your first booking</p>
                       <Link href="/book/new">
-                        <Button intent="primary" size="sm" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
+                        <Button intent="primary" size="sm" className="w-full sm:w-auto bg-[var(--color-primary)] hover:bg-[var(--color-primary-600)] shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">
                           Schedule First Job
                         </Button>
                       </Link>
@@ -387,22 +395,22 @@ export default function EnterpriseDashboard() {
                       {jobsToday.slice(0, 5).map((job) => (
                         <div
                           key={job.id}
-                          className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border border-gray-200 bg-white hover:shadow-md hover:border-gray-300 transition-all duration-200 cursor-pointer"
+                          className="group flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] hover:shadow-md hover:border-[var(--color-border-strong)] transition-all duration-200 cursor-pointer"
                         >
                           <div className="flex items-center gap-3 sm:gap-4">
-                            <div className="flex flex-col items-center bg-blue-50 rounded-lg p-2 sm:p-3 min-w-[70px] sm:min-w-[80px]">
-                              <div className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+                            <div className="flex flex-col items-center bg-[var(--color-primary-50)] rounded-lg p-2 sm:p-3 min-w-[70px] sm:min-w-[80px]">
+                              <div className="text-xs font-medium text-[var(--color-primary-600)] uppercase tracking-wide">
                                 {job.bookings?.start_at ? new Date(job.bookings.start_at).toLocaleDateString('en-GB', { weekday: 'short' }) : 'TBD'}
                               </div>
-                              <div className="text-base sm:text-lg font-bold text-blue-900">
+                              <div className="text-base sm:text-lg font-bold text-[var(--color-primary-900)]">
                                 {job.bookings?.start_at ? new Date(job.bookings.start_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-gray-900 mb-1 text-sm sm:text-base">
+                              <div className="font-semibold text-[var(--color-text)] mb-1 text-sm sm:text-base">
                                 {job.bookings?.reference || 'No Reference'}
                               </div>
-                              <div className="text-xs sm:text-sm text-gray-600 mb-1">
+                              <div className="text-xs sm:text-sm text-[var(--color-text-secondary)] mb-1">
                                 <span className="font-medium">{job.bookings?.customer_name || 'Customer'}</span>
                                 <span className="hidden sm:inline"> • </span>
                                 <span className="block sm:inline">{job.bookings?.service_name || 'Service'}</span>
@@ -428,7 +436,7 @@ export default function EnterpriseDashboard() {
                               {job.status.replace('_', ' ')}
                             </Badge>
                             <Link href={`/bookings/${job.id}`}>
-                              <Button intent="ghost" size="sm" className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 hover:bg-blue-50 hover:text-blue-700 text-xs sm:text-sm">
+                              <Button intent="ghost" size="sm" className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)] text-xs sm:text-sm">
                                 View
                               </Button>
                             </Link>
@@ -436,9 +444,9 @@ export default function EnterpriseDashboard() {
                         </div>
                       ))}
                       {jobsToday.length > 5 && (
-                        <div className="text-center pt-4 sm:pt-6 border-t border-gray-100">
+                        <div className="text-center pt-4 sm:pt-6 border-t border-[var(--color-border)]">
                           <Link href="/admin/bookings">
-                            <Button intent="ghost" size="sm" className="w-full sm:w-auto text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium text-sm">
+                            <Button intent="ghost" size="sm" className="w-full sm:w-auto text-[var(--color-primary-600)] hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] font-medium text-sm">
                               View All {jobsToday.length} Jobs →
                             </Button>
                           </Link>
@@ -452,7 +460,7 @@ export default function EnterpriseDashboard() {
 
             {/* Recent Activity */}
             <ActivityFeed
-              activities={sampleActivities}
+              activities={activities}
               title="Recent Activity"
               maxItems={6}
               showAvatar={false}
