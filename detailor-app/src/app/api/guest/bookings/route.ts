@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { sendBookingConfirmation, sendBookingNotificationToAdmin } from '@/lib/email';
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
       .single();
     
     if (!customer) {
-      throw new Error('Customer not found');
+      return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Customer not found', { customer_id: payload.customer_id }, 404);
     }
     
     const tenantId = customer.tenant_id;
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
       const currentCount = monthlyBookings?.length || 0;
       
       if (currentCount >= bookingsLimit) {
-        throw new Error(`Monthly booking limit reached (${bookingsLimit}). Upgrade to Pro for unlimited bookings.`);
+        return createErrorResponse(API_ERROR_CODES.LIMIT_EXCEEDED, `Monthly booking limit reached (${bookingsLimit}). Upgrade to Pro for unlimited bookings.`, { limit: bookingsLimit, current: currentCount }, 403);
       }
     }
 
@@ -75,7 +76,7 @@ export async function POST(req: Request) {
       .single();
     
     if (!svc) {
-      throw new Error('Service not found');
+      return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Service not found', { service_id: payload.service_id }, 404);
     }
 
     let addonsTotal = 0;
@@ -184,8 +185,8 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, booking: data });
+    return createSuccessResponse({ booking: data });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'POST /api/guest/bookings' }, 400);
   }
 }

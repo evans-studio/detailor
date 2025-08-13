@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { sendTestEmail, sendBookingConfirmation, sendWelcomeEmail, sendPasswordReset } from '@/lib/email';
 
 export async function POST(req: Request) {
@@ -9,7 +10,7 @@ export async function POST(req: Request) {
     const { type, email } = body;
 
     if (!email) {
-      return NextResponse.json({ ok: false, error: 'Email address required' }, { status: 400 });
+      return createErrorResponse(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 'Email address required', { field: 'email' }, 400);
     }
 
     let result = false;
@@ -52,20 +53,12 @@ export async function POST(req: Request) {
         break;
       
       default:
-        return NextResponse.json({ ok: false, error: 'Invalid email type' }, { status: 400 });
+        return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'Invalid email type', { type }, 400);
     }
 
-    return NextResponse.json({ 
-      ok: result,
-      message: result ? 'Email sent successfully' : 'Failed to send email',
-      type,
-      sent_to: email
-    });
+    return createSuccessResponse({ message: result ? 'Email sent successfully' : 'Failed to send email', type, sent_to: email, ok: result });
   } catch (error: unknown) {
     console.error('Email test error:', error);
-    return NextResponse.json({ 
-      ok: false, 
-      error: (error as Error).message 
-    }, { status: 500 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, undefined, 500);
   }
 }

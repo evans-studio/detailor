@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import * as Sentry from '@sentry/nextjs';
 
 export async function GET(req: Request) {
@@ -46,19 +47,10 @@ export async function GET(req: Request) {
         throw new Error('Unknown error type');
     }
 
-    return NextResponse.json({ 
-      ok: true, 
-      message: 'No error triggered',
-      type: errorType
-    });
+    return createSuccessResponse({ message: 'No error triggered', type: errorType });
   } catch (error) {
     // Capture the error in Sentry
     Sentry.captureException(error);
-    
-    return NextResponse.json({
-      ok: false,
-      error: (error as Error).message,
-      message: 'Error captured by Sentry'
-    }, { status: 500 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { note: 'Error captured by Sentry' }, 500);
   }
 }

@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -27,7 +28,7 @@ export async function POST(req: Request) {
       .single();
     
     if (!customer) {
-      throw new Error('Customer not found');
+      return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Customer not found', { customer_id: payload.customer_id }, 404);
     }
     
     const tenantId = customer.tenant_id;
@@ -41,7 +42,7 @@ export async function POST(req: Request) {
       .single();
     
     if (!svc) {
-      throw new Error('Service not found');
+      return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Service not found', { service_id: payload.service_id }, 404);
     }
 
     // Get add-ons if any
@@ -75,8 +76,8 @@ export async function POST(req: Request) {
       total
     };
 
-    return NextResponse.json({ ok: true, quote: { price_breakdown } });
+    return createSuccessResponse({ quote: { price_breakdown } });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'POST /api/guest/quotes' }, 400);
   }
 }

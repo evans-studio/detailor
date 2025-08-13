@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -29,7 +30,7 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       .single();
     
     if (!customer) {
-      throw new Error('Customer not found');
+      return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Customer not found', { customer_id: customerId }, 404);
     }
 
     // Create address for the customer
@@ -48,8 +49,8 @@ export async function POST(req: Request, context: { params: Promise<{ id: string
       .single();
     
     if (error) throw error;
-    return NextResponse.json({ ok: true, address: data });
+    return createSuccessResponse({ address: data });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'POST /api/guest/customers/[id]/addresses' }, 400);
   }
 }

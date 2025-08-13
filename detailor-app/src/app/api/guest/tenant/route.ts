@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 // Get tenant info for guest users
@@ -11,7 +12,7 @@ export async function GET(req: Request) {
     const domain = url.searchParams.get('domain') || req.headers.get('host');
     
     if (!domain) {
-      throw new Error('domain required in URL parameter or host header');
+      return createErrorResponse(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 'domain required in URL parameter or host header', { field: 'domain' }, 400);
     }
 
     // For now, return the first active tenant (MVP approach)
@@ -24,11 +25,10 @@ export async function GET(req: Request) {
       .single();
     
     if (!tenant) {
-      throw new Error('No active tenant found');
+      return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'No active tenant found', undefined, 404);
     }
 
-    return NextResponse.json({ 
-      ok: true, 
+    return createSuccessResponse({ 
       tenant: {
         id: tenant.id,
         name: tenant.trading_name || tenant.legal_name,
@@ -36,6 +36,6 @@ export async function GET(req: Request) {
       }
     });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'GET /api/guest/tenant' }, 400);
   }
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export const runtime = 'nodejs';
@@ -351,8 +352,7 @@ export async function POST() {
       });
     }
 
-    return NextResponse.json({ 
-      ok: true, 
+    return createSuccessResponse({ 
       message: 'Demo Auto Detailing tenant created successfully',
       tenantId, 
       adminEmail, 
@@ -364,6 +364,6 @@ export async function POST() {
       }
     });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/demo/seed-full' }, 400);
   }
 }

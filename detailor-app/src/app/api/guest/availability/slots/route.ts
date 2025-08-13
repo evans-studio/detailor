@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 // Guest availability slots endpoint
@@ -14,7 +15,7 @@ export async function GET(req: Request) {
     const days = parseInt(url.searchParams.get('days') || '14', 10);
     
     if (!tenantId) {
-      throw new Error('tenant_id required in URL parameter or x-tenant-id header');
+      return createErrorResponse(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 'tenant_id required in URL parameter or x-tenant-id header', { field: 'tenant_id' }, 400);
     }
 
     // Verify the tenant exists and is active
@@ -25,7 +26,7 @@ export async function GET(req: Request) {
       .single();
     
     if (!tenant || tenant.status !== 'active') {
-      throw new Error('Invalid or inactive tenant');
+      return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Invalid or inactive tenant', { tenant_id: tenantId }, 404);
     }
 
     // Get available slots - simplified version for now
@@ -65,8 +66,8 @@ export async function GET(req: Request) {
       );
     }
     
-    return NextResponse.json({ ok: true, slots });
+    return createSuccessResponse({ slots });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'GET /api/guest/availability/slots' }, 400);
   }
 }

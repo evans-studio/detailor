@@ -78,13 +78,16 @@ export default function EnterpriseDashboard() {
   const [servicesCount, setServicesCount] = React.useState<number | null>(null);
   const [patternsCount, setPatternsCount] = React.useState<number | null>(null);
 
-  // Usage Data
-  const { data: usage } = useQuery({
+  // Usage Data (System Bible response)
+  type UsageResponse = {
+    success: boolean;
+    data?: {
+      usage: { used: number; limit: number | null; allowed: number | null; warn: boolean };
+    };
+  };
+  const { data: usage } = useQuery<UsageResponse>({
     queryKey: ['usage'],
-    queryFn: async () => (await (await fetch('/api/billing/usage')).json()) as { 
-      ok: boolean; 
-      usage?: { used: number; limit: number | null; allowed: number | null; warn: boolean } 
-    },
+    queryFn: async () => (await fetch('/api/billing/usage')).json(),
   });
 
   React.useEffect(() => {
@@ -142,7 +145,7 @@ export default function EnterpriseDashboard() {
   });
 
   const needsSetup = servicesCount === 0 || patternsCount === 0;
-  const hasWarning = usage?.success && usage.data?.limit !== null && usage.data?.warn;
+  const hasWarning = usage?.success && usage.data?.usage?.limit !== null && usage.data?.usage?.warn;
 
   return (
     <DashboardShell role="admin" tenantName="Detailor">
@@ -246,7 +249,7 @@ export default function EnterpriseDashboard() {
                     Usage Warning
                   </Badge>
                   <span className="text-amber-800">
-                    You have used {usage.data!.used} of {usage.data!.limit} bookings this month. 
+                    You have used {usage?.data?.usage?.used} of {usage?.data?.usage?.limit} bookings this month. 
                     You can exceed by 5 before overage charges apply.
                   </span>
                 </div>

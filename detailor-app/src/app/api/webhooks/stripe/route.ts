@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
+import { createErrorResponse } from '@/lib/api-response';
 import Stripe from 'stripe';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import crypto from 'node:crypto';
@@ -115,7 +116,7 @@ function featureFlagsForPlan(plan: Plan) {
 export async function POST(req: Request) {
   const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string | undefined;
-  if (!secret || !webhookSecret) return NextResponse.json({ ok: false }, { status: 200 });
+  if (!secret || !webhookSecret) return NextResponse.json({ received: true }, { status: 200 });
   const stripe = new Stripe(secret);
   const body = await req.text();
   const sig = (await headers()).get('stripe-signature') as string | undefined;
@@ -123,7 +124,7 @@ export async function POST(req: Request) {
   try {
     event = stripe.webhooks.constructEvent(body, sig || '', webhookSecret);
   } catch (err) {
-    return NextResponse.json({ ok: false, error: (err as Error).message }, { status: 400 });
+    return createErrorResponse('PAYMENT_ERROR', (err as Error).message, { endpoint: 'POST /api/webhooks/stripe' }, 400);
   }
 
   try {
