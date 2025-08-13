@@ -87,7 +87,9 @@ export default function OnboardingPage() {
             body: JSON.stringify(businessForm)
           });
           const tenantData = await tenantRes.json();
-          if (!tenantData.ok) throw new Error(tenantData.error);
+          if (!tenantRes.ok || !tenantData.success) {
+            throw new Error(tenantData?.error?.message || 'Failed to create business');
+          }
           setCurrentStep('service');
           break;
 
@@ -100,7 +102,7 @@ export default function OnboardingPage() {
             const existingServicesRes = await fetch('/api/admin/services');
             const existingServicesData = await existingServicesRes.json();
             
-            if (existingServicesData.ok && existingServicesData.services?.length > 0) {
+            if (existingServicesData?.success && Array.isArray(existingServicesData.data) && existingServicesData.data.length > 0) {
               // Services already exist, skip creation and move to next step
               setHasService(true);
               setCurrentStep('availability');
@@ -125,14 +127,17 @@ export default function OnboardingPage() {
             }),
           });
           const serviceData = await serviceRes.json();
-          if (!serviceData.ok) {
+          if (!serviceRes.ok || !serviceData.success) {
             // Handle specific duplicate key constraint error with actionable message
-            if (serviceData.error?.includes('duplicate key value') || 
-                serviceData.error?.includes('already exists') ||
-                serviceData.error?.includes('services_tenant_id_name_key')) {
+            const msg = serviceData?.error?.message as string | undefined;
+            const code = serviceData?.error?.code as string | undefined;
+            if (code === 'SERVICE_NAME_EXISTS' ||
+                msg?.includes('duplicate key value') ||
+                msg?.includes('already exists') ||
+                msg?.includes('services_tenant_id_name_key')) {
               throw new Error(`A service named "${validated.name}" already exists. Please try a different name or continue to the next step if you already have services configured.`);
             }
-            throw new Error(serviceData.error);
+            throw new Error(msg || 'Failed to create service');
           }
           setHasService(true);
           setCurrentStep('availability');
@@ -184,8 +189,8 @@ export default function OnboardingPage() {
                 body: JSON.stringify(pattern)
               });
               const patternData = await patternRes.json();
-              if (!patternData.ok) {
-                lastError = patternData.error;
+              if (!patternRes.ok || !patternData.success) {
+                lastError = patternData?.error?.message || 'Unknown error';
                 allPatternsCreated = false;
                 break;
               }

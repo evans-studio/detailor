@@ -120,9 +120,9 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
 
       const data = await res.json();
 
-      if (!res.ok || !data.ok) {
-        console.error('[WelcomeHandoff] Password set failed:', data.error);
-        setError(data.error || 'Failed to set password. Please try again.');
+      if (!res.ok || !data.success) {
+        console.error('[WelcomeHandoff] Password set failed:', data?.error);
+        setError(data?.error?.message || 'Failed to set password. Please try again.');
         return;
       }
 
@@ -352,9 +352,10 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
               
               console.log('[WelcomeHandoff] Bootstrap response:', bj);
               
-              if (!bj.ok) {
+              if (!boot.ok || !bj.success) {
                 // Handle specific error codes with user-friendly messages
-                switch (bj.code) {
+                const code = bj?.error?.details?.code || bj?.error?.code;
+                switch (code) {
                   case 'SETUP_PENDING':
                     setError('Your account is still being set up after payment. Please wait a moment and try again.');
                     break;
@@ -365,12 +366,12 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
                     setError('Unexpected account state. Please contact support.');
                     break;
                   default:
-                    setError(bj.error || 'Failed to access your account');
+                    setError(bj?.error?.message || 'Failed to access your account');
                 }
                 return;
               }
               
-              if (bj.complete) {
+              if (bj.data?.complete) {
                 // User has complete setup - redirect to normal login
                 console.log('[WelcomeHandoff] Account fully set up - redirecting to sign in');
                 setError('Your account is fully set up! Please use the sign-in page to access your account.');
@@ -379,9 +380,9 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
                 return;
               }
               
-              if (bj.exists && bj.needsSetup) {
-                setError(bj.message || 'Your account setup is in progress. Please try again in a few moments.');
-              } else if (bj.exists) {
+              if (bj.data?.exists && bj.data?.needsSetup) {
+                setError(bj.data?.message || 'Your account setup is in progress. Please try again in a few moments.');
+              } else if (bj.data?.exists) {
                 setError('Account exists. Please use the sign-in page or try password reset if needed.');
               } else {
                 setError('Unable to access your account. Please try creating a new account below or contact support.');
