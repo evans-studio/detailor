@@ -160,19 +160,20 @@ export async function POST(req: Request) {
         }
 
         if (!existingUser) {
-          // Create user with proper email confirmation flow
+          // Create user ready for password setting (no email confirmation needed)
           const tempPassword = generateTempPassword();
           console.log(`[webhook] Creating new user for ${email}`);
           
           const createResult = await admin.auth.admin.createUser({
             email,
             password: tempPassword,
-            email_confirm: false, // This will generate confirmation token
+            email_confirm: true, // Skip email confirmation since user paid
             user_metadata: {
               stripe_customer_id: customerId,
               stripe_session_id: session.id,
               plan,
-              created_via: 'stripe_webhook'
+              created_via: 'stripe_webhook',
+              temp_password: true // Flag to indicate password needs to be set by user
             },
           });
 
@@ -301,11 +302,9 @@ export async function POST(req: Request) {
           console.warn('[webhook] Failed to seed default configurations (non-critical):', (seedError as Error).message);
         }
 
-        // If we created a new user, they will need to confirm their email
-        // The confirmation token was generated when we set email_confirm: false
+        // If we created a new user, they can set their password directly
         if (userCreated && userId) {
-          console.log(`[webhook] User created with email confirmation required: ${email}`);
-          // User will receive automatic confirmation email from Supabase
+          console.log(`[webhook] User created and confirmed, ready for password setting: ${email}`);
         }
 
         console.log(`[webhook] Checkout processing completed successfully for ${email}`);

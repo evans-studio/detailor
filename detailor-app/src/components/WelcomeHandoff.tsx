@@ -82,7 +82,7 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
     }
   }, [supabase]);
 
-  async function createAccount(e: React.FormEvent) {
+  async function setPasswordForExistingUser(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setError(null);
@@ -101,46 +101,68 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
         return;
       }
 
-      const res = await supabase.auth.signUp({ email, password });
-      if (res.error) {
-        // Handle specific Supabase errors
-        if (res.error.message.includes('already registered')) {
-          setError('An account with this email already exists. Try the "I already have an account" option above.');
-        } else if (res.error.message.includes('Email already exists')) {
-          setError('This email is already in use. Try the "I already have an account" option above.');
-        } else {
-          setError(`Account creation failed: ${res.error.message}`);
-        }
+      // Get session_id from URL for additional security verification
+      const urlParams = new URLSearchParams(window.location.search);
+      const sessionId = urlParams.get('session_id');
+
+      console.log('[WelcomeHandoff] Setting password for existing user:', email);
+
+      // Use our new API endpoint to update the existing user's password
+      const res = await fetch('/api/auth/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email, 
+          password,
+          session_id: sessionId 
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.ok) {
+        console.error('[WelcomeHandoff] Password set failed:', data.error);
+        setError(data.error || 'Failed to set password. Please try again.');
         return;
       }
 
-      if (!res.data.user) {
-        setError('Account creation failed. Please try again.');
+      console.log('[WelcomeHandoff] Password set successfully, attempting sign in');
+
+      // Password set successfully, now sign in with the new password
+      const signInRes = await supabase.auth.signInWithPassword({ 
+        email, 
+        password 
+      });
+
+      if (signInRes.error) {
+        console.error('[WelcomeHandoff] Sign in failed after password set:', signInRes.error);
+        // Password was set but sign in failed - redirect to normal sign in page
+        setError('Password set successfully! Please use the sign-in page to access your account.');
+        setTimeout(() => {
+          window.location.href = '/signin';
+        }, 2000);
         return;
       }
 
-      // Check if user needs email confirmation
-      if (!res.data.session && res.data.user && !res.data.user.email_confirmed_at) {
-        // User created but needs email confirmation
-        setError(null); // Clear any existing errors
-        setSubmitting(false);
-        alert('Account created! Please check your email for a confirmation link, then return to sign in.');
+      if (!signInRes.data.session) {
+        console.warn('[WelcomeHandoff] No session after successful sign in');
+        setError('Password set successfully! Please check your email to confirm your account, then sign in.');
         return;
       }
 
-      // If we have a session, try to persist it
-      if (res.data.session) {
-        const ok = await persistSession();
-        if (ok) {
-          window.location.href = '/onboarding';
-        } else {
-          setError('Account created but session setup failed. Please try signing in.');
-        }
+      console.log('[WelcomeHandoff] Sign in successful, setting up session');
+
+      // Sign in successful, set up the session
+      const ok = await persistSession();
+      if (ok) {
+        console.log('[WelcomeHandoff] Session persisted, redirecting to onboarding');
+        window.location.href = '/onboarding';
       } else {
-        setError('Account created but unable to sign in. Please check your email for confirmation.');
+        setError('Password set and signed in successfully, but session setup failed. Please try signing in again.');
       }
+
     } catch (error) {
-      console.error('[WelcomeHandoff] Account creation error:', error);
+      console.error('[WelcomeHandoff] Password set error:', error);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
@@ -225,14 +247,14 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
             </svg>
           </div>
           <h3 className="text-xl font-semibold text-[var(--color-text)] mb-2">
-            Create Your Account
+            Set Your Password
           </h3>
           <p className="text-sm text-[var(--color-text-muted)]">
-            Set up your password to access your Detailor workspace
+            Your account was created after payment. Set your password to access your Detailor workspace.
           </p>
         </div>
 
-      <form onSubmit={createAccount} className="space-y-4">
+      <form onSubmit={setPasswordForExistingUser} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-[var(--color-text)] mb-2">
             Email Address
@@ -294,10 +316,10 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
           {submitting ? (
             <>
               <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-              Creating Account...
+              Setting Password...
             </>
           ) : (
-            'Create Account & Continue →'
+            'Set Password & Continue →'
           )}
         </Button>
       </form>
