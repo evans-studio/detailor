@@ -147,11 +147,17 @@ export async function POST(req: Request) {
 
       // Create complete user setup atomically
       try {
-        // First, check if user already exists
-        const { data: usersList } = await admin.auth.admin.listUsers();
-        const existingUser = usersList.users.find(u => u.email === email);
-        let userId = existingUser?.id;
+        // First, check if user already exists using database lookup (faster than listUsers)
+        const { data: existingProfile } = await admin.from('profiles').select('id, email').eq('email', email).maybeSingle();
+        let userId = existingProfile?.id;
         let userCreated = false;
+        let existingUser = null;
+
+        if (userId) {
+          // User exists, get their auth record for reference
+          console.log(`[webhook] User profile exists for ${email}, ID: ${userId}`);
+          existingUser = { id: userId };
+        }
 
         if (!existingUser) {
           // Create user with proper email confirmation flow
@@ -236,24 +242,29 @@ export async function POST(req: Request) {
 
         console.log(`[webhook] Profile created/updated successfully for ${email}`);
 
-        // Create subscription record
-        if (subscriptionId) {
-          console.log(`[webhook] Creating subscription record: ${subscriptionId}`);
-          const subPayload = {
-            tenant_id: tenantId,
-            stripe_customer_id: customerId,
-            stripe_subscription_id: subscriptionId,
-            price_id: priceId,
-            status: 'active',
-            current_period_end: null,
-          };
-          
-          const subResult = await admin.from('subscriptions').upsert(subPayload, { onConflict: 'stripe_subscription_id' });
-          if (subResult.error) {
-            console.error('[webhook] Failed to create subscription:', subResult.error);
-            throw new Error(`Failed to create subscription: ${subResult.error.message}`);
-          }
-          console.log(`[webhook] Subscription record created`);
+        // Create subscription record - ALWAYS create one for proper user setup
+        console.log(`[webhook] Creating subscription record for tenant ${tenantId}`);
+        console.log(`[webhook] Stripe subscription ID: ${subscriptionId || 'none'}, Customer ID: ${customerId}`);
+        
+        // Always create subscription record, even if Stripe subscription ID is not available yet
+        const subPayload = {
+          tenant_id: tenantId,
+          stripe_customer_id: customerId,
+          stripe_subscription_id: subscriptionId, // Can be null initially
+          price_id: priceId,
+          status: subscriptionId ? 'active' : 'trialing', // Default to trial if no subscription ID
+          current_period_end: null,
+        };
+        
+        const conflictColumn = subscriptionId ? 'stripe_subscription_id' : 'tenant_id';
+        const subResult = await admin.from('subscriptions').upsert(subPayload, { onConflict: conflictColumn });
+        
+        if (subResult.error) {
+          console.error('[webhook] Failed to create subscription:', subResult.error);
+          // Don't throw - log error but continue setup process
+          console.error('[webhook] Subscription payload was:', subPayload);
+        } else {
+          console.log(`[webhook] Subscription record created successfully`);
         }
 
         // Seed default configurations (best-effort, don't fail if these error)

@@ -331,35 +331,38 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
               console.log('[WelcomeHandoff] Bootstrap response:', bj);
               
               if (!bj.ok) {
-                if (bj.code === 'USER_NOT_FOUND_AFTER_CHECKOUT') {
-                  setError('Your account is still being set up. Please wait a moment and try again, or contact support if this persists.');
-                } else {
-                  setError(bj.error || 'Failed to access your account');
+                // Handle specific error codes with user-friendly messages
+                switch (bj.code) {
+                  case 'SETUP_PENDING':
+                    setError('Your account is still being set up after payment. Please wait a moment and try again.');
+                    break;
+                  case 'MISSING_TENANT':
+                    setError('Account setup incomplete. Please contact support for assistance.');
+                    break;
+                  case 'UNEXPECTED_STATE':
+                    setError('Unexpected account state. Please contact support.');
+                    break;
+                  default:
+                    setError(bj.error || 'Failed to access your account');
                 }
                 return;
               }
               
-              if (bj.access_token) {
-                console.log('[WelcomeHandoff] Setting session with access token');
-                await fetch('/api/session/set', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  credentials: 'include',
-                  body: JSON.stringify({ access_token: bj.access_token })
-                });
-                
-                // Refresh supabase client state
-                await supabase.auth.getSession();
-                window.location.href = '/onboarding';
+              if (bj.complete) {
+                // User has complete setup - redirect to normal login
+                console.log('[WelcomeHandoff] Account fully set up - redirecting to sign in');
+                setError('Your account is fully set up! Please use the sign-in page to access your account.');
+                // Could redirect to signin page here
+                window.location.href = '/signin';
                 return;
               }
               
               if (bj.exists && bj.needsSetup) {
-                setError('Your account exists but setup is incomplete. Our system is working to complete your setup. Please try again in a few moments.');
+                setError(bj.message || 'Your account setup is in progress. Please try again in a few moments.');
               } else if (bj.exists) {
-                setError('Account exists but we cannot sign you in automatically. Please try the email confirmation flow or contact support.');
+                setError('Account exists. Please use the sign-in page or try password reset if needed.');
               } else {
-                setError('Unable to access your account. Please try creating a new account below.');
+                setError('Unable to access your account. Please try creating a new account below or contact support.');
               }
             } catch (e) {
               console.error('[WelcomeHandoff] Bootstrap error:', e);

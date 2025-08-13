@@ -27,103 +27,65 @@ export async function POST(req: Request) {
 
     const admin = getSupabaseAdmin();
     
-    // First, check if user already exists and is properly set up
-    const { data: existingUser } = await admin.auth.admin.listUsers();
-    const userWithEmail = existingUser.users.find(u => u.email === email);
+    console.log(`[bootstrap] Processing session for ${email}`);
     
-    if (userWithEmail) {
-      // User exists, check if they have complete records
-      const { data: profile } = await admin.from('profiles').select('id, tenant_id, role').eq('id', userWithEmail.id).maybeSingle();
-      const { data: tenant } = await admin.from('tenants').select('id, contact_email').eq('contact_email', email).maybeSingle();
-      
-      if (profile && tenant && profile.tenant_id) {
-        // User is properly set up, try to sign them in
-        try {
-          // Generate a new temporary password for existing user
-          const tempPassword = generateTempPassword();
-          await admin.auth.admin.updateUserById(userWithEmail.id, { password: tempPassword });
-          
-          // Sign in with the new temporary password
-          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-          const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-          const userClient = createClient(supabaseUrl, anon, { auth: { persistSession: false, autoRefreshToken: false } });
-          const signIn = await userClient.auth.signInWithPassword({ email, password: tempPassword });
-          
-          if (signIn.data.session) {
-            const accessToken = signIn.data.session.access_token;
-            const refreshToken = signIn.data.session.refresh_token as string | null;
-            
-            // Configure cookies
-            const rootDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || '').trim();
-            const cookieDomain = process.env.NODE_ENV === 'production' && rootDomain
-              ? (rootDomain.startsWith('.') ? rootDomain : `.${rootDomain}`)
-              : undefined;
-            const secure = process.env.NODE_ENV === 'production';
-
-            const res = NextResponse.json({ ok: true, access_token: accessToken, refresh_token: refreshToken, email });
-            res.cookies.set('sb-access-token', accessToken, {
-              httpOnly: true,
-              secure,
-              sameSite: 'lax',
-              path: '/',
-              domain: cookieDomain,
-              maxAge: 60 * 60 * 8, // 8 hours
-            });
-            
-            if (refreshToken) {
-              res.cookies.set('sb-refresh-token', refreshToken, {
-                httpOnly: true,
-                secure,
-                sameSite: 'lax',
-                path: '/',
-                domain: cookieDomain,
-                maxAge: 60 * 60 * 24 * 14, // 14 days
-              });
-            }
-            
-            console.log('[bootstrap] existing user signed in', email);
-            return res;
-          }
-        } catch (signInError) {
-          console.error('[bootstrap] sign-in failed for existing user', email, (signInError as Error).message);
-        }
-      } else {
-        // User exists but incomplete setup - fix their records
-        console.log('[bootstrap] fixing incomplete user records', email);
-        try {
-          if (tenant && !profile) {
-            // Create missing profile
-            await admin.from('profiles').upsert({ 
-              id: userWithEmail.id, 
-              email, 
-              tenant_id: tenant.id, 
-              role: 'admin' 
-            }, { onConflict: 'id' });
-            console.log('[bootstrap] created missing profile for existing user', email);
-          } else if (!tenant && userWithEmail.id) {
-            // This will be handled by the webhook when it processes the Stripe session
-            console.log('[bootstrap] user exists but no tenant - webhook should handle', email);
-          }
-        } catch (fixError) {
-          console.error('[bootstrap] failed to fix incomplete records', email, (fixError as Error).message);
-        }
-      }
+    // Fast lookup using profile table (much faster than listUsers)
+    const { data: profile } = await admin.from('profiles').select('id, tenant_id, role, email').eq('email', email).maybeSingle();
+    const { data: tenant } = await admin.from('tenants').select('id, contact_email').eq('contact_email', email).maybeSingle();
+    
+    console.log(`[bootstrap] Profile found: ${!!profile}, Tenant found: ${!!tenant}`);
+    
+    if (profile && tenant && profile.tenant_id) {
+      // User has complete setup - they should be able to login normally
+      console.log(`[bootstrap] User ${email} has complete setup - redirecting to normal login`);
+      return NextResponse.json({ 
+        ok: true, 
+        exists: true, 
+        complete: true,
+        email,
+        message: 'Account is fully set up. Please use normal login or password reset if needed.'
+      });
+    }
+    
+    if (profile && !tenant) {
+      // User exists but no tenant - unusual state, webhook should have created tenant
+      console.warn(`[bootstrap] User ${email} has profile but no tenant - broken state`);
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Account setup incomplete: missing business tenant. Please contact support.',
+        code: 'MISSING_TENANT'
+      });
+    }
+    
+    if (!profile && tenant) {
+      // Tenant exists but no profile - can happen during webhook processing
+      console.log(`[bootstrap] Tenant exists for ${email} but no profile - webhook may be processing`);
+      return NextResponse.json({ 
+        ok: true, 
+        exists: true, 
+        needsSetup: true,
+        email,
+        message: 'Business account found. Setup is in progress.'
+      });
+    }
+    
+    if (!profile && !tenant) {
+      // Neither exists - webhook should have created both after Stripe checkout
+      console.warn(`[bootstrap] No profile or tenant found for ${email} after checkout`);
+      return NextResponse.json({ 
+        ok: false, 
+        error: 'Account not found after payment. Please wait a moment for setup to complete, or contact support if this persists.',
+        code: 'SETUP_PENDING'
+      });
     }
 
-    // For new users or users that couldn't be signed in, return exists flag
-    // This tells the client that they should either use normal signup flow or wait for webhook processing
-    if (userWithEmail) {
-      return NextResponse.json({ ok: true, exists: true, email, needsSetup: true });
-    }
-
-    // User doesn't exist yet - this is unusual since they completed Stripe checkout
-    // The webhook should have created them. Return error for investigation.
-    console.warn('[bootstrap] user not found after Stripe checkout', email);
+    // This line should never be reached due to the exhaustive checks above
+    console.error('[bootstrap] Unexpected code path reached', email);
     return NextResponse.json({ 
       ok: false, 
-      error: 'Account not found. Please wait a moment and try again, or contact support if the issue persists.',
-      code: 'USER_NOT_FOUND_AFTER_CHECKOUT'
-    }, { status: 400 });
+      error: 'Unexpected error during account verification. Please contact support.',
+      code: 'UNEXPECTED_STATE'
+    }, { status: 500 });
 
   } catch (e) {
     console.error('[bootstrap] error', (e as Error).message);
