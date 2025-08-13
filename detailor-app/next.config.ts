@@ -120,7 +120,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https:",
               "font-src 'self'",
-              "connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co",
+              "connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://*.sentry.io",
               "frame-src https://js.stripe.com https://hooks.stripe.com",
               "object-src 'none'",
               "base-uri 'self'",

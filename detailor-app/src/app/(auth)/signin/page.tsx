@@ -5,6 +5,8 @@ import { Button } from '@/ui/button';
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -13,6 +15,21 @@ export default function SignInPage() {
   const [error, setError] = useState('');
   const [debugInfo, setDebugInfo] = useState<any>(null);
   const [showDebug, setShowDebug] = useState(false);
+  const router = useRouter();
+  const { user, loading, isAuthenticated } = useAuth();
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (!loading && isAuthenticated && user) {
+      if (user.role === 'admin') {
+        router.push('/dashboard');
+      } else if (user.role === 'staff') {
+        router.push('/dashboard');
+      } else if (user.role === 'customer') {
+        router.push('/customer/dashboard');
+      }
+    }
+  }, [user, loading, isAuthenticated, router]);
   
   const client = React.useMemo(() => {
     return createClient(
@@ -58,44 +75,9 @@ export default function SignInPage() {
         return;
       }
 
-      // Attempt role landing via profile fetch
-      try {
-        const token = (await client.auth.getSession()).data.session?.access_token;
-        if (token) {
-          await fetch('/api/session/set', { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ access_token: token }) 
-          });
-        }
-        
-        const apiRes = await fetch('/api/profiles/me', { 
-          headers: token ? { Authorization: `Bearer ${token}` } : {} 
-        });
-        const json = await apiRes.json();
-        const role = json?.profile?.role as 'admin' | 'staff' | 'customer' | undefined;
-        
-        // Enforce onboarding for admins if tenant not configured
-        if (role === 'admin') {
-          try {
-            const t = await fetch('/api/settings/tenant');
-            const tj = await t.json();
-            const tenant = tj?.tenant;
-            const services = await fetch('/api/admin/services').then(r=>r.json()).catch(()=>({services:[]}));
-            const patterns = await fetch('/api/admin/availability/work-patterns').then(r=>r.json()).catch(()=>({patterns:[]}));
-            const needs = !tenant?.legal_name || (services?.services?.length ?? 0) === 0 || (patterns?.patterns?.length ?? 0) === 0;
-            window.location.href = needs ? '/onboarding' : '/dashboard';
-            return;
-          } catch {
-            window.location.href = '/dashboard';
-            return;
-          }
-        }
-        else if (role === 'staff') window.location.href = '/dashboard';
-        else window.location.href = '/customer/dashboard';
-      } catch {
-        window.location.href = '/dashboard';
-      }
+      // Success - let the auth context handle the user state
+      // The useEffect above will automatically redirect based on user role
+      window.location.reload(); // Refresh to trigger auth context update
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
     } finally {

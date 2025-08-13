@@ -226,7 +226,6 @@ describe('constants', () => {
           case USER_ROLES.ADMIN:
             return '/admin/dashboard';
           default:
-            // @ts-expect-error - should be exhaustive
             const exhaustive: never = role;
             return exhaustive;
         }

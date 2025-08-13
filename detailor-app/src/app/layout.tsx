@@ -6,6 +6,7 @@ import { NotificationsProvider } from "@/lib/notifications";
 import { BrandLoader } from "@/lib/brand-loader";
 import { QueryProvider } from "@/lib/query-client";
 import { RealtimeBridge } from "@/components/RealtimeBridge";
+import { AuthProvider } from "@/lib/auth-context";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,9 +43,11 @@ export default function RootLayout({
         {/* In a real app, derive tenantId from domain or session */}
         <ThemeProvider paletteName="Master">
           <QueryProvider>
-            <BrandLoader />
-            <RealtimeBridge />
-            <NotificationsProvider>{children}</NotificationsProvider>
+            <AuthProvider>
+              <BrandLoader />
+              <RealtimeBridge />
+              <NotificationsProvider>{children}</NotificationsProvider>
+            </AuthProvider>
           </QueryProvider>
         </ThemeProvider>
       </body>

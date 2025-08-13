@@ -1,4 +1,4 @@
-import { beforeEach, vi } from 'vitest';
+import { beforeEach, vi, expect } from 'vitest';
 
 // Mock Next.js modules
 vi.mock('next/server', () => ({

@@ -9,6 +9,7 @@ import { NotificationsProvider } from '@/lib/notifications';
 import { MobileBottomNav } from '@/components/MobileBottomNav';
 import { Badge } from '@/ui/badge';
 import { SkipLink, ScreenReaderOnly, useFocusTrap } from '@/components/ui/AccessibilityUtils';
+import { useAuth } from '@/lib/auth-context';
 
 // Enterprise icons (you can replace with lucide-react)
 const MenuIcon = () => (
@@ -47,24 +48,10 @@ export function DashboardShell({
   const pathname = usePathname();
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [resolvedRole, setResolvedRole] = React.useState<UserRole | null>(role ?? null);
+  const { user, loading } = useAuth();
   
-  React.useEffect(() => {
-    if (role) { 
-      setResolvedRole(role); 
-      return; 
-    }
-    (async () => {
-      try {
-        const res = await fetch('/api/profiles/me');
-        const json = await res.json();
-        const r = (json?.profile?.role as UserRole | undefined) ?? 'admin';
-        setResolvedRole(r);
-      } catch {
-        setResolvedRole('admin');
-      }
-    })();
-  }, [role]);
+  // Use provided role or fall back to user role from context
+  const resolvedRole = role || (user?.role as UserRole) || 'admin';
 
   // Apply brand theming if provided
   React.useEffect(() => {
@@ -78,7 +65,7 @@ export function DashboardShell({
     };
   }, [brandColor]);
 
-  const items = getNavForRole(resolvedRole ?? 'admin');
+  const items = getNavForRole(resolvedRole);
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
@@ -115,11 +102,13 @@ export function DashboardShell({
         >
           <div className="p-4 sm:p-6 md:p-8 pb-20 sm:pb-24 md:pb-8 max-w-7xl mx-auto">
             <NotificationsProvider>
-              {resolvedRole ? children : (
+              {loading ? (
                 <div role="status" aria-label="Loading content">
                   <LoadingSkeleton rows={6} />
                   <ScreenReaderOnly>Loading dashboard content, please wait...</ScreenReaderOnly>
                 </div>
+              ) : (
+                children
               )}
             </NotificationsProvider>
           </div>

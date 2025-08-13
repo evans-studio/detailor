@@ -128,7 +128,7 @@ export function generateTestUuid(): string {
  * Helper to wait for async operations in tests
  */
 export function waitFor(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout resolve(ms));
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 /**
