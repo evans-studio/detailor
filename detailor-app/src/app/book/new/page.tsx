@@ -81,7 +81,7 @@ export default function NewBookingPage() {
           })
         });
         const data = await res.json();
-        if (data.ok) setQuote(data.quote);
+        if (res.ok && (data.success ?? true)) setQuote(data.data?.quote || data.quote);
       }
     } catch (error) {
       console.error('Failed to get quote:', error);
@@ -178,12 +178,14 @@ export default function NewBookingPage() {
         
         // Get tenant info and load services for guest users
         try {
-           const tenantRes = await fetch('/api/guest/tenant').then(r => r.json());
-           const tenantData = tenantRes.data || tenantRes.tenant;
+           const tenantRes = await fetch('/api/guest/tenant');
+           const tenantJson = await tenantRes.json();
+           const tenantData = tenantJson.data || tenantJson.tenant;
            if (tenantData) {
              const tenantId = tenantData.id;
-             const s = await fetch(`/api/guest/services?tenant_id=${tenantId}`).then(r => r.json());
-             const svc = s.data || s.services || [];
+              const sRes = await fetch(`/api/guest/services?tenant_id=${tenantId}`);
+              const s = await sRes.json();
+              const svc = s.data || s.services || [];
              setServices(svc);
              setEnterpriseServices(transformServicesForEnterprise(svc));
             setEnterpriseAddons(sampleAddons);
@@ -368,7 +370,7 @@ export default function NewBookingPage() {
             <Button onClick={async () => {
               // Validate slot still available
               const latest = await getSlots(14);
-              const stillAvailable = latest.slots.some((s) => s.start === location.start && s.end === location.end);
+              const stillAvailable = latest.slots.some((s: { start: string; end: string }) => s.start === location.start && s.end === location.end);
               if (!stillAvailable) {
                 notify({ title: 'Selected slot is no longer available' });
                 setStep('schedule');
@@ -399,8 +401,8 @@ export default function NewBookingPage() {
                     })
                   });
                   const customerData = await customerRes.json();
-                  if (!customerData.ok) throw new Error(customerData.error);
-                  finalCustomerId = customerData.customer.id;
+                  if (!customerRes.ok || !customerData.success) throw new Error(customerData?.error?.message || 'Failed to create customer');
+                  finalCustomerId = (customerData.data?.customer || customerData.customer).id;
 
                   // Create vehicle
                   const vehicleRes = await fetch(`/api/guest/customers/${finalCustomerId}/vehicles`, {
@@ -415,8 +417,8 @@ export default function NewBookingPage() {
                     })
                   });
                   const vehicleData = await vehicleRes.json();
-                  if (!vehicleData.ok) throw new Error(vehicleData.error);
-                  finalVehicleId = vehicleData.vehicle.id;
+                  if (!vehicleRes.ok || !vehicleData.success) throw new Error(vehicleData?.error?.message || 'Failed to create vehicle');
+                  finalVehicleId = (vehicleData.data?.vehicle || vehicleData.vehicle).id;
 
                   // Create address - for now using a default address since we don't have address input in this flow
                   const addressRes = await fetch(`/api/guest/customers/${finalCustomerId}/addresses`, {
@@ -429,8 +431,8 @@ export default function NewBookingPage() {
                     })
                   });
                   const addressData = await addressRes.json();
-                  if (!addressData.ok) throw new Error(addressData.error);
-                  finalAddressId = addressData.address.id;
+                  if (!addressRes.ok || !addressData.success) throw new Error(addressData?.error?.message || 'Failed to create address');
+                  finalAddressId = (addressData.data?.address || addressData.address).id;
                 } catch (error) {
                   notify({ title: `Failed to create customer record: ${(error as Error).message}` });
                   return;

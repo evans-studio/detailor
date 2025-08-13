@@ -8,7 +8,7 @@ export function EvidenceUpload({ jobId }: { jobId: string | null }) {
     if (!jobId) return;
     const res = await fetch(`/api/jobs/${jobId}/evidence`);
     const json = await res.json();
-    setItems(json.items || []);
+    setItems(json.data?.items || json.items || []);
   }
   React.useEffect(() => { setItems([]); setError(null); load(); }, [jobId]);
   async function onUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -17,7 +17,7 @@ export function EvidenceUpload({ jobId }: { jobId: string | null }) {
     Array.from(e.target.files).forEach((f) => form.append('files', f));
     const res = await fetch(`/api/jobs/${jobId}/evidence`, { method: 'POST', body: form });
     const json = await res.json();
-    if (!json.ok) { setError(json.error || 'Upload failed'); return; }
+    if (!res.ok || !json.success) { setError(json?.error?.message || 'Upload failed'); return; }
     setError(null);
     load();
   }

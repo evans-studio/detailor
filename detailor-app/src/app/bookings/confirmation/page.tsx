@@ -45,9 +45,8 @@ function BookingConfirmationInner() {
         });
         
         const paymentData = await paymentRes.json();
-        
-        if (!paymentData.ok) {
-          throw new Error('Payment verification failed');
+        if (!paymentRes.ok || !paymentData.success) {
+          throw new Error(paymentData?.error?.message || 'Payment verification failed');
         }
 
         // Get pending booking data from localStorage
@@ -78,8 +77,8 @@ function BookingConfirmationInner() {
             })
           });
           const data = await res.json();
-          if (!data.ok) throw new Error(data.error);
-          booking = data;
+          if (!res.ok || !data.success) throw new Error(data?.error?.message || 'Failed to create booking');
+          booking = data.data?.booking || data.booking || data;
         } else {
           // Authenticated booking
           booking = await createBooking({

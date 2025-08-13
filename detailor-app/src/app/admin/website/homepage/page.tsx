@@ -39,8 +39,9 @@ export default function HomepageAdminPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['homepage-settings'],
     queryFn: async (): Promise<TenantHomepage> => {
-      const res = await api<{ ok: boolean; tenant: TenantHomepage }>(`/api/website/homepage`, { credentials: 'include' });
-      return res.tenant;
+      const res = await fetch(`/api/website/homepage`, { credentials: 'include', cache: 'no-store' });
+      const json = await res.json();
+      return json.data?.tenant || json.tenant;
     },
   });
 
@@ -49,12 +50,15 @@ export default function HomepageAdminPage() {
 
   const saveMutation = useMutation({
     mutationFn: async (payload: Partial<TenantHomepage>) => {
-      return await api<{ ok: boolean; tenant: TenantHomepage }>(`/api/website/homepage`, {
+      const res = await fetch(`/api/website/homepage`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(payload),
       });
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json?.error?.message || 'Failed to save');
+      return json;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['homepage-settings'] }),
   });
@@ -210,7 +214,7 @@ export default function HomepageAdminPage() {
               fd.append('file', input.files[0]);
               const res = await fetch('/api/website/logo', { method: 'POST', body: fd, credentials: 'include' });
               const json = await res.json();
-              if (json.ok) updateBrand('logo_url', json.url);
+              if (res.ok && (json.success ?? true)) updateBrand('logo_url', json.data?.url || json.url);
             }}>
               <input type="file" name="file" accept="image/*" className="text-sm" />
               <button className="px-3 py-1.5 rounded-md border">Upload</button>

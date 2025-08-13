@@ -21,7 +21,7 @@ export function EntityCustomerDrawer({
     mutationFn: async () => {
       const res = await fetch(`/api/customers`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
       const json = await res.json();
-      if (!res.ok || !json.ok) throw new Error(json.error || 'Failed to create customer');
+      if (!res.ok || !json.success) throw new Error(json?.error?.message || 'Failed to create customer');
     },
     onSuccess: async () => {
       onOpenChange(false);

@@ -12,15 +12,21 @@ export type QuoteRequest = {
 
 type PriceBreakdown = { base: number; addons: number; taxRate: number; tax: number; total: number };
 export async function getQuote(req: QuoteRequest) {
-  return api<{ ok: boolean; quote: { price_breakdown: PriceBreakdown } }>(`/api/quotes`, {
+  const res = await fetch(`/api/quotes`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
   });
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new Error(json?.error?.message || 'Failed to get quote');
+  return json.data || json;
 }
 
 export async function getSlots(days = 30) {
-  return api<{ ok: boolean; slots: Array<{ start: string; end: string; capacity: number }> }>(`/api/availability/slots?days=${days}`);
+  const res = await fetch(`/api/availability/slots?days=${days}`);
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new Error(json?.error?.message || 'Failed to load slots');
+  return json.data || json;
 }
 
 export type CreateBookingRequest = {
@@ -35,11 +41,14 @@ export type CreateBookingRequest = {
 };
 
 export async function createBooking(req: CreateBookingRequest) {
-  return api<{ ok: boolean; booking: unknown }>(`/api/bookings`, {
+  const res = await fetch(`/api/bookings`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
   });
+  const json = await res.json();
+  if (!res.ok || !json.success) throw new Error(json?.error?.message || 'Failed to create booking');
+  return json.data || json;
 }
 
 
