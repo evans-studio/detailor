@@ -1,6 +1,7 @@
 "use client";
 import * as React from 'react';
 import { useTenantBrand } from './use-tenant-brand';
+import { useAuth } from './auth-context';
 
 type Profile = { tenant_id?: string };
 type Palette = {
@@ -52,21 +53,29 @@ function applyPaletteToCSS(palette: Palette) {
 }
 
 export function BrandLoader() {
+  const { user, isAuthenticated, loading } = useAuth();
   const [tenantId, setTenantId] = React.useState<string | undefined>(undefined);
   const { palette } = useTenantBrand(tenantId);
+  
   React.useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/api/profiles/me');
-        if (!res.ok) return;
-        const json = (await res.json()) as { ok: boolean; profile: Profile };
-        setTenantId(json.profile?.tenant_id);
-      } catch {}
-    })();
-  }, []);
+    // Only try to load tenant branding if user is authenticated and has a profile
+    if (!loading && isAuthenticated && user) {
+      // Get tenant ID from user context or make API call to get tenant details
+      (async () => {
+        try {
+          const res = await fetch('/api/tenant/me');
+          if (!res.ok) return;
+          const json = await res.json();
+          setTenantId(json.tenant?.id);
+        } catch {}
+      })();
+    }
+  }, [user, isAuthenticated, loading]);
+  
   React.useEffect(() => {
     if (palette) applyPaletteToCSS(palette as Palette);
   }, [palette]);
+  
   return null;
 }
 
