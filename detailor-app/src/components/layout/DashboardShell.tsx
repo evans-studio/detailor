@@ -237,7 +237,7 @@ function EnterpriseHeader({
         </Button>
 
         {/* Settings Link */}
-        <Link href="/settings">
+        <Link href="/admin/settings">
           <Button intent="ghost" size="sm" className="hover:bg-gray-100 font-medium">
             Settings
           </Button>

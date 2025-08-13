@@ -52,16 +52,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           Authorization: `Bearer ${session.access_token}`,
         },
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.profile) {
-          setUser({
-            id: data.profile.id,
-            email: data.profile.email,
-            role: data.profile.role,
-          });
-        }
+
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.success && data?.data) {
+        setUser({
+          id: data.data.id,
+          email: data.data.email,
+          role: data.data.role,
+        });
       } else {
         // If profile fetch fails but we have a session, clear everything
         setUser(null);
