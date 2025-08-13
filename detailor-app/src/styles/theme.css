@@ -1,0 +1,21 @@
+/* System Bible Theme - Single source of truth */
+
+:root {
+  --color-primary: #3B82F6;
+  --color-secondary: #10B981;
+  --color-background: #FFFFFF;
+  --color-surface: #F9FAFB;
+  --color-text: #1F2937;
+  --color-border: #E2E7EB;
+
+  /* Back-compat mappings */
+  --color-bg: var(--color-background);
+  --color-surface-elevated: var(--color-surface);
+  --color-border-strong: var(--color-border);
+  --color-text-secondary: color-mix(in srgb, var(--color-text) 70%, transparent);
+  --color-text-muted: color-mix(in srgb, var(--color-text) 55%, transparent);
+  --color-text-subtle: color-mix(in srgb, var(--color-text) 40%, transparent);
+  --color-primary-foreground: #FFFFFF;
+}
+
+

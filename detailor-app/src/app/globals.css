@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import "../styles/brand.css" layer(base);
 @import "../styles/tokens.css" layer(base);
+@import "../styles/theme.css" layer(base);
 @import "../styles/animations.css" layer(components);
 
 @layer base {
