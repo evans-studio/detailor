@@ -23,6 +23,21 @@ export async function PATCH(req: Request) {
     const { data: selfCustomer } = await admin.from('customers').select('id').eq('auth_user_id', user.id).single();
 
     // Basic policy: customers can only reschedule future pending/confirmed bookings, or cancel within rules
+    // If rescheduling, perform conflict prevention before update
+    if (payload.start_at && payload.end_at) {
+      const { data: current } = await admin.from('bookings').select('tenant_id').eq('id', id).single();
+      if (!current?.tenant_id) throw new Error('Booking not found');
+      const { data: conflicts } = await admin
+        .from('bookings')
+        .select('id')
+        .eq('tenant_id', current.tenant_id)
+        .neq('id', id)
+        .overlaps('time_range', `[${payload.start_at},${payload.end_at})`);
+      if ((conflicts?.length || 0) > 0) {
+        return createErrorResponse(API_ERROR_CODES.OPERATION_NOT_ALLOWED, 'Selected time overlaps with an existing booking', { conflicting_ids: conflicts?.map(c => c.id) }, 409);
+      }
+    }
+
     let query = admin.from('bookings').update(payload).eq('id', id).select('*').single();
     if (profile?.tenant_id && profile.role !== 'customer') {
       query = admin.from('bookings').update(payload).eq('id', id).eq('tenant_id', profile.tenant_id).select('*').single();

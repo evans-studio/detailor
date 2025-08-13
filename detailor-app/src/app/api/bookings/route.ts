@@ -132,6 +132,21 @@ export async function POST(req: Request) {
     const total = Math.round((basePrice + tax) * 100) / 100;
     const price_breakdown = { base: Number(svc.base_price), addons: addonsTotal, taxRate, tax, total };
 
+    // Conflict prevention: verify no overlapping bookings (tstzrange overlap)
+    const { data: conflicts } = await admin
+      .from('bookings')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .overlaps('time_range', `[${payload.start_at},${payload.end_at})`);
+    if ((conflicts?.length || 0) > 0) {
+      return createErrorResponse(
+        API_ERROR_CODES.OPERATION_NOT_ALLOWED,
+        'Selected time overlaps with an existing booking',
+        { conflicting_ids: conflicts?.map(c => c.id) },
+        409
+      );
+    }
+
     const { data, error } = await admin
       .from('bookings')
       .insert({

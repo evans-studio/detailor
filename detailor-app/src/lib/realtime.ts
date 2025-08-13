@@ -1,4 +1,34 @@
 "use client";
+import * as React from 'react';
+import { getSupabaseClient } from '@/lib/supabaseClient';
+
+type TableName = 'bookings' | 'customers' | 'services' | 'messages';
+
+export function useRealtimeTable<T = unknown>(
+  table: TableName,
+  onEvent: (payload: { type: 'INSERT' | 'UPDATE' | 'DELETE'; new?: T; old?: T }) => void,
+  filter?: string
+) {
+  React.useEffect(() => {
+    const supabase = getSupabaseClient();
+    const channel = supabase
+      .channel(`rt:${table}:${filter || 'all'}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table, filter },
+        (payload: any) => {
+          const type = payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE';
+          onEvent({ type, new: payload.new as T, old: payload.old as T });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [table, filter, onEvent]);
+}
+
 import { createClient } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
