@@ -148,22 +148,27 @@ export default function NewBookingPage() {
     (async () => {
       try {
         // Try to load customer data if authenticated
-        const list = await api<{ ok: boolean; customers: Array<{ id: string }> }>(`/api/customers`);
-        const me = list.customers?.[0];
+         const listRes = await fetch('/api/customers', { cache: 'no-store' });
+         const listJson = await listRes.json();
+         const me = (listJson.data || listJson.customers || [])[0];
         if (me?.id) {
           setIsAuthenticated(true);
           setCustomerId(me.id);
           
           // Load services for authenticated users
-          const s = await api<{ ok: boolean; services: Array<{ id: string; name: string; base_price?: number; duration?: number }> }>(`/api/services`);
-          setServices(s.services);
-          setEnterpriseServices(transformServicesForEnterprise(s.services));
+           const sRes = await fetch('/api/services', { cache: 'no-store' });
+           const sJson = await sRes.json();
+           const svc = sJson.data || sJson.services || [];
+           setServices(svc);
+           setEnterpriseServices(transformServicesForEnterprise(svc));
           setEnterpriseAddons(sampleAddons);
           
-          const vs = await api<{ ok: boolean; vehicles: Array<{ id: string; make: string; model: string; size_tier?: string }> }>(`/api/customers/${me.id}/vehicles`);
-          setVehicles(vs.vehicles || []);
-          const as = await api<{ ok: boolean; addresses: Array<{ id: string; label?: string; address_line1: string; postcode?: string }> }>(`/api/customers/${me.id}/addresses`);
-          setAddresses(as.addresses || []);
+           const vsRes = await fetch(`/api/customers/${me.id}/vehicles`, { cache: 'no-store' });
+           const vsJson = await vsRes.json();
+           setVehicles(vsJson.data || vsJson.vehicles || []);
+           const asRes = await fetch(`/api/customers/${me.id}/addresses`, { cache: 'no-store' });
+           const asJson = await asRes.json();
+           setAddresses(asJson.data || asJson.addresses || []);
         } else {
           setIsAuthenticated(false);
         }
@@ -173,18 +178,20 @@ export default function NewBookingPage() {
         
         // Get tenant info and load services for guest users
         try {
-          const tenantRes = await fetch('/api/guest/tenant').then(r => r.json());
-          if (tenantRes.ok) {
-            const tenantId = tenantRes.tenant.id;
-            const s = await fetch(`/api/guest/services?tenant_id=${tenantId}`).then(r => r.json());
-            setServices(s.services || []);
-            setEnterpriseServices(transformServicesForEnterprise(s.services || []));
+           const tenantRes = await fetch('/api/guest/tenant').then(r => r.json());
+           const tenantData = tenantRes.data || tenantRes.tenant;
+           if (tenantData) {
+             const tenantId = tenantData.id;
+             const s = await fetch(`/api/guest/services?tenant_id=${tenantId}`).then(r => r.json());
+             const svc = s.data || s.services || [];
+             setServices(svc);
+             setEnterpriseServices(transformServicesForEnterprise(svc));
             setEnterpriseAddons(sampleAddons);
             
             // Try to get business name and branding
-            setBusinessName(tenantRes.tenant.trading_name || tenantRes.tenant.legal_name || 'Detailor');
-            if (tenantRes.tenant.brand_settings?.primary_color) {
-              setBrandColor(tenantRes.tenant.brand_settings.primary_color);
+             setBusinessName(tenantData.trading_name || tenantData.legal_name || 'Detailor');
+             if (tenantData.brand_settings?.primary_color) {
+               setBrandColor(tenantData.brand_settings.primary_color);
             }
             
             // Store tenant ID for later use

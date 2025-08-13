@@ -77,8 +77,9 @@ export default function AdminBookingsPage() {
       if (from) qs.set('from', from);
       if (to) qs.set('to', to);
       if (q) qs.set('q', q);
-      const response = await api<{ ok: boolean; bookings: Booking[] }>(`/api/bookings${qs.toString() ? `?${qs.toString()}` : ''}`);
-      return response.bookings || [];
+      const res = await fetch(`/api/bookings${qs.toString() ? `?${qs.toString()}` : ''}`, { cache: 'no-store' });
+      const json = await res.json();
+      return json.data?.bookings || json.bookings || json.data || [];
     },
     refetchInterval: 30000, // Real-time updates
   });
