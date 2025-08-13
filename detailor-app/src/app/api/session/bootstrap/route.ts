@@ -58,13 +58,21 @@ export async function POST(req: Request) {
       // Link profile with correct role (admin if email == tenant.contact_email)
       try {
         const { data: tenant } = await admin.from('tenants').select('id, contact_email').eq('contact_email', email).maybeSingle();
-        if (tenant?.id) {
-          const uid = signIn.data.user?.id as string | undefined;
-          if (uid) {
-            await admin.from('profiles').upsert({ id: uid, email, tenant_id: tenant.id, role: 'admin' }, { onConflict: 'id' });
-          }
+        const uid = signIn.data.user?.id as string | undefined;
+        
+        if (tenant?.id && uid) {
+          // Tenant exists, link profile
+          await admin.from('profiles').upsert({ id: uid, email, tenant_id: tenant.id, role: 'admin' }, { onConflict: 'id' });
+          console.log('[bootstrap] linked profile to existing tenant', email, tenant.id);
+        } else if (uid) {
+          // No tenant found, create placeholder profile for onboarding
+          await admin.from('profiles').upsert({ id: uid, email, tenant_id: null, role: 'admin' }, { onConflict: 'id' });
+          console.log('[bootstrap] created orphaned profile for onboarding', email);
         }
-      } catch {}
+      } catch (profileError) {
+        console.warn('[bootstrap] profile linking failed', email, (profileError as Error).message);
+        // Continue anyway - let onboarding handle tenant creation
+      }
 
       // Build response and set cookies so subsequent API calls are authenticated
       const res = NextResponse.json({ ok: true, access_token: accessToken, refresh_token: refreshToken, email });
