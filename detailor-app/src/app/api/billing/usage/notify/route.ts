@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { sendTenantEmail } from '@/lib/messaging';
 
@@ -51,9 +52,9 @@ export async function POST() {
         results.push({ tenant_id: tenantId, notified80: isWarn || undefined, overage: isOver || undefined });
       }
     }
-    return NextResponse.json({ ok: true, results });
+    return createSuccessResponse({ results });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/billing/usage/notify' }, 400);
   }
 }
 

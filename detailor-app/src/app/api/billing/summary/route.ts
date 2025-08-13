@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import Stripe from 'stripe';
@@ -20,10 +21,10 @@ export async function GET(req: Request) {
       .select('stripe_subscription_id, price_id, status, current_period_end')
       .eq('tenant_id', profile.tenant_id)
       .maybeSingle();
-    if (!sub) return NextResponse.json({ ok: true, current: null, next: null });
+    if (!sub) return createSuccessResponse({ current: null, next: null });
 
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
-    if (!secret) return NextResponse.json({ ok: true, current: null, next: null });
+    if (!secret) return createSuccessResponse({ current: null, next: null });
     const stripe = new Stripe(secret);
 
     let current: string | undefined;
@@ -44,9 +45,9 @@ export async function GET(req: Request) {
       nextDate = s.current_period_end ? new Date(s.current_period_end * 1000).toISOString() : undefined;
     }
 
-    return NextResponse.json({ ok: true, current, next, nextDate });
+    return createSuccessResponse({ current, next, nextDate });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/billing/summary' }, 400);
   }
 }
 

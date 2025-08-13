@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import Stripe from 'stripe';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
     const secretHeader = req.headers.get('x-admin-secret');
     const allowed = process.env.BILLING_ADMIN_SECRET || '';
     if (allowed && secretHeader !== allowed) {
-      return NextResponse.json({ ok: false, error: 'Forbidden' }, { status: 403 });
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Forbidden', undefined, 403);
     }
 
     const admin = getSupabaseAdmin();
@@ -91,9 +92,9 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ ok: true, results });
+    return createSuccessResponse({ results });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/billing/overages/run' }, 400);
   }
 }
 

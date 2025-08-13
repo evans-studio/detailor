@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -15,16 +16,18 @@ export async function GET(req: Request) {
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || profile.role !== 'admin') throw new Error('Forbidden');
+    if (!profile || profile.role !== 'admin') {
+      return createErrorResponse(API_ERROR_CODES.ADMIN_ONLY, 'Only admin can fetch homepage settings', undefined, 403);
+    }
     const { data, error } = await admin
       .from('tenants')
       .select('id, legal_name, trading_name, homepage_template, homepage_published, homepage_content, brand_settings, plan_id, feature_flags')
       .eq('id', profile.tenant_id)
       .single();
     if (error) throw error;
-    return NextResponse.json({ ok: true, tenant: data });
+    return createSuccessResponse({ tenant: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/website/homepage' }, 400);
   }
 }
 
@@ -35,7 +38,9 @@ export async function PATCH(req: Request) {
     const body = await req.json();
     const payload = payloadSchema.parse(body);
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || profile.role !== 'admin') throw new Error('Forbidden');
+    if (!profile || profile.role !== 'admin') {
+      return createErrorResponse(API_ERROR_CODES.ADMIN_ONLY, 'Only admin can update homepage settings', undefined, 403);
+    }
     const { data, error } = await admin
       .from('tenants')
       .update(payload)
@@ -43,9 +48,9 @@ export async function PATCH(req: Request) {
       .select('id, legal_name, trading_name, homepage_template, homepage_published, homepage_content, brand_settings')
       .single();
     if (error) throw error;
-    return NextResponse.json({ ok: true, tenant: data });
+    return createSuccessResponse({ tenant: data });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'PATCH /api/website/homepage' }, 400);
   }
 }
 

@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -28,24 +29,25 @@ export async function POST(req: Request) {
           const sessionEmail = session.customer_details?.email || session.customer_email;
           
           if (sessionEmail?.toLowerCase() !== email.toLowerCase()) {
-            return NextResponse.json({
-              ok: false,
-              error: 'Session email mismatch'
-            }, { status: 403 });
+            return createErrorResponse(
+              API_ERROR_CODES.FORBIDDEN,
+              'Session email mismatch',
+              { expected: sessionEmail, actual: email },
+              403
+            );
           }
           
           if (session.payment_status !== 'paid') {
-            return NextResponse.json({
-              ok: false,
-              error: 'Payment not completed'
-            }, { status: 403 });
+            return createErrorResponse(
+              API_ERROR_CODES.PAYMENT_ERROR,
+              'Payment not completed',
+              { status: session.payment_status },
+              403
+            );
           }
         } catch (stripeError) {
           console.error('[set-password] Stripe verification failed:', stripeError);
-          return NextResponse.json({
-            ok: false,
-            error: 'Unable to verify payment session'
-          }, { status: 403 });
+          return createErrorResponse(API_ERROR_CODES.PAYMENT_ERROR, 'Unable to verify payment session', undefined, 403);
         }
       }
     }
@@ -54,18 +56,12 @@ export async function POST(req: Request) {
     const { data: users, error: listError } = await admin.auth.admin.listUsers();
     if (listError) {
       console.error('[set-password] Failed to list users:', listError);
-      return NextResponse.json({
-        ok: false,
-        error: 'Unable to verify user'
-      }, { status: 500 });
+      return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'Unable to verify user', undefined, 500);
     }
     
     const existingUser = users.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
     if (!existingUser) {
-      return NextResponse.json({
-        ok: false,
-        error: 'User not found. Please contact support.'
-      }, { status: 404 });
+      return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'User not found. Please contact support.', { email }, 404);
     }
     
     console.log(`[set-password] Updating password for user: ${existingUser.id} (${email})`);
@@ -83,33 +79,20 @@ export async function POST(req: Request) {
     
     if (updateError) {
       console.error('[set-password] Failed to update password:', updateError);
-      return NextResponse.json({
-        ok: false,
-        error: 'Failed to update password'
-      }, { status: 500 });
+      return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'Failed to update password', undefined, 500);
     }
     
     console.log(`[set-password] Password updated successfully for ${email}`);
     
-    return NextResponse.json({
-      ok: true,
-      message: 'Password set successfully'
-    });
+    return createSuccessResponse({ message: 'Password set successfully' });
     
   } catch (error) {
     console.error('[set-password] Unexpected error:', error);
     
     if (error instanceof z.ZodError) {
-      return NextResponse.json({
-        ok: false,
-        error: 'Invalid request data',
-        details: error.issues
-      }, { status: 400 });
+      return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'Invalid request data', error.issues, 400);
     }
     
-    return NextResponse.json({
-      ok: false,
-      error: 'An unexpected error occurred'
-    }, { status: 500 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, 'An unexpected error occurred', undefined, 500);
   }
 }

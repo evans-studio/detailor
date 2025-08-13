@@ -1,6 +1,7 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -35,9 +36,9 @@ export async function GET(req: Request) {
     const overageAmount = (overageFee ?? 0) * billableOverUnits;
     const warn = limit !== null && used >= Math.floor(limit * 0.8);
 
-    return NextResponse.json({ ok: true, usage: { used, limit, allowed, buffer, overUnits, billableOverUnits, overageFee: overageFee ?? 0, overageAmount, warn } });
+    return createSuccessResponse({ usage: { used, limit, allowed, buffer, overUnits, billableOverUnits, overageFee: overageFee ?? 0, overageAmount, warn } });
   } catch (e) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/billing/usage' }, 400);
   }
 }
 

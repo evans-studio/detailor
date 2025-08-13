@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -9,11 +10,15 @@ export async function POST(req: Request) {
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || profile.role !== 'admin') throw new Error('Forbidden');
+    if (!profile || profile.role !== 'admin') {
+      return createErrorResponse(API_ERROR_CODES.ADMIN_ONLY, 'Only admin can upload logo', undefined, 403);
+    }
 
     const form = await req.formData();
     const file = form.get('file') as File | null;
-    if (!file) throw new Error('No file');
+    if (!file) {
+      return createErrorResponse(API_ERROR_CODES.MISSING_REQUIRED_FIELD, 'No file', { field: 'file' }, 400);
+    }
     const arrayBuffer = await file.arrayBuffer();
     const bytes = Buffer.from(arrayBuffer);
     const path = `logos/${profile.tenant_id}.png`;
@@ -25,9 +30,9 @@ export async function POST(req: Request) {
       .from('tenants')
       .update({ brand_settings: { logo_url: pub.publicUrl } })
       .eq('id', profile.tenant_id);
-    return NextResponse.json({ ok: true, url: pub.publicUrl });
+    return createSuccessResponse({ url: pub.publicUrl });
   } catch (e: unknown) {
-    return NextResponse.json({ ok: false, error: (e as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/website/logo' }, 400);
   }
 }
 
