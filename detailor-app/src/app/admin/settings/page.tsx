@@ -60,7 +60,7 @@ export default function AdminSettingsPage() {
       const res = await fetch('/api/settings/tenant');
       if (!res.ok) throw new Error('Failed to load settings');
       const json = await res.json();
-      return json.tenant || {
+      return json.data?.tenant || json.tenant || {
         id: '',
         business_prefs: {
           auto_confirm_bookings: false,
@@ -159,6 +159,8 @@ export default function AdminSettingsPage() {
   
   const handleSave = async () => {
     await saveMutation.mutateAsync();
+    // Refetch to ensure UI reflects persisted values
+    await queryClient.invalidateQueries({ queryKey: ['tenant'] });
   };
   
   const handleReset = () => {

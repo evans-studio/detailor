@@ -12,7 +12,11 @@ export default function AdminServicesPage() {
   const qc = useQueryClient();
   const { data: services = [] } = useQuery<Service[]>({
     queryKey: ['services'],
-    queryFn: async () => (await (await fetch('/api/admin/services')).json()).services || [],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/services', { cache: 'no-store' });
+      const json = await res.json();
+      return json.data || json.services || [];
+    },
   });
   const create = useMutation({
     mutationFn: async (body: { name: string }) => {
