@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { getUserFromRequest } from '@/lib/authServer';
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
       .eq('token', token)
       .eq('status', 'pending')
       .single();
-    if (iErr || !invite) throw iErr ?? new Error('Invalid or consumed invite');
+    if (iErr || !invite) return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'Invalid or consumed invite', undefined, 400);
 
     // Upsert profile for this auth user
     const { error: pErr } = await admin.from('profiles').upsert(
@@ -43,9 +44,9 @@ export async function POST(req: Request) {
       .eq('id', invite.id);
     if (uErr) throw uErr;
 
-    return NextResponse.json({ ok: true, tenant_id: invite.tenant_id, role: invite.role });
+    return createSuccessResponse({ tenant_id: invite.tenant_id, role: invite.role });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'POST /api/invites/accept' }, 400);
   }
 }
 

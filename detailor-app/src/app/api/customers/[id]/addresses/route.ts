@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -31,13 +32,13 @@ export async function GET(req: Request) {
         .eq('customer_id', customerId)
         .order('created_at');
       if (error) throw error;
-      return NextResponse.json({ ok: true, addresses: data });
+      return createSuccessResponse({ addresses: data });
     }
     const { data, error } = await admin.from('addresses').select('*').order('created_at');
     if (error) throw error;
-    return NextResponse.json({ ok: true, addresses: data });
+    return createSuccessResponse({ addresses: data });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'GET /api/customers/[id]/addresses' }, 400);
   }
 }
 
@@ -50,16 +51,18 @@ export async function POST(req: Request) {
     const body = await req.json();
     const payload = createSchema.parse(body);
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
-    if (!profile || !['staff', 'admin'].includes(profile.role)) throw new Error('Forbidden');
+    if (!profile || !['staff', 'admin'].includes(profile.role)) {
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Insufficient permissions', { required_roles: ['staff','admin'] }, 403);
+    }
     const { data, error } = await admin
       .from('addresses')
       .insert({ tenant_id: profile.tenant_id, customer_id: customerId, ...payload })
       .select('*')
       .single();
     if (error) throw error;
-    return NextResponse.json({ ok: true, address: data });
+    return createSuccessResponse({ address: data });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'POST /api/customers/[id]/addresses' }, 400);
   }
 }
 

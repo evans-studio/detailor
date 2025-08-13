@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -21,8 +22,8 @@ export async function POST(req: Request) {
       .select('*')
       .eq('id', user.id)
       .single();
-    if (pErr || !inviterProfile) throw new Error('Inviter has no profile');
-    if (inviterProfile.role !== 'admin') throw new Error('Only admin can invite');
+    if (pErr || !inviterProfile) return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Inviter has no profile', undefined, 404);
+    if (inviterProfile.role !== 'admin') return createErrorResponse(API_ERROR_CODES.ADMIN_ONLY, 'Only admin can invite', undefined, 403);
 
     // Check staff limit for staff/admin invites
     if (role === 'staff' || role === 'admin') {
@@ -37,9 +38,9 @@ export async function POST(req: Request) {
         
         const currentCount = currentStaff?.length || 0;
         
-        if (currentCount >= staffLimit) {
-          throw new Error(`Staff limit reached (${staffLimit}). Upgrade to Pro for more team members.`);
-        }
+          if (currentCount >= staffLimit) {
+            return createErrorResponse(API_ERROR_CODES.LIMIT_EXCEEDED, `Staff limit reached (${staffLimit}). Upgrade to Pro for more team members.`, { current_count: currentCount, limit: staffLimit }, 403);
+          }
       }
     }
 
@@ -50,9 +51,9 @@ export async function POST(req: Request) {
       .single();
     if (iErr || !invite) throw iErr ?? new Error('Invite creation failed');
 
-    return NextResponse.json({ ok: true, invite });
+    return createSuccessResponse({ invite });
   } catch (error: unknown) {
-    return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'POST /api/invites/create' }, 400);
   }
 }
 
