@@ -68,7 +68,7 @@ describe('OnboardingPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 
-    await screen.findByText(/Branding/i);
+    await screen.findByLabelText(/Business Name for Branding/i);
 
     // Branding save and complete
     fetchMock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ success: true }), { status: 200 })));
