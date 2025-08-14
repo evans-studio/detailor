@@ -19,7 +19,13 @@ export default function AdminInvoiceDetailPage() {
   const { data: invoice, isLoading } = useQuery({
     queryKey: ['invoice', id],
     queryFn: async (): Promise<Invoice | null> => {
-      const res = await fetch(`/api/invoices/${id}`);
+      let headers: HeadersInit | undefined = undefined;
+      try {
+        const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+        const tid = cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
+        if (tid) headers = { 'x-tenant-id': tid };
+      } catch {}
+      const res = await fetch(`/api/invoices/${id}`, { headers });
       const json = await res.json();
       return json.invoice || null;
     },
@@ -27,7 +33,13 @@ export default function AdminInvoiceDetailPage() {
   const { data: payments = [] } = useQuery({
     queryKey: ['payments', { invoiceId: id }],
     queryFn: async (): Promise<Array<{ id: string; amount: number; status: string; provider: string; created_at: string }>> => {
-      const res = await fetch(`/api/payments?invoice_id=${id}`);
+      let headers: HeadersInit | undefined = undefined;
+      try {
+        const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+        const tid = cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
+        if (tid) headers = { 'x-tenant-id': tid };
+      } catch {}
+      const res = await fetch(`/api/payments?invoice_id=${id}` , { headers });
       const json = await res.json();
       return json.payments || [];
     },

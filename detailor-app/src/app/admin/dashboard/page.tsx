@@ -50,7 +50,14 @@ export default function AdminDashboard() {
   const { data: activeJobs = [] } = useQuery<JobRow[]>({
     queryKey: ['jobs', { scope: 'active' }],
     queryFn: async () => {
-      const res = await fetch('/api/jobs?status=in_progress');
+      // Provide tenant header fallback for environments where auth cookie hasn't attached yet
+      let headers: HeadersInit | undefined = undefined;
+      try {
+        const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+        const tid = cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
+        if (tid) headers = { 'x-tenant-id': tid };
+      } catch {}
+      const res = await fetch('/api/jobs?status=in_progress', { headers });
       const json = await res.json();
       return json.data?.jobs || json.jobs || [];
     },

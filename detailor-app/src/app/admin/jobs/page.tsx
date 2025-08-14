@@ -31,7 +31,13 @@ export default function AdminJobsPage() {
   const { data: jobs = [], isLoading, error, refetch } = useQuery<Job[]>({
     queryKey: ['jobs', { scope: 'admin-list' }],
     queryFn: async () => {
-      const res = await fetch('/api/jobs', { cache: 'no-store' });
+      let headers: HeadersInit | undefined = undefined;
+      try {
+        const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+        const tid = cookie ? decodeURIComponent(cookie.split('=')[1]) : '';
+        if (tid) headers = { 'x-tenant-id': tid };
+      } catch {}
+      const res = await fetch('/api/jobs', { cache: 'no-store', headers });
       const json = await res.json();
       if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to load jobs');
       return json.data?.jobs || json.jobs || [];
