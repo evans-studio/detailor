@@ -90,8 +90,8 @@ This document tracks progress to fully resolve the UI not showing existing backe
   - [ ] Verification protocol completed
 
 - Jobs (`/admin/jobs`, `/api/jobs`)
-  - [ ] Lists and detail views follow fetch‑bind‑save; show loading/error
-  - [ ] Start/Complete flow verified with activity logs; realtime invalidations
+  - [x] Lists and detail views follow fetch‑bind‑save; show loading/error
+  - [x] Start/Complete flow verified with activity logs; realtime invalidations
   - [ ] Verification protocol completed
 
 ### Invoices & Payments
