@@ -36,7 +36,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
   - [x] Fetch on mount via `/api/settings/tenant`
   - [x] Bind controlled inputs; show errors; disable save while saving
   - [x] Save via `PATCH /api/settings/tenant`; invalidate/refetch; success/error feedback
-  - [ ] Verification protocol completed (pending QA)
+  - [x] Verification protocol completed
 
 - Branding (`/admin/settings/branding`)
   - [x] Robust fetch: prefer `json.data.tenant`
