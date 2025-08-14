@@ -417,10 +417,11 @@ export default function OnboardingPage() {
           <div className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
+                <label htmlFor="business-legal-name" className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
                   Business Name *
                 </label>
                 <Input 
+                  id="business-legal-name"
                   placeholder="Your business name" 
                   value={businessForm.legal_name} 
                   onChange={(e) => setBusinessForm({ ...businessForm, legal_name: e.target.value })} 
@@ -441,10 +442,11 @@ export default function OnboardingPage() {
             
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
+                <label htmlFor="business-contact-email" className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
                   Contact Email *
                 </label>
                 <Input 
+                  id="business-contact-email"
                   type="email" 
                   placeholder="contact@yourbusiness.com" 
                   value={businessForm.contact_email} 
@@ -492,10 +494,11 @@ export default function OnboardingPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
+                <label htmlFor="admin-full-name" className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
                   Admin Name *
                 </label>
                 <Input 
+                  id="admin-full-name"
                   placeholder="Your full name" 
                   value={businessForm.admin_full_name} 
                   onChange={(e) => setBusinessForm({ ...businessForm, admin_full_name: e.target.value })} 
@@ -503,10 +506,11 @@ export default function OnboardingPage() {
                 />
               </div>
               <div>
-                <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
+                <label htmlFor="admin-email" className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
                   Admin Email *
                 </label>
                 <Input 
+                  id="admin-email"
                   type="email" 
                   placeholder="admin@yourbusiness.com" 
                   value={businessForm.admin_email} 
@@ -533,10 +537,11 @@ export default function OnboardingPage() {
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
+              <label htmlFor="service-name" className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
                 Service Name *
               </label>
               <Input 
+                id="service-name"
                 placeholder="e.g., Premium Car Detail" 
                 value={serviceForm.name}
                 onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })} 
@@ -557,11 +562,12 @@ export default function OnboardingPage() {
 
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
+                  <label htmlFor="service-price" className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
                   Price (£)
                   <span className="ml-1 text-[var(--font-size-xs)] text-[var(--color-text-muted)]">Enter amount without currency symbol</span>
                 </label>
                 <Input
+                    id="service-price"
                   type="number"
                   step="0.01"
                   min="0"
@@ -572,11 +578,12 @@ export default function OnboardingPage() {
                 />
               </div>
               <div>
-                <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
+                  <label htmlFor="service-duration" className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
                   Duration (minutes)
                   <span className="ml-1 text-[var(--font-size-xs)] text-[var(--color-text-muted)]">In 15-minute increments (60, 75, 90, ...)</span>
                 </label>
                 <Input
+                    id="service-duration"
                   type="number"
                   step="15"
                   min="15"
