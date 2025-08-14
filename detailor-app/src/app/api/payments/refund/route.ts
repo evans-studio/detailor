@@ -25,6 +25,8 @@ export async function POST(req: Request) {
     }
     
     const admin = getSupabaseAdmin();
+    // Idempotency: allow clients to pass Idempotency-Key header; if present, return existing result
+    const idempotencyKey = req.headers.get('idempotency-key') || undefined;
     const payload = schema.parse(await req.json());
     
     // Validate payment_id format
@@ -107,6 +109,26 @@ export async function POST(req: Request) {
     const newRefundedAmount = alreadyRefunded + refundAmount;
     const newStatus = newRefundedAmount >= Number(payment.amount) ? 'refunded' : 'partially_refunded';
     
+    // If idempotency key supplied, check if similar refund already exists
+    if (idempotencyKey) {
+      const { data: existing } = await admin
+        .from('payments')
+        .select('*')
+        .eq('idempotency_key', idempotencyKey)
+        .eq('tenant_id', profile.tenant_id)
+        .maybeSingle();
+      if (existing) {
+        return createSuccessResponse({
+          payment: existing,
+          refund: {
+            amount: Math.abs(Number(existing.amount || 0)),
+            status: existing.status,
+            stripe_refund_id: existing.external_txn_id || null,
+          }
+        });
+      }
+    }
+
     const { data, error } = await admin
       .from('payments')
       .update({ 
@@ -131,7 +153,7 @@ export async function POST(req: Request) {
       currency: payment.currency,
       external_txn_id: stripeRefundId,
       status: refundStatus,
-      idempotency_key: `refund-${payment.id}-${Date.now()}`,
+      idempotency_key: idempotencyKey || `refund-${payment.id}-${Math.round(refundAmount*100)}-${Date.now()}`,
     });
 
     // Update booking payment status if linked

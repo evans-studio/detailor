@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -29,16 +30,16 @@ export async function GET(req: Request) {
         .eq('tenant_id', profile.tenant_id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return NextResponse.json({ success: true, data: data, meta: { timestamp: new Date().toISOString() } });
+      return createSuccessResponse(data);
     }
     const { data, error } = await admin
       .from('quotes')
       .select('*')
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return NextResponse.json({ success: true, data: data, meta: { timestamp: new Date().toISOString() } });
+    return createSuccessResponse(data);
   } catch (error: unknown) {
-    return NextResponse.json({ success: false, error: { code: 'QUOTES_ERROR', message: (error as Error).message } , meta: { timestamp: new Date().toISOString() } }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'GET /api/quotes' }, 400);
   }
 }
 
@@ -98,9 +99,9 @@ export async function POST(req: Request) {
       .select('*')
       .single();
     if (error) throw error;
-    return NextResponse.json({ success: true, data: quote, meta: { timestamp: new Date().toISOString() } });
+    return createSuccessResponse(quote);
   } catch (error: unknown) {
-    return NextResponse.json({ success: false, error: { code: 'QUOTES_CREATE_ERROR', message: (error as Error).message }, meta: { timestamp: new Date().toISOString() } }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'POST /api/quotes' }, 400);
   }
 }
 

@@ -2,6 +2,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
+import { checkRateLimit } from '@/lib/security';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -9,6 +10,10 @@ function startOfMonth(d: Date) { return new Date(Date.UTC(d.getUTCFullYear(), d.
 
 export async function GET(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkRateLimit(`export-bookings-${ip}`, 10, 60000)) {
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Too many export requests', { window: '1m', limit: 10 }, 429);
+    }
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
     const url = new URL(req.url);

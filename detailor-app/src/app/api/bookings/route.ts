@@ -33,6 +33,10 @@ export async function GET(req: Request) {
     const from = url.searchParams.get('from') || undefined;
     const to = url.searchParams.get('to') || undefined;
     const q = url.searchParams.get('q') || undefined;
+    const page = Math.max(1, Number(url.searchParams.get('page') || '1'));
+    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') || '25')));
+    const rangeFrom = (page - 1) * pageSize;
+    const rangeTo = rangeFrom + pageSize - 1;
 
     // Relationship-select to provide names instead of just IDs
     const relationshipSelect = `
@@ -71,7 +75,7 @@ export async function GET(req: Request) {
           401
         );
       }
-      query = admin.from('bookings').select(relationshipSelect).eq('tenant_id', tenantId);
+      query = admin.from('bookings').select(relationshipSelect, { count: 'exact' }).eq('tenant_id', tenantId);
     }
     
     if (status) query = query.eq('status', status);
@@ -81,7 +85,7 @@ export async function GET(req: Request) {
       // Basic text search on reference; PostgREST cannot easily filter joined fields without rpc
       query = query.or(`reference.ilike.%${q}%,customers.name.ilike.%${q}%`);
     }
-    const { data, error } = await query.order('start_at', { ascending: true });
+    const { data, error, count } = await query.order('start_at', { ascending: true }).range(rangeFrom, rangeTo);
     
     if (error) {
       return createErrorResponse(
@@ -113,7 +117,8 @@ export async function GET(req: Request) {
       };
     });
 
-    return createSuccessResponse({ bookings });
+    const total = typeof count === 'number' ? count : bookings.length;
+    return createSuccessResponse({ bookings }, { pagination: { page, pageSize, total } });
   } catch (error: unknown) {
     return createErrorResponse(
       API_ERROR_CODES.INTERNAL_ERROR,

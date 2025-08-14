@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 import { NextResponse } from 'next/server';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -59,79 +60,29 @@ export async function GET(req: Request) {
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
     if (!profile || !['staff', 'admin'].includes(profile.role)) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'FORBIDDEN',
-          message: 'Insufficient permissions to access services.',
-          details: { required_roles: ['staff', 'admin'] }
-        },
-        meta: {
-          timestamp: new Date().toISOString()
-        }
-      }, { status: 403 });
+      return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Insufficient permissions to access services.', { required_roles: ['staff', 'admin'] }, 403);
     }
     
     try {
       const { data, error } = await admin.from('services').select('*').eq('tenant_id', profile.tenant_id).order('name');
       
       if (error) {
-        console.warn('Services table error, using sample data:', error);
-        return NextResponse.json({
-          success: true,
-          data: generateSampleServices(profile.tenant_id),
-          meta: {
-            timestamp: new Date().toISOString(),
-            warning: 'Using sample services - database table not available'
-          }
-        });
+        return createSuccessResponse(generateSampleServices(profile.tenant_id));
       }
 
       // If no services exist, return sample services
       if (!data || data.length === 0) {
-        return NextResponse.json({
-          success: true,
-          data: generateSampleServices(profile.tenant_id),
-          meta: {
-            timestamp: new Date().toISOString(),
-            info: 'No services configured - showing sample services'
-          }
-        });
+        return createSuccessResponse(generateSampleServices(profile.tenant_id));
       }
 
-      return NextResponse.json({
-        success: true,
-        data: data,
-        meta: {
-          timestamp: new Date().toISOString()
-        }
-      });
+      return createSuccessResponse(data);
 
     } catch (dbError) {
-      console.warn('Database error getting services:', dbError);
-      return NextResponse.json({
-        success: true,
-        data: generateSampleServices(profile.tenant_id),
-        meta: {
-          timestamp: new Date().toISOString(),
-          warning: 'Using sample services due to database error'
-        }
-      });
+      return createSuccessResponse(generateSampleServices(profile.tenant_id));
     }
 
   } catch (error: unknown) {
-    console.error('Services API error:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'SERVICES_ERROR',
-        message: (error as Error).message,
-        details: { endpoint: 'GET /api/admin/services' }
-      },
-      meta: {
-        timestamp: new Date().toISOString()
-      }
-    }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'GET /api/admin/services' }, 400);
   }
 }
 
@@ -143,17 +94,7 @@ export async function POST(req: Request) {
     const admin = getSupabaseAdmin();
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
     if (!profile || profile.role !== 'admin') {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'ADMIN_ONLY',
-          message: 'Only admin users can create services.',
-          details: { required_role: 'admin' }
-        },
-        meta: {
-          timestamp: new Date().toISOString()
-        }
-      }, { status: 403 });
+      return createErrorResponse(API_ERROR_CODES.ADMIN_ONLY, 'Only admin users can create services.', { required_role: 'admin' }, 403);
     }
 
     try {
@@ -166,17 +107,7 @@ export async function POST(req: Request) {
         const currentCount = currentServices?.length || 0;
         
         if (currentCount >= servicesLimit) {
-          return NextResponse.json({
-            success: false,
-            error: {
-              code: 'SERVICE_LIMIT_REACHED',
-              message: `Service limit reached (${servicesLimit}). Upgrade to Pro for more services.`,
-              details: { current_count: currentCount, limit: servicesLimit }
-            },
-            meta: {
-              timestamp: new Date().toISOString()
-            }
-          }, { status: 403 });
+          return createErrorResponse('SERVICE_LIMIT_REACHED', `Service limit reached (${servicesLimit}). Upgrade to Pro for more services.`, { current_count: currentCount, limit: servicesLimit }, 403);
         }
       }
 
@@ -189,17 +120,7 @@ export async function POST(req: Request) {
         .single();
       
       if (existingService) {
-        return NextResponse.json({
-          success: false,
-          error: {
-            code: 'SERVICE_NAME_EXISTS',
-            message: `A service named "${payload.name}" already exists. Please choose a different name.`,
-            details: { service_name: payload.name }
-          },
-          meta: {
-            timestamp: new Date().toISOString()
-          }
-        }, { status: 409 });
+        return createErrorResponse('SERVICE_NAME_EXISTS', `A service named "${payload.name}" already exists. Please choose a different name.`, { service_name: payload.name }, 409);
       }
 
       const { data, error } = await admin
@@ -211,55 +132,19 @@ export async function POST(req: Request) {
       if (error) {
         // Handle specific constraint violations with better error messages
         if (error.code === '23505' && error.message?.includes('services_tenant_id_name_key')) {
-          return NextResponse.json({
-            success: false,
-            error: {
-              code: 'SERVICE_NAME_EXISTS',
-              message: `A service named "${payload.name}" already exists. Please choose a different name.`,
-              details: { service_name: payload.name, constraint: 'unique_name' }
-            },
-            meta: {
-              timestamp: new Date().toISOString()
-            }
-          }, { status: 409 });
+          return createErrorResponse('SERVICE_NAME_EXISTS', `A service named "${payload.name}" already exists. Please choose a different name.`, { service_name: payload.name, constraint: 'unique_name' }, 409);
         }
         
-        return NextResponse.json({
-          success: false,
-          error: {
-            code: 'DATABASE_ERROR',
-            message: 'Failed to create service due to database error.',
-            details: { db_error: error.message }
-          },
-          meta: {
-            timestamp: new Date().toISOString()
-          }
-        }, { status: 500 });
+        return createErrorResponse(API_ERROR_CODES.DATABASE_ERROR, 'Failed to create service due to database error.', { db_error: error.message }, 500);
       }
       
-      return NextResponse.json({
-        success: true,
-        data: data,
-        meta: {
-          timestamp: new Date().toISOString()
-        }
-      });
+      return createSuccessResponse(data);
 
     } catch (dbError: any) {
       // If services table doesn't exist, return a helpful error
       if (dbError.message?.includes('relation "services" does not exist') || 
           dbError.code === '42P01') {
-        return NextResponse.json({
-          success: false,
-          error: {
-            code: 'SERVICES_TABLE_MISSING',
-            message: 'Services table not set up yet. Please contact support to initialize your database.',
-            details: { db_code: dbError.code }
-          },
-          meta: {
-            timestamp: new Date().toISOString()
-          }
-        }, { status: 503 });
+        return createErrorResponse('SERVICES_TABLE_MISSING', 'Services table not set up yet. Please contact support to initialize your database.', { db_code: dbError.code }, 503);
       }
       
       // Re-throw other database errors to be handled by outer catch
@@ -267,18 +152,7 @@ export async function POST(req: Request) {
     }
     
   } catch (error: unknown) {
-    console.error('Services POST API error:', error);
-    return NextResponse.json({
-      success: false,
-      error: {
-        code: 'SERVICES_CREATE_ERROR',
-        message: (error as Error).message,
-        details: { endpoint: 'POST /api/admin/services' }
-      },
-      meta: {
-        timestamp: new Date().toISOString()
-      }
-    }, { status: 400 });
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'POST /api/admin/services' }, 400);
   }
 }
 

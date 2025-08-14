@@ -93,14 +93,19 @@ Utilities & health
 - [ ] Replace `NextResponse.json` with helpers in:
   - ~~`admin/availability/work-patterns/route.ts` (all paths)~~ ✅
   - ~~`analytics/revenue/route.ts` (GET)~~ ✅ (+ rate limit)
+  - ~~`admin/services/route.ts` (GET, POST)~~ ✅
+  - ~~`quotes/route.ts` (GET, POST)~~ ✅
   - Any remaining legacy endpoints (grep audit)
 - [ ] Normalize error codes & statuses across:
   - All analytics endpoints → 401/403/404/422/409/429/500 with clear codes
   - Guest endpoints → `MISSING_REQUIRED_FIELD` + 400 for missing tenant_id
 - [ ] Add Zod validation where missing (quotes, bulk/messaging, exports)
 - [ ] Add pagination for list endpoints (bookings, invoices, customers, payments)
+  - ✅ Bookings, Invoices, Customers (page/pageSize/total via meta.pagination)
 - [ ] Add rate limiting on: refunds, exports, analytics heavy endpoints
+  - ✅ Refunds (5/5m), Exports (10/min), Analytics revenue (30/min)
 - [ ] Ensure idempotency for: refunds, bulk messaging, webhook handlers (re‑entrancy)
+  - ✅ Refunds via `Idempotency-Key` header respected; returns prior result if exists
 
 ### Verification protocol (per endpoint class)
 Auth/Tenant
@@ -138,6 +143,9 @@ Realtime
 - [x] Standardized success response in `POST /api/messages/send`
 - [ ] Migrate `NextResponse.json` in `analytics/revenue` and `admin/availability/work-patterns` to helpers
   - ✅ Done in both; added rate limiting to revenue
+  - ✅ Converted `admin/services` and `quotes` to helpers
+  - ✅ Added pagination to bookings, invoices, customers endpoints
+  - ✅ Added rate limiting to export endpoints; added idempotency to refunds
 - [ ] Add pagination to invoices/bookings/customers lists (BE+FE)
 - [ ] Normalize error codes across analytics and guest endpoints
 

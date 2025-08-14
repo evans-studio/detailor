@@ -20,10 +20,14 @@ export async function GET(req: Request) {
     const status = url.searchParams.get('status') || undefined; // 'active' | 'inactive'
     const createdFrom = url.searchParams.get('from') || undefined;
     const createdTo = url.searchParams.get('to') || undefined;
+    const page = Math.max(1, Number(url.searchParams.get('page') || '1'));
+    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') || '25')));
+    const fromIdx = (page - 1) * pageSize;
+    const toIdx = fromIdx + pageSize - 1;
     // Staff/Admin view tenant customers; customer sees their own via RLS + filter
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
     if (profile && ['staff', 'admin'].includes(profile.role)) {
-      let query = admin.from('customers').select('*').eq('tenant_id', profile.tenant_id);
+      let query = admin.from('customers').select('*', { count: 'exact' }).eq('tenant_id', profile.tenant_id);
       if (q) {
         query = query.or(`name.ilike.%${q}%,email.ilike.%${q}%,phone.ilike.%${q}%`);
       }
@@ -35,7 +39,7 @@ export async function GET(req: Request) {
       }
       if (createdFrom) query = query.gte('created_at', createdFrom);
       if (createdTo) query = query.lte('created_at', createdTo);
-      const { data, error } = await query.order('created_at');
+      const { data, error, count } = await query.order('created_at').range(fromIdx, toIdx);
       if (error) {
         return createErrorResponse(
           API_ERROR_CODES.DATABASE_ERROR,
@@ -44,10 +48,10 @@ export async function GET(req: Request) {
           500
         );
       }
-      return createSuccessResponse(data);
+      return createSuccessResponse(data, { pagination: { page, pageSize, total: count ?? (data?.length || 0) } });
     }
     // Fallback: try self customer
-    const { data, error } = await admin.from('customers').select('*').eq('auth_user_id', user.id).order('created_at');
+    const { data, error } = await admin.from('customers').select('*').eq('auth_user_id', user.id).order('created_at').range(fromIdx, toIdx);
     if (error) {
       return createErrorResponse(
         API_ERROR_CODES.DATABASE_ERROR,
@@ -56,7 +60,7 @@ export async function GET(req: Request) {
         500
       );
     }
-    return createSuccessResponse(data);
+    return createSuccessResponse(data, { pagination: { page, pageSize, total: (data?.length || 0) } });
   } catch (error: unknown) {
     return createErrorResponse(
       API_ERROR_CODES.INTERNAL_ERROR,
