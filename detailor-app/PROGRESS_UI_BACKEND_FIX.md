@@ -8,6 +8,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 - [x] Return relationship‑enriched responses (names, not IDs) where the UI displays relations.
 - [x] Realtime subscriptions invalidate caches so multiple users see updates quickly.
 - [ ] Loading and error states on all key lists/forms.
+- [x] Loading and error states on all key lists/forms.
 - [ ] Verification testing protocol executed for each view.
 
 ### Cross‑cutting standards (apply everywhere)
@@ -15,6 +16,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 - [x] React Query: invalidate relevant keys on mutation; avoid stale data.
 - [x] Realtime: subscribe with `useRealtimeAdminUpdates(tenantId)`; derive `tenantId` from `df-tenant` cookie with `/api/tenant/me` fallback.
 - [ ] Global UX: show skeletons/spinners on load; disable save buttons while saving; show error toasts.
+- [x] Global UX: show skeletons/spinners on load; disable save buttons while saving; show error toasts.
 
 ### Verification protocol (run per page)
 - [ ] Create → Refresh → Still there
@@ -26,6 +28,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 - [x] Bookings API returns: `customer_name`, `service_name`, `vehicle_name`, `address` (flattened)
 - [x] Booking detail also shows related names, not IDs
 - [ ] Forms that need services/staff/customers load options via proper endpoints
+- [x] Forms that need services/staff/customers load options via proper endpoints
 
 ---
 

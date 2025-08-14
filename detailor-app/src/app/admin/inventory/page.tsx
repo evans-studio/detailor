@@ -6,11 +6,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardContent } from '@/ui/card';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
+import { useRealtimeAdminUpdates } from '@/lib/realtime';
 
 type Item = { id: string; name: string; sku?: string; unit?: string; stock: number; reorder_level: number };
 
 export default function InventoryPage() {
   const qc = useQueryClient();
+  // Realtime updates for inventory changes via payments/jobs can cascade to UI
+  useRealtimeAdminUpdates('');
   const { data: items = [] } = useQuery<Item[]>({
     queryKey: ['inventory'],
     queryFn: async () => { const r = await fetch('/api/inventory', { cache: 'no-store' }); const j = await r.json(); if (!r.ok || j?.success === false) throw new Error(j?.error?.message || 'Failed to load inventory'); return j.data?.items || j.items || []; }

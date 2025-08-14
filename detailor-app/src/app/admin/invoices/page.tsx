@@ -8,10 +8,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '@/ui/card';
 import { Button } from '@/ui/button';
 import { api } from '@/lib/api';
+import { useRealtimeAdminUpdates } from '@/lib/realtime';
 
 type Invoice = { id: string; number: string; total: number; paid_amount: number; balance: number; created_at: string; booking_id?: string | null };
 
 export default function AdminInvoicesPage() {
+  // Let hook resolve tenant via cookie/API fallback
+  useRealtimeAdminUpdates('');
   const [q, setQ] = React.useState('');
   const { data: invoices = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['invoices'],
