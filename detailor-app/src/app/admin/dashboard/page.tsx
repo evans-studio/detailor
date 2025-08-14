@@ -69,16 +69,16 @@ export default function AdminDashboard() {
       <RoleGuard allowed={['admin','staff']}>
         <div className="space-y-6">
           {/* KPI Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <MetricCard label="Today's Bookings" value={kpis?.bookings_today ?? 0} />
-            <MetricCard label="Monthly Revenue" value={`£${(kpis?.revenue_mtd ?? 0).toLocaleString()}`} />
-            <MetricCard label="Total Customers" value={kpis?.total_customers ?? 0} />
-            <MetricCard label="Active Jobs" value={kpis?.active_jobs ?? 0} />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4" data-testid="kpi-row">
+            <MetricCard label="Today's Bookings" value={kpis?.bookings_today ?? 0} testId="kpi-bookings-today" />
+            <MetricCard label="Monthly Revenue" value={`£${(kpis?.revenue_mtd ?? 0).toLocaleString()}`} testId="kpi-revenue-mtd" />
+            <MetricCard label="Total Customers" value={kpis?.total_customers ?? 0} testId="kpi-total-customers" />
+            <MetricCard label="Active Jobs" value={kpis?.active_jobs ?? 0} testId="kpi-active-jobs" />
           </div>
 
           {/* Main Content: Upcoming and Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <Card>
+            <Card data-testid="upcoming-bookings">
               <CardHeader>
                 <CardTitle>Upcoming Bookings</CardTitle>
               </CardHeader>
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card data-testid="recent-activity">
               <CardHeader>
                 <CardTitle>Recent Activity</CardTitle>
               </CardHeader>
@@ -121,7 +121,7 @@ export default function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
-            <Card>
+            <Card data-testid="live-jobs">
               <CardHeader>
                 <CardTitle>Live Jobs</CardTitle>
               </CardHeader>
@@ -153,14 +153,15 @@ export default function AdminDashboard() {
   );
 }
 
-function MetricCard({ label, value }: { label: string; value: string | number }) {
+function MetricCard({ label, value, testId }: { label: string; value: string | number; testId?: string }) {
   return (
-    <Card>
+    <Card data-testid={testId}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-[var(--color-text-muted)] text-sm font-medium">{label}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-[var(--color-text)]">{value}</div>
+        <div className="text-2xl font-bold text-[var(--color-text)]" data-testid={`${testId}-value`}>{value}</div>
       </CardContent>
     </Card>
   );

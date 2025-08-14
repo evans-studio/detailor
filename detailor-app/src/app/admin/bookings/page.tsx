@@ -249,6 +249,7 @@ export default function AdminBookingsPage() {
       className={`transition-colors hover:border-[var(--color-primary)]/30 ${draggable ? 'cursor-move' : ''}`}
       draggable={draggable}
       onDragStart={draggable ? (e) => handleDragStart(e, booking) : undefined}
+      data-testid={`booking-card-${booking.id}`}
     >
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
@@ -262,13 +263,13 @@ export default function AdminBookingsPage() {
             </div>
           </div>
           <div className="text-[var(--color-text)] mb-1">
-            {booking.service_name || 'Service'} • {booking.customer_name || 'Customer'}
+            <span data-testid="booking-service">{booking.service_name || 'Service'}</span> • <span data-testid="booking-customer">{booking.customer_name || 'Customer'}</span>
           </div>
           <div className="text-[var(--color-text-muted)] text-[var(--font-size-sm)] mb-2">
-            {booking.vehicle_name || 'Vehicle'} • {booking.address || 'Address'}
+            <span data-testid="booking-vehicle">{booking.vehicle_name || 'Vehicle'}</span> • <span data-testid="booking-address">{booking.address || 'Address'}</span>
           </div>
           <div className="text-[var(--color-text)] font-medium">
-            Total £{booking.price_breakdown?.total ?? 0}
+            <span data-testid="booking-total">Total £{booking.price_breakdown?.total ?? 0}</span>
           </div>
         </div>
         <div className="flex gap-2">

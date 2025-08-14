@@ -139,6 +139,7 @@ export default function AdminServicesPage() {
             <Button 
               onClick={() => setIsCreating(true)}
               className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-600)]"
+              data-testid="add-service-button"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Service
@@ -154,7 +155,7 @@ export default function AdminServicesPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleCreateService} className="space-y-4">
+                <form onSubmit={handleCreateService} className="space-y-4" data-testid="service-form">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-[var(--color-text-secondary)] mb-2">
@@ -165,6 +166,7 @@ export default function AdminServicesPage() {
                         onChange={(e) => setNewService({...newService, name: e.target.value})}
                         placeholder="e.g., Exterior Wash & Wax"
                         required
+                        data-testid="service-name-input"
                       />
                     </div>
                     <div>
@@ -175,6 +177,7 @@ export default function AdminServicesPage() {
                         value={newService.category}
                         onChange={(e) => setNewService({...newService, category: e.target.value})}
                         className="w-full px-3 py-2 border border-[var(--color-border-strong)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)]"
+                        data-testid="service-category-select"
                       >
                         {categories.map(cat => (
                           <option key={cat.value} value={cat.value}>{cat.label}</option>
@@ -193,6 +196,7 @@ export default function AdminServicesPage() {
                       placeholder="Brief description of the service..."
                       rows={3}
                       className="w-full px-3 py-2 border border-[var(--color-border-strong)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)]"
+                      data-testid="service-description-textarea"
                     />
                   </div>
 
@@ -207,6 +211,7 @@ export default function AdminServicesPage() {
                         onChange={(e) => setNewService({...newService, duration_minutes: parseInt(e.target.value) || 60})}
                         min="15"
                         step="15"
+                        data-testid="service-duration-input"
                       />
                     </div>
                     <div>
@@ -219,6 +224,7 @@ export default function AdminServicesPage() {
                         onChange={(e) => setNewService({...newService, base_price: parseFloat(e.target.value) || 0})}
                         min="0"
                         step="0.01"
+                        data-testid="service-price-input"
                       />
                     </div>
                   </div>
@@ -249,6 +255,7 @@ export default function AdminServicesPage() {
                       type="submit" 
                       disabled={createServiceMutation.isPending}
                       className="bg-blue-600 hover:bg-blue-700"
+                      data-testid="create-service-button"
                     >
                       {createServiceMutation.isPending ? 'Creating...' : 'Create Service'}
                     </Button>
@@ -269,7 +276,7 @@ export default function AdminServicesPage() {
           )}
 
           {/* Services List */}
-          <div className="space-y-4">
+          <div className="space-y-4" data-testid="services-list">
             {isLoading ? (
               <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (
@@ -314,12 +321,12 @@ export default function AdminServicesPage() {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {services.map((service) => (
-                  <Card key={service.id}>
+                  <Card key={service.id} data-testid={`service-card-${service.id}`}>
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-lg text-gray-900">
+                            <h3 className="font-semibold text-lg text-gray-900" data-testid="service-name">
                               {service.name}
                             </h3>
                             {service.visible ? (
@@ -334,7 +341,7 @@ export default function AdminServicesPage() {
                               </Badge>
                             )}
                           </div>
-                          <p className="text-gray-600 text-sm mb-3">
+                          <p className="text-gray-600 text-sm mb-3" data-testid="service-description">
                             {service.description || 'No description'}
                           </p>
                           <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -344,7 +351,7 @@ export default function AdminServicesPage() {
                             </span>
                             <span className="flex items-center gap-1">
                               <DollarSign className="h-4 w-4" />
-                              £{service.base_price.toFixed(2)}
+                              <span data-testid="service-price">£{service.base_price.toFixed(2)}</span>
                             </span>
                           </div>
                         </div>

@@ -36,16 +36,16 @@ describe('AdminDashboard', () => {
     });
   });
 
-  it('renders KPI cards and lists sections', async () => {
+  it('renders KPI cards and lists sections with KPI values', async () => {
     renderWithProviders(<AdminDashboard />);
-    await screen.findByText(/Today's Bookings/i);
-    expect(screen.getByText('3')).toBeInTheDocument();
-    expect(screen.getByText(/Monthly Revenue/i)).toBeInTheDocument();
-    expect(screen.getByText(/Total Customers/i)).toBeInTheDocument();
-    expect(screen.getByText(/Active Jobs/i)).toBeInTheDocument();
-    await screen.findByText(/Upcoming Bookings/i);
-    await screen.findByText(/Recent Activity/i);
-    await screen.findByText(/Live Jobs/i);
+    const bookingsKPI = await screen.findByTestId('kpi-bookings-today-value');
+    expect(bookingsKPI.textContent).toBe('3');
+    expect(await screen.findByTestId('kpi-revenue-mtd')).toBeInTheDocument();
+    expect(await screen.findByTestId('kpi-total-customers')).toBeInTheDocument();
+    expect(await screen.findByTestId('kpi-active-jobs')).toBeInTheDocument();
+    await screen.findByTestId('upcoming-bookings');
+    await screen.findByTestId('recent-activity');
+    await screen.findByTestId('live-jobs');
   });
 });
 
