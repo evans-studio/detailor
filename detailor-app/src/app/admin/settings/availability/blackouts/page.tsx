@@ -52,21 +52,21 @@ export default function BlackoutsSettingsPage() {
         <div className="space-y-6">
           <h1 className="text-[var(--font-size-2xl)] font-semibold">Blackouts</h1>
 
-          <Card>
+          <Card data-testid="blackout-create">
             <CardHeader><CardTitle>Add Blackout</CardTitle></CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-3">
-              <Input type="datetime-local" value={starts} onChange={(e) => setStarts(e.target.value)} />
-              <Input type="datetime-local" value={ends} onChange={(e) => setEnds(e.target.value)} />
-              <Input placeholder="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} />
+              <Input type="datetime-local" value={starts} onChange={(e) => setStarts(e.target.value)} data-testid="blackout-start" />
+              <Input type="datetime-local" value={ends} onChange={(e) => setEnds(e.target.value)} data-testid="blackout-end" />
+              <Input placeholder="Reason (optional)" value={reason} onChange={(e) => setReason(e.target.value)} data-testid="blackout-reason" />
               <div className="md:col-span-3 flex justify-end">
-                <Button onClick={() => create.mutate({ starts_at: starts, ends_at: ends, reason: reason || undefined })} disabled={create.isPending || !starts || !ends}>
+                <Button onClick={() => create.mutate({ starts_at: starts, ends_at: ends, reason: reason || undefined })} disabled={create.isPending || !starts || !ends} data-testid="blackout-add">
                   {create.isPending ? 'Saving…' : 'Add'}
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="blackout-list">
             <CardHeader><CardTitle>Existing Blackouts</CardTitle></CardHeader>
             {isLoading ? (
               <CardContent className="p-6 text-[var(--color-text-muted)]">Loading…</CardContent>
@@ -81,13 +81,13 @@ export default function BlackoutsSettingsPage() {
                   <div className="text-[var(--color-text-muted)]">No blackouts configured.</div>
                 ) : (
                   blackouts.map((b) => (
-                    <div key={b.id} className="flex items-center justify-between">
+                    <div key={b.id} className="flex items-center justify-between" data-testid={`blackout-item-${b.id}`}>
                       <div>
                         {new Date(b.starts_at).toLocaleString()} → {new Date(b.ends_at).toLocaleString()}
                         {b.reason ? ` • ${b.reason}` : ''}
                       </div>
                       <div>
-                        <Button intent="destructive" size="sm" onClick={() => remove.mutate(b.id)} disabled={remove.isPending}>Delete</Button>
+                        <Button intent="destructive" size="sm" onClick={() => remove.mutate(b.id)} disabled={remove.isPending} data-testid={`blackout-delete-${b.id}`}>Delete</Button>
                       </div>
                     </div>
                   ))

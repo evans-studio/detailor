@@ -65,14 +65,14 @@ export default function AdminQuotesPage() {
               <h1 className="text-2xl font-bold text-gray-900">Quotes</h1>
               <p className="text-gray-600">Manage customer quotes and proposals</p>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-blue-600 hover:bg-blue-700" data-testid="create-quote-button">
               <PlusCircle className="h-4 w-4 mr-2" />
               Create Quote
             </Button>
           </div>
 
           {/* Filters */}
-          <Card>
+          <Card data-testid="quotes-filters">
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
@@ -101,7 +101,7 @@ export default function AdminQuotesPage() {
           </Card>
 
           {/* Quotes List */}
-          <div className="space-y-4">
+          <div className="space-y-4" data-testid="quotes-list">
             {isLoading ? (
               <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (
@@ -135,19 +135,17 @@ export default function AdminQuotesPage() {
               </Card>
             ) : (
               filteredQuotes.map((quote) => (
-                <Card key={quote.id} className="hover:shadow-md transition-shadow">
+                <Card key={quote.id} className="hover:shadow-md transition-shadow" data-testid={`quote-card-${quote.id}`}>
                   <CardContent className="p-6">
                     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                       <div className="flex-1 space-y-2">
                         <div className="flex items-center gap-3">
-                          <h3 className="font-semibold text-lg text-gray-900">
-                            {quote.quote_number}
-                          </h3>
+                          <h3 className="font-semibold text-lg text-gray-900" data-testid="quote-number">{quote.quote_number}</h3>
                           <Badge className={getStatusColor(quote.status)}>
                             {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
                           </Badge>
                         </div>
-                        <p className="text-gray-600">{quote.customer_name}</p>
+                        <p className="text-gray-600" data-testid="quote-customer">{quote.customer_name}</p>
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
@@ -155,7 +153,7 @@ export default function AdminQuotesPage() {
                           </span>
                           <span className="flex items-center gap-1">
                             <DollarSign className="h-4 w-4" />
-                            £{quote.total.toFixed(2)}
+                            <span data-testid="quote-total">£{quote.total.toFixed(2)}</span>
                           </span>
                         </div>
                       </div>

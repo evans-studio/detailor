@@ -113,7 +113,7 @@ export default function AdminMessagesPage() {
           )}
 
           {/* Filters */}
-          <Card>
+          <Card data-testid="messages-filters">
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
@@ -142,7 +142,7 @@ export default function AdminMessagesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Conversations List */}
             <div className="lg:col-span-1 space-y-4">
-              <Card>
+              <Card data-testid="conversations-list">
                 <CardHeader>
                   <CardTitle className="text-lg">Conversations</CardTitle>
                 </CardHeader>
@@ -171,12 +171,13 @@ export default function AdminMessagesPage() {
                             selectedConversation === conversation.id ? 'bg-blue-50 border-r-2 border-blue-500' : ''
                           }`}
                           onClick={() => setSelectedConversation(conversation.id)}
+                          data-testid={`conversation-item-${conversation.id}`}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 {getChannelIcon(conversation.channel)}
-                                <p className="font-medium text-[var(--color-text)] truncate">
+                                <p className="font-medium text-[var(--color-text)] truncate" data-testid="conversation-customer">
                                   {conversation.customer_name}
                                 </p>
                                 {conversation.unread_count > 0 && (
@@ -206,13 +207,13 @@ export default function AdminMessagesPage() {
 
             {/* Message Thread */}
             <div className="lg:col-span-2">
-              <Card className="h-[600px] flex flex-col">
+              <Card className="h-[600px] flex flex-col" data-testid="message-thread">
                 {selectedConversation ? (
                   <>
                     <CardHeader className="border-b">
                       <div className="flex items-center justify-between">
                         <div>
-                          <CardTitle className="text-lg">
+                          <CardTitle className="text-lg" data-testid="thread-title">
                             {filteredConversations.find(c => c.id === selectedConversation)?.customer_name}
                           </CardTitle>
                           <p className="text-sm text-[var(--color-text-secondary)]">
