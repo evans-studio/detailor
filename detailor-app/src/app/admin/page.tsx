@@ -49,20 +49,20 @@ export default function AdminTodayView() {
   
   const { data: todayBookings = [] } = useQuery({
     queryKey: ['bookings', { scope: 'admin-today', date: today }],
-    queryFn: async (): Promise<Booking[]> => {
-      const response = await api<{ ok: boolean; bookings: Booking[] }>(`/api/bookings?from=${today}T00:00:00&to=${today}T23:59:59`);
-      return response.bookings || [];
-    },
+		queryFn: async (): Promise<Booking[]> => {
+			const response = await api<{ bookings: Booking[] }>(`/api/bookings?from=${today}T00:00:00&to=${today}T23:59:59`);
+			return response.bookings || [];
+		},
     refetchInterval: 30000, // Real-time updates every 30 seconds
   });
 
-  const { data: upcomingBookings = [] } = useQuery({
+	const { data: upcomingBookings = [] } = useQuery({
     queryKey: ['bookings', { scope: 'admin-upcoming' }],
-    queryFn: async (): Promise<Booking[]> => {
+		queryFn: async (): Promise<Booking[]> => {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
-      const response = await api<{ ok: boolean; bookings: Booking[] }>(`/api/bookings?from=${tomorrow.toISOString().split('T')[0]}T00:00:00&status=confirmed`);
-      return (response.bookings || []).slice(0, 5); // Next 5 upcoming
+			const response = await api<{ bookings: Booking[] }>(`/api/bookings?from=${tomorrow.toISOString().split('T')[0]}T00:00:00&status=confirmed`);
+			return (response.bookings || []).slice(0, 5); // Next 5 upcoming
     },
     refetchInterval: 60000,
   });
