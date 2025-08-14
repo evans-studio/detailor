@@ -171,7 +171,19 @@ export function useRealtimeAdminUpdates(tenantId: string, enabled = true) {
   const queryClient = useQueryClient();
   
   useEffect(() => {
-    if (!enabled || !tenantId) return;
+    if (!enabled) return;
+    if (!tenantId) {
+      // Fallback to API to resolve tenant id when cookie is missing
+      fetch('/api/tenant/me').then(r => r.json()).then(j => {
+        const id = j?.data?.id || j?.id;
+        if (id) {
+          const unsubscribe = wireRealtimeInvalidations(String(id), queryClient);
+          return () => unsubscribe();
+        }
+        return () => {};
+      }).catch(() => {});
+      return;
+    }
     
     // System Bible Pattern: Multi-entity real-time invalidation
     const unsubscribe = wireRealtimeInvalidations(tenantId, queryClient);

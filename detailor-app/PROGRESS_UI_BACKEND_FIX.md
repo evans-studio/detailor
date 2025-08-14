@@ -13,7 +13,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 ### Cross‑cutting standards (apply everywhere)
 - [x] Use `json.success` and `json.data` (System Bible) and surface `json.error.message`.
 - [x] React Query: invalidate relevant keys on mutation; avoid stale data.
-- [x] Realtime: subscribe with `useRealtimeAdminUpdates(tenantId)`; derive `tenantId` from `df-tenant` cookie (fallback to `/api/tenant/me` pending).
+- [x] Realtime: subscribe with `useRealtimeAdminUpdates(tenantId)`; derive `tenantId` from `df-tenant` cookie with `/api/tenant/me` fallback.
 - [ ] Global UX: show skeletons/spinners on load; disable save buttons while saving; show error toasts.
 
 ### Verification protocol (run per page)
@@ -85,6 +85,8 @@ This document tracks progress to fully resolve the UI not showing existing backe
   - [x] Deposit and balance collection wired
   - [ ] Loading/error states
   - [ ] Verification protocol completed
+  - [x] Relationship data shown (customer/service/vehicle/address)
+  - [x] Loading/error with retry
 
 - Jobs (`/admin/jobs`, `/api/jobs`)
   - [ ] Lists and detail views follow fetch‑bind‑save; show loading/error
