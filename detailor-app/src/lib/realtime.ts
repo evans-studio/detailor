@@ -179,7 +179,6 @@ export function wireRealtimeInvalidations(tenantId: string, queryClient: QueryCl
     queryClient.invalidateQueries({ queryKey: ['jobs'] });
     // Also invalidate any ad-hoc job keys used by legacy views
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // @ts-expect-error using predicate to support mixed query keys
     queryClient.invalidateQueries({ predicate: (q: any) => (q?.queryKey || []).some((k: any) => typeof k === 'string' && k.includes('jobs')) });
     queryClient.invalidateQueries({ queryKey: ['bookings'] });
   });

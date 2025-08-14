@@ -64,7 +64,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 ### Services
 - Admin Services (`/admin/settings/services`)
   - [x] Queries/mutations standardized to `json.success`
-  - [ ] Onboarding POSTs to `/api/admin/services` verified
+  - [x] Onboarding POSTs to `/api/admin/services` verified
   - [ ] Verification protocol completed
 
 -### Customers & Inventory
