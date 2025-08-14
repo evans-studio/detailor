@@ -53,6 +53,8 @@ export default function AdminSettingsPage() {
   const queryClient = useQueryClient();
   const [hasChanges, setHasChanges] = React.useState(false);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+  const [saveSuccess, setSaveSuccess] = React.useState<string | null>(null);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
   
   const { data: tenant, isLoading, error } = useQuery<TenantSettings>({
     queryKey: ['tenant'],
@@ -147,11 +149,13 @@ export default function AdminSettingsPage() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['tenant'] });
       setHasChanges(false);
-      // Settings saved successfully (would show toast in production)
+      setSaveError(null);
+      setSaveSuccess('Settings saved successfully');
+      setTimeout(() => setSaveSuccess(null), 2500);
     },
     onError: (error) => {
-      // Error saving settings (would show toast in production)
-      console.error('Error saving settings:', error.message);
+      setSaveSuccess(null);
+      setSaveError((error as Error)?.message || 'Failed to save settings');
     }
   });
   
@@ -192,6 +196,12 @@ export default function AdminSettingsPage() {
           error={error?.message}
           actions={actions}
         >
+          {saveError ? (
+            <div className="mb-3 text-[var(--color-danger)]">{saveError}</div>
+          ) : null}
+          {saveSuccess ? (
+            <div className="mb-3 text-[var(--color-success)]">{saveSuccess}</div>
+          ) : null}
           {draft && (
             <div className="space-y-6">
               <SettingsGrid columns={2}>
