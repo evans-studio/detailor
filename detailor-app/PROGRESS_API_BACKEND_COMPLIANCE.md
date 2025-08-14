@@ -91,8 +91,8 @@ Utilities & health
 
 ### Migration queue (high priority)
 - [ ] Replace `NextResponse.json` with helpers in:
-  - `admin/availability/work-patterns/route.ts` (all paths)
-  - `analytics/revenue/route.ts` (GET)
+  - ~~`admin/availability/work-patterns/route.ts` (all paths)~~ ✅
+  - ~~`analytics/revenue/route.ts` (GET)~~ ✅ (+ rate limit)
   - Any remaining legacy endpoints (grep audit)
 - [ ] Normalize error codes & statuses across:
   - All analytics endpoints → 401/403/404/422/409/429/500 with clear codes
@@ -137,6 +137,7 @@ Realtime
 - [x] Updated frontend to send `x-tenant-id` from dashboard/jobs/invoices when df-tenant present
 - [x] Standardized success response in `POST /api/messages/send`
 - [ ] Migrate `NextResponse.json` in `analytics/revenue` and `admin/availability/work-patterns` to helpers
+  - ✅ Done in both; added rate limiting to revenue
 - [ ] Add pagination to invoices/bookings/customers lists (BE+FE)
 - [ ] Normalize error codes across analytics and guest endpoints
 

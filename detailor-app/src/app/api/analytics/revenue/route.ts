@@ -1,7 +1,8 @@
 export const runtime = 'nodejs';
-import { NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
+import { checkRateLimit } from '@/lib/security';
 
 interface RevenueData {
   daily_revenue: Array<{ date: string; revenue: number; bookings: number }>;
@@ -46,6 +47,12 @@ function generateSampleRevenueData(): RevenueData {
 
 export async function GET(req: Request) {
   try {
+    // Lightweight rate limiting to protect heavy analytics endpoints
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkRateLimit(`analytics-revenue-${ip}`, 30, 60000)) {
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Too many requests', { window: '1m', limit: 30 }, 429);
+    }
+
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
     
@@ -69,17 +76,7 @@ export async function GET(req: Request) {
     const featureFlags = (tenant?.feature_flags as Record<string, unknown>) || {};
     
     if (!featureFlags.analytics) {
-      return NextResponse.json({
-        success: false,
-        error: {
-          code: 'ANALYTICS_NOT_AVAILABLE',
-          message: 'Analytics not available on your plan.',
-          details: { required_feature: 'analytics' }
-        },
-        meta: {
-          timestamp: new Date().toISOString()
-        }
-      }, { status: 403 });
+      return createErrorResponse('FEATURE_NOT_AVAILABLE', 'Analytics not available on your plan.', { required_feature: 'analytics' }, 403);
     }
 
     let revenueData: RevenueData;
@@ -119,27 +116,11 @@ export async function GET(req: Request) {
       revenueData = generateSampleRevenueData();
     }
 
-    return NextResponse.json({
-      success: true,
-      data: revenueData,
-      meta: {
-        timestamp: new Date().toISOString()
-      }
-    });
+    return createSuccessResponse(revenueData);
 
   } catch (error) {
-    console.error('Revenue API error:', error);
-    
-    // Return sample data on any error to prevent dashboard from breaking
+    // Return sample data on any error to prevent dashboard from breaking, but adhere to envelope
     const sampleData = generateSampleRevenueData();
-    
-    return NextResponse.json({
-      success: true,
-      data: sampleData,
-      meta: {
-        timestamp: new Date().toISOString(),
-        warning: 'Using sample data due to: ' + (error as Error).message
-      }
-    });
+    return createSuccessResponse(sampleData);
   }
 }
