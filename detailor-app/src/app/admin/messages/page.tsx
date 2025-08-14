@@ -34,7 +34,7 @@ export default function AdminMessagesPage() {
   const [channelFilter, setChannelFilter] = React.useState<string>('all');
   const [selectedConversation, setSelectedConversation] = React.useState<string | null>(null);
 
-  const { data: conversations = [], isLoading } = useQuery({
+  const { data: conversations = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['admin-messages'],
     queryFn: async (): Promise<Message[]> => {
       const res = await fetch('/api/messages', { cache: 'no-store' });
@@ -101,6 +101,16 @@ export default function AdminMessagesPage() {
               </div>
             </div>
           </div>
+
+          {/* Error State */}
+          {isError && (
+            <Card>
+              <CardContent className="p-4 text-[var(--color-danger)]">
+                {(error as Error)?.message || 'Failed to load conversations'}
+                <div className="mt-2"><Button size="sm" intent="ghost" onClick={() => refetch()}>Retry</Button></div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Filters */}
           <Card>

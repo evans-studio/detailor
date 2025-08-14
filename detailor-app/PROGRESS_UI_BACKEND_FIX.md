@@ -104,7 +104,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 ### Messaging
 - Conversations/send (`/admin/messages`)
   - [x] Queries standardized; send rate‑limited with surfaced errors
-  - [ ] Loading/error states; verification completed
+  - [x] Loading/error states; tenant-aware realtime; verification pending
 
 - Triggers (`/admin/messaging/triggers`)
   - [x] Rules load/save and Run Now via `/api/messaging/run`
@@ -112,7 +112,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 
 ### Staff Mobile
 - Today/Upcoming/Past (`/staff/*`)
-  - [ ] Use standardized `fetchJobs`; loading/error states
+  - [x] Use standardized `fetchJobs`; loading/error states; tenant-aware realtime
   - [ ] Start/Complete actions update UI and logs; realtime invalidations
   - [ ] Verification protocol completed (multi‑user sync)
 
