@@ -31,13 +31,18 @@ export async function GET(req: Request) {
     // Get active services for the tenant
     const { data, error } = await admin
       .from('services')
-      .select('id, name, description, base_price, duration_minutes, visible')
+      .select('id, name, description, base_price, base_duration_min, visible')
       .eq('tenant_id', tenantId)
       .eq('visible', true)
       .order('name');
     
     if (error) throw error;
-    return createSuccessResponse({ services: data });
+    // Normalize to include duration_minutes for FE convenience
+    const normalized = (data || []).map((s: any) => ({
+      ...s,
+      duration_minutes: s.base_duration_min ?? s.duration_minutes,
+    }));
+    return createSuccessResponse({ services: normalized });
   } catch (error: unknown) {
     return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'GET /api/guest/services' }, 400);
   }

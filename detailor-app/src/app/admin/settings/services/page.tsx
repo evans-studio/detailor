@@ -37,13 +37,14 @@ export default function AdminServicesPage() {
 
   const queryClient = useQueryClient();
 
-  const { data: services = [], isLoading } = useQuery({
+  const { data: services = [], isLoading, error } = useQuery({
     queryKey: ['admin-services'],
     queryFn: async (): Promise<Service[]> => {
       const res = await fetch('/api/admin/services', { cache: 'no-store' });
       const json = await res.json();
       if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to load services');
-      return json.data?.services || json.services || [];
+      const raw = json.data || json.services || [];
+      return (raw as Service[]).map((s: any) => ({ ...s, duration_minutes: s.duration_minutes ?? s.base_duration_min ?? 60 }));
     },
   });
 
@@ -283,6 +284,14 @@ export default function AdminServicesPage() {
                   </Card>
                 ))}
               </div>
+            ) : error ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load services</h3>
+                  <p className="text-gray-600 mb-6">{String((error as Error)?.message || 'Unknown error')}</p>
+                  <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-services'] })}>Retry</Button>
+                </CardContent>
+              </Card>
             ) : services.length === 0 ? (
               <Card>
                 <CardContent className="p-12 text-center">

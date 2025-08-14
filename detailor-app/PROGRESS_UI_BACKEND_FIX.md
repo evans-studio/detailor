@@ -54,7 +54,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
   - [x] Load week grid from `/api/admin/availability/work-patterns`
   - [x] Save per‑day upsert; persist `service_radius_km`
   - [x] Loading/error and success feedback; buttons disable during save
-  - [ ] Verification protocol completed (onboarding → settings consistency)
+  - [x] Verification protocol completed (onboarding → settings consistency)
 
 - Blackouts (`/admin/settings/availability/blackouts`)
   - [x] List via `GET /api/admin/availability/blackouts`
@@ -65,7 +65,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 - Admin Services (`/admin/settings/services`)
   - [x] Queries/mutations standardized to `json.success`
   - [x] Onboarding POSTs to `/api/admin/services` verified
-  - [ ] Verification protocol completed
+  - [x] Verification protocol completed
 
 -### Customers & Inventory
 - Customers (`/admin/customers`)
@@ -122,16 +122,16 @@ This document tracks progress to fully resolve the UI not showing existing backe
 ### Public booking flow
 - New booking (`/book/new`) & confirmation
   - [x] API calls check `json.success`; throw with `json.error.message`
-  - [ ] Loading/error states; verification completed
+  - [x] Loading/error states; verification completed
 
 ---
 
 ## Critical validation scenarios (must pass)
 - Onboarding → Settings hours parity
-  - [ ] Set Monday 09:00–17:00 in onboarding → See same in settings → Change to 10:00–18:00 → Save → Refresh shows 10:00–18:00
+  - [x] Set Monday 09:00–17:00 in onboarding → See same in settings → Change to 10:00–18:00 → Save → Refresh shows 10:00–18:00
 
 - Cross‑page data flow
-  - [ ] Add a Service in settings → Booking form options include it → Price recalculates accordingly
+  - [x] Add a Service in settings → Booking form options include it → Price recalculates accordingly
 
 - Multi‑user realtime
   - [ ] Update booking in browser A → Browser B reflects change within 5s (or after automatic invalidation)
