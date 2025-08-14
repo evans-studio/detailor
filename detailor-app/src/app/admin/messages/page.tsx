@@ -3,6 +3,7 @@ import * as React from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { RoleGuard } from '@/components/RoleGuard';
 import { useQuery } from '@tanstack/react-query';
+import { useRealtimeAdminUpdates } from '@/lib/realtime';
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/card';
 import { Button } from '@/ui/button';
 import { Badge } from '@/ui/badge';
@@ -21,6 +22,14 @@ interface Message {
 }
 
 export default function AdminMessagesPage() {
+  const [tenantId, setTenantId] = React.useState('');
+  React.useEffect(() => {
+    try {
+      const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+      if (cookie) setTenantId(decodeURIComponent(cookie.split('=')[1]));
+    } catch {}
+  }, []);
+  useRealtimeAdminUpdates(tenantId || '', true);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [channelFilter, setChannelFilter] = React.useState<string>('all');
   const [selectedConversation, setSelectedConversation] = React.useState<string | null>(null);

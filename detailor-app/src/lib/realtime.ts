@@ -94,6 +94,35 @@ export type SupaInvoice = {
   created_at: string;
 };
 
+export type SupaMessage = {
+  id: string;
+  tenant_id: string;
+  customer_id?: string | null;
+  channel: 'email' | 'sms' | 'chat';
+  direction: string;
+  status: string;
+  created_at: string;
+};
+
+export function subscribeMessages(
+  tenantId: string,
+  onChange: (event: { type: 'INSERT' | 'UPDATE' | 'DELETE'; record: SupaMessage }) => void
+) {
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL as string,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+  );
+  const channel = client
+    .channel('messages-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `tenant_id=eq.${tenantId}` }, (payload) => {
+      onChange({ type: payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE', record: payload.new as unknown as SupaMessage });
+    })
+    .subscribe();
+  return () => {
+    client.removeChannel(channel);
+  };
+}
+
 export function subscribeInvoices(
   tenantId: string,
   onChange: (event: { type: 'INSERT' | 'UPDATE' | 'DELETE'; record: SupaInvoice }) => void
@@ -148,6 +177,10 @@ export function wireRealtimeInvalidations(tenantId: string, queryClient: QueryCl
   });
   const unsubJobs = subscribeJobs(tenantId, () => {
     queryClient.invalidateQueries({ queryKey: ['jobs'] });
+    // Also invalidate any ad-hoc job keys used by legacy views
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // @ts-expect-error using predicate to support mixed query keys
+    queryClient.invalidateQueries({ predicate: (q: any) => (q?.queryKey || []).some((k: any) => typeof k === 'string' && k.includes('jobs')) });
     queryClient.invalidateQueries({ queryKey: ['bookings'] });
   });
   const unsubPayments = subscribePayments(tenantId, () => {
@@ -158,11 +191,16 @@ export function wireRealtimeInvalidations(tenantId: string, queryClient: QueryCl
   const unsubInvoices = subscribeInvoices(tenantId, () => {
     queryClient.invalidateQueries({ queryKey: ['invoices'] });
   });
+  const unsubMessages = subscribeMessages(tenantId, () => {
+    queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
+    queryClient.invalidateQueries({ queryKey: ['sms-credits'] });
+  });
   return () => {
     unsubBookings();
     unsubJobs();
     unsubPayments();
     unsubInvoices();
+    unsubMessages();
   };
 }
 

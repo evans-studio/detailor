@@ -3,6 +3,7 @@ import * as React from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { RoleGuard } from '@/components/RoleGuard';
 import { useQuery, fetchJobs } from '@/lib/data';
+import { useRealtimeAdminUpdates } from '@/lib/realtime';
 
 type JobRow = { 
   id: string; 
@@ -25,13 +26,25 @@ type JobRow = {
   };
 };
 export default function StaffUpcoming() {
-  const { data } = useQuery('jobs-upcoming', () => fetchJobs('?status=not_started'));
+  const [tenantId, setTenantId] = React.useState('');
+  React.useEffect(() => {
+    try {
+      const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+      if (cookie) setTenantId(decodeURIComponent(cookie.split('=')[1]));
+    } catch {}
+  }, []);
+  useRealtimeAdminUpdates(tenantId || '', true);
+  const { data, loading, error, reload } = useQuery('jobs-upcoming', () => fetchJobs('?status=not_started'));
   const jobs = (data || []) as JobRow[];
   return (
     <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin","staff"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Upcoming</h1>
-        {jobs.length === 0 ? <div className="text-[var(--color-text-muted)]">No upcoming jobs.</div> : (
+        {loading ? (
+          <div className="text-[var(--color-text-muted)]">Loading…</div>
+        ) : error ? (
+          <div className="text-[var(--color-danger)]">{error} <button className="underline" onClick={reload}>Retry</button></div>
+        ) : jobs.length === 0 ? <div className="text-[var(--color-text-muted)]">No upcoming jobs.</div> : (
           <div className="grid gap-3">
             {jobs.map((j) => (
               <div key={j.id} className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
