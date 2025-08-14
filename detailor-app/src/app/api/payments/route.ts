@@ -21,14 +21,18 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const invoiceId = url.searchParams.get('invoice_id') || undefined;
     const bookingId = url.searchParams.get('booking_id') || undefined;
+    const page = Math.max(1, Number(url.searchParams.get('page') || '1'));
+    const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get('pageSize') || '25')));
+    const rangeFrom = (page - 1) * pageSize;
+    const rangeTo = rangeFrom + pageSize - 1;
     const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
     if (!profile) throw new Error('No profile');
-    let query = admin.from('payments').select('*').eq('tenant_id', profile.tenant_id);
+    let query = admin.from('payments').select('*', { count: 'exact' }).eq('tenant_id', profile.tenant_id);
     if (invoiceId) query = query.eq('invoice_id', invoiceId);
     if (bookingId) query = query.eq('booking_id', bookingId);
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error, count } = await query.order('created_at', { ascending: false }).range(rangeFrom, rangeTo);
     if (error) throw error;
-    return createSuccessResponse({ payments: data });
+    return createSuccessResponse({ payments: data }, { pagination: { page, pageSize, total: count ?? (data?.length || 0) } });
   } catch (e: unknown) {
     return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/payments' }, 400);
   }

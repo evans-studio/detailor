@@ -101,7 +101,7 @@ Utilities & health
   - Guest endpoints → `MISSING_REQUIRED_FIELD` + 400 for missing tenant_id
 - [ ] Add Zod validation where missing (quotes, bulk/messaging, exports)
 - [ ] Add pagination for list endpoints (bookings, invoices, customers, payments)
-  - ✅ Bookings, Invoices, Customers (page/pageSize/total via meta.pagination)
+  - ✅ Bookings, Invoices, Customers, Payments (page/pageSize/total via meta.pagination)
 - [ ] Add rate limiting on: refunds, exports, analytics heavy endpoints
   - ✅ Refunds (5/5m), Exports (10/min), Analytics revenue (30/min)
 - [ ] Ensure idempotency for: refunds, bulk messaging, webhook handlers (re‑entrancy)
@@ -145,6 +145,7 @@ Realtime
   - ✅ Done in both; added rate limiting to revenue
   - ✅ Converted `admin/services` and `quotes` to helpers
   - ✅ Added pagination to bookings, invoices, customers endpoints
+  - ✅ Added pagination to payments list and rate limiting to payments export
   - ✅ Added rate limiting to export endpoints; added idempotency to refunds
 - [ ] Add pagination to invoices/bookings/customers lists (BE+FE)
 - [ ] Normalize error codes across analytics and guest endpoints
