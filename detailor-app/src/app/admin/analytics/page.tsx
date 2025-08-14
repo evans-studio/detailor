@@ -56,10 +56,10 @@ export default function AnalyticsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="analytics-panels">
             <Card>
               <CardHeader>
-                <CardTitle>Revenue (last 7 days)</CardTitle>
+                <CardTitle data-testid="analytics-revenue">Revenue (last 7 days)</CardTitle>
               </CardHeader>
               <CardContent>
                 {revenue?.daily_revenue?.length ? (
@@ -79,7 +79,7 @@ export default function AnalyticsPage() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Service Popularity</CardTitle>
+                <CardTitle data-testid="analytics-services">Service Popularity</CardTitle>
               </CardHeader>
               <CardContent>
                 {services?.services?.length ? (
@@ -99,7 +99,7 @@ export default function AnalyticsPage() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Customer Lifetime Value</CardTitle>
+                <CardTitle data-testid="analytics-clv">Customer Lifetime Value</CardTitle>
               </CardHeader>
               <CardContent>
                 {clv?.customers?.length ? (
@@ -119,7 +119,7 @@ export default function AnalyticsPage() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Staff Productivity</CardTitle>
+                <CardTitle data-testid="analytics-staff">Staff Productivity</CardTitle>
               </CardHeader>
               <CardContent>
                 {staff?.staff?.length ? (
@@ -139,7 +139,7 @@ export default function AnalyticsPage() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle>Conversion Funnel</CardTitle>
+                <CardTitle data-testid="analytics-funnel">Conversion Funnel</CardTitle>
               </CardHeader>
               <CardContent>
                 {funnel?.funnel ? (

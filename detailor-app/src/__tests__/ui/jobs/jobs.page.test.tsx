@@ -33,7 +33,7 @@ describe('AdminJobsPage', () => {
 
   it('renders jobs and allows start/complete actions', async () => {
     renderWithProviders(<AdminJobsPage />);
-    await screen.findByText(/Jobs/i);
+    await screen.findByRole('heading', { name: /Jobs/i, level: 1 });
     const startBtn = await screen.findByRole('button', { name: /Start/i });
     fireEvent.click(startBtn);
     // After start, a complete button would appear in a real flow; we assert refresh button remains

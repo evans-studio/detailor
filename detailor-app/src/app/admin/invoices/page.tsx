@@ -71,6 +71,7 @@ export default function AdminInvoicesPage() {
           </Card>
         )}
 
+        <div data-testid="invoices-table">
         <DataTable
           data={filtered}
           columns={[
@@ -86,6 +87,7 @@ export default function AdminInvoicesPage() {
           enableExport
           exportFilename="invoices.csv"
         />
+        </div>
       </RoleGuard>
     </DashboardShell>
   );
