@@ -15,6 +15,8 @@ export default function OnboardingPage() {
   const { notify } = useNotifications();
   const [hasService, setHasService] = React.useState<boolean | null>(null);
   const [hasAvailability, setHasAvailability] = React.useState<boolean | null>(null);
+  const [tenantId, setTenantId] = React.useState<string | null>(null);
+  const [initializing, setInitializing] = React.useState<boolean>(true);
 
   // Business Info
   const [businessForm, setBusinessForm] = React.useState({
@@ -73,6 +75,66 @@ export default function OnboardingPage() {
     logo_text: ''
   });
 
+  // Initialize: load tenant context and any existing data to make onboarding idempotent and NULL-safe
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        // Get tenant context
+        const meRes = await fetch('/api/tenant/me', { cache: 'no-store' });
+        const meJson = await meRes.json();
+        if (meRes.ok && meJson?.success) {
+          const tid = meJson?.data?.id || meJson?.id || null;
+          if (!cancelled && tid) setTenantId(tid);
+        }
+
+        // Prefill business settings if available
+        const tenantRes = await fetch('/api/settings/tenant', { cache: 'no-store' });
+        const tenantJson = await tenantRes.json();
+        if (tenantRes.ok && tenantJson?.success && tenantJson?.data?.tenant) {
+          const t = tenantJson.data.tenant;
+          if (!cancelled) {
+            setBusinessForm((prev) => ({
+              ...prev,
+              legal_name: t.legal_name || prev.legal_name,
+              trading_name: t.trading_name || prev.trading_name,
+              contact_email: t.contact_email || prev.contact_email,
+            }));
+          }
+        }
+
+        // Check if services exist
+        const servicesRes = await fetch('/api/admin/services', {
+          cache: 'no-store',
+          headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+        });
+        const servicesJson = await servicesRes.json();
+        if (!cancelled && servicesRes.ok && servicesJson?.success && Array.isArray(servicesJson.data)) {
+          const isSample = Boolean(servicesJson?.meta?.warning) || String(servicesJson?.meta?.info || '').toLowerCase().includes('sample');
+          setHasService(!isSample && servicesJson.data.length > 0);
+        }
+
+        // Check if work patterns exist
+        const wpRes = await fetch('/api/admin/availability/work-patterns', {
+          cache: 'no-store',
+          headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+        });
+        const wpJson = await wpRes.json();
+        if (!cancelled && wpRes.ok && wpJson?.success && Array.isArray(wpJson.data)) {
+          const isDefault = Boolean(wpJson?.meta?.warning) || String(wpJson?.meta?.info || '').toLowerCase().includes('default');
+          setHasAvailability(!isDefault && wpJson.data.length > 0);
+        }
+      } catch (e) {
+        // Non-fatal; onboarding can continue
+      } finally {
+        if (!cancelled) setInitializing(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [tenantId]);
+
   const handleSubmit = async (step: Step) => {
     setSubmitting(true);
     setError(null);
@@ -90,6 +152,10 @@ export default function OnboardingPage() {
           if (!tenantRes.ok || !tenantData.success) {
             throw new Error(tenantData?.error?.message || 'Failed to create business');
           }
+          // Persist tenant context locally for subsequent steps/headers
+          const tid = tenantData?.data?.tenant_id || tenantData?.tenant_id;
+          if (tid) setTenantId(tid);
+          notify({ title: 'Business details saved' });
           setCurrentStep('service');
           break;
 
@@ -99,7 +165,9 @@ export default function OnboardingPage() {
           
           // First check if services already exist to avoid duplicates during repeated onboarding attempts
           try {
-            const existingServicesRes = await fetch('/api/admin/services');
+            const existingServicesRes = await fetch('/api/admin/services', {
+              headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+            });
             const existingServicesData = await existingServicesRes.json();
             
             if (existingServicesData?.success && Array.isArray(existingServicesData.data) && existingServicesData.data.length > 0) {
@@ -116,7 +184,7 @@ export default function OnboardingPage() {
           
           const serviceRes = await fetch('/api/admin/services', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(tenantId ? { 'x-tenant-id': tenantId } : {}) },
             body: JSON.stringify({
               name: validated.name,
               description: validated.description,
@@ -140,6 +208,7 @@ export default function OnboardingPage() {
             throw new Error(msg || 'Failed to create service');
           }
           setHasService(true);
+          notify({ title: 'Service created' });
           setCurrentStep('availability');
           break;
 
@@ -185,7 +254,7 @@ export default function OnboardingPage() {
             try {
               const patternRes = await fetch('/api/admin/availability/work-patterns', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', ...(tenantId ? { 'x-tenant-id': tenantId } : {}) },
                 body: JSON.stringify(pattern)
               });
               const patternData = await patternRes.json();
@@ -211,20 +280,30 @@ export default function OnboardingPage() {
           }
           
           setHasAvailability(true);
+          notify({ title: 'Working hours saved' });
           setCurrentStep('branding');
           break;
 
         case 'branding':
-          // Set up basic branding
-          const brandingRes = await fetch('/api/admin/settings/branding', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              primary_color: brandingForm.primary_color,
-              business_name: brandingForm.logo_text || businessForm.trading_name || businessForm.legal_name
-            })
-          });
-          // Don't fail if branding fails - it's not critical
+          // Save branding via tenant settings (brand_theme)
+          try {
+            const brandingRes = await fetch('/api/settings/tenant', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json', ...(tenantId ? { 'x-tenant-id': tenantId } : {}) },
+              body: JSON.stringify({
+                brand_theme: {
+                  brand: { primary: brandingForm.primary_color },
+                },
+              }),
+            });
+            const brandingJson = await brandingRes.json();
+            if (!brandingRes.ok || !brandingJson?.success) {
+              // Non-blocking: proceed but inform user
+              notify({ title: `Branding save failed: ${brandingJson?.error?.message || 'Unknown error'}` });
+            } else {
+              notify({ title: 'Branding saved' });
+            }
+          } catch {}
           // Enforce completion prerequisites
           if (!hasService) {
             setCurrentStep('service');
@@ -246,6 +325,14 @@ export default function OnboardingPage() {
       setSubmitting(false);
     }
   };
+
+  if (initializing) {
+    return (
+      <main className="min-h-screen grid place-items-center p-6">
+        <div className="text-[var(--color-text-muted)]">Loading setup…</div>
+      </main>
+    );
+  }
 
   if (currentStep === 'complete') {
     return (

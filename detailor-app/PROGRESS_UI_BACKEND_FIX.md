@@ -152,6 +152,13 @@ This document tracks progress to fully resolve the UI not showing existing backe
 - [ ] Realtime tenant wiring across admin pages (pending)
 - [ ] Complete verification protocol per page (pending)
 
+- [x] Onboarding fixes: persist tenant‑scoped data end‑to‑end
+  - Business step posts to `/api/onboarding` and stores returned `tenant_id`
+  - Service creation posts to `/api/admin/services` with tenant context; idempotent check to skip sample data
+  - Working hours upserts via `/api/admin/availability/work-patterns` with tenant context; validates and confirms at least one saved pattern
+  - Branding saved via `PATCH /api/settings/tenant` (`brand_theme`); non‑blocking
+  - Initialization loads existing tenant/services/work patterns; NULL‑safe defaults; clear loading and feedback states
+
 ---
 
 ## How to use this tracker
