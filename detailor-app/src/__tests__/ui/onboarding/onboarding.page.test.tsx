@@ -57,7 +57,7 @@ describe('OnboardingPage', () => {
     fetchMock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ success: true, data: { id: 'svc1' } }), { status: 200 })));
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 
-    await screen.findByText(/Working Hours/i);
+    await screen.findByText(/Appointment Duration/i);
 
     // Save availability
     fetchMock.mockImplementation((url: string) => {
