@@ -771,10 +771,11 @@ export default function OnboardingPage() {
             </div>
 
             <div>
-              <label className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
+              <label htmlFor="branding-name" className="block text-[var(--font-size-sm)] font-medium text-[var(--color-text)] mb-1">
                 Business Name for Branding
               </label>
               <Input 
+                id="branding-name"
                 placeholder={businessForm.trading_name || businessForm.legal_name}
                 value={brandingForm.logo_text} 
                 onChange={(e) => setBrandingForm({ ...brandingForm, logo_text: e.target.value })} 
