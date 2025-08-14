@@ -22,6 +22,8 @@ export default function BookingDefaultsPage() {
     },
   });
   const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [success, setSuccess] = React.useState<string | null>(null);
   React.useEffect(() => {
     (async () => {
       try {
@@ -53,12 +55,13 @@ export default function BookingDefaultsPage() {
             if (!Number.isNaN(km) && km > 0) setForm((f) => ({ ...f, service_radius_km: km }));
           }
         } catch {}
-      } catch {}
+      } catch (e) { setError((e as Error)?.message || 'Failed to load working hours'); }
     })();
   }, []);
   async function onSave() {
     setSaving(true);
     try {
+      setError(null); setSuccess(null);
       // Persist each weekday via upsert endpoint
       for (let d = 0; d <= 6; d++) {
         const cfg = form.days[d];
@@ -70,19 +73,25 @@ export default function BookingDefaultsPage() {
           capacity: cfg.enabled ? (cfg.capacity || 1) : 0,
         };
         // POST upsert per weekday
-        await fetch('/api/admin/availability/work-patterns', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-        });
+        const r = await fetch('/api/admin/availability/work-patterns', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || j?.success === false) throw new Error(j?.error?.message || 'Failed to save work pattern');
       }
       if (form.service_radius_km && form.service_radius_km > 0) {
-        await fetch('/api/settings/tenant', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ business_prefs: { service_radius_km: form.service_radius_km } }) });
+        const r2 = await fetch('/api/settings/tenant', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ business_prefs: { service_radius_km: form.service_radius_km } }) });
+        const j2 = await r2.json().catch(() => ({}));
+        if (!r2.ok || j2?.success === false) throw new Error(j2?.error?.message || 'Failed to save service radius');
       }
+      setSuccess('Working hours saved');
+      setTimeout(() => setSuccess(null), 2000);
     } finally { setSaving(false); }
   }
   return (
     <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Working Hours</h1>
+        {error ? <div className="mb-2 text-[var(--color-danger)]">{error}</div> : null}
+        {success ? <div className="mb-2 text-[var(--color-success)]">{success}</div> : null}
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-3">
           {[0,1,2,3,4,5,6].map((d) => (
             <div key={d} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center">

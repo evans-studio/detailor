@@ -52,6 +52,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 - Working hours (`/admin/settings/booking`)
   - [x] Load week grid from `/api/admin/availability/work-patterns`
   - [x] Save per‑day upsert; persist `service_radius_km`
+  - [x] Loading/error and success feedback; buttons disable during save
   - [ ] Verification protocol completed (onboarding → settings consistency)
 
 - Blackouts (`/admin/settings/availability/blackouts`)
