@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
+import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { z } from 'zod';
 
 const schema = z.object({ access_token: z.string().min(10) });
@@ -22,6 +24,47 @@ export async function POST(req: Request) {
       domain: cookieDomain,
       maxAge: 60 * 60 * 8,
     });
+
+    // Hint middleware with role and tenant for routing decisions (non-authoritative)
+    try {
+      const url = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+      const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
+      if (url && anon) {
+        const client = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
+        const { data: userData } = await client.auth.getUser(access_token);
+        const authUserId = userData?.user?.id;
+        if (authUserId) {
+          const admin = getSupabaseAdmin();
+          const { data: profile } = await admin
+            .from('profiles')
+            .select('role, tenant_id')
+            .eq('id', authUserId)
+            .single();
+          const role = (profile?.role as string) || '';
+          const tenantId = (profile?.tenant_id as string) || '';
+          if (role) {
+            res.cookies.set('df-role', role, {
+              httpOnly: true,
+              secure,
+              sameSite: 'lax',
+              path: '/',
+              domain: cookieDomain,
+              maxAge: 60 * 60 * 8,
+            });
+          }
+          if (tenantId) {
+            res.cookies.set('df-tenant', tenantId, {
+              httpOnly: true,
+              secure,
+              sameSite: 'lax',
+              path: '/',
+              domain: cookieDomain,
+              maxAge: 60 * 60 * 8,
+            });
+          }
+        }
+      }
+    } catch {}
     return res;
   } catch (e: unknown) {
     return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, (e as Error).message, { endpoint: 'POST /api/session/set' }, 400);
