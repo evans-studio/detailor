@@ -3,6 +3,7 @@ import * as React from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { RoleGuard } from '@/components/RoleGuard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Card, CardContent } from '@/ui/card';
 import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
 import { Input } from '@/ui/input';
 import { Select } from '@/ui/select';
@@ -25,12 +26,13 @@ export default function AdminPaymentsPage() {
   const [q, setQ] = React.useState('');
   const [status, setStatus] = React.useState<'all'|Payment['status']>('all');
   const [provider, setProvider] = React.useState<'all'|'stripe'|'paypal'|'cash'>('all');
-  const { data: payments = [] } = useQuery<Payment[]>({
+  const { data: payments = [], isLoading, isError, error, refetch } = useQuery<Payment[]>({
     queryKey: ['payments'],
     queryFn: async () => {
       const res = await fetch('/api/payments');
       const json = await res.json();
-      return json.payments || [];
+      if (!json.success) throw new Error(json?.error?.message || 'Failed to load payments');
+      return json.data?.payments || json.payments || [];
     },
   });
 
@@ -84,6 +86,19 @@ export default function AdminPaymentsPage() {
             <Button onClick={() => exportCsv(filtered)}>Export CSV</Button>
           </div>
         </div>
+        {/* Loading / Error */}
+        {isLoading && (
+          <Card><CardContent className="p-6 text-[var(--color-text-muted)]">Loading payments…</CardContent></Card>
+        )}
+        {isError && (
+          <Card>
+            <CardContent className="p-6 text-[var(--color-danger)]">
+              {(error as Error)?.message || 'Failed to load payments'}
+              <div className="mt-3"><Button size="sm" intent="ghost" onClick={() => refetch()}>Retry</Button></div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
           <Table>
             <THead>

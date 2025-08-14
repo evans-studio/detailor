@@ -55,9 +55,9 @@ This document tracks progress to fully resolve the UI not showing existing backe
   - [ ] Verification protocol completed (onboarding → settings consistency)
 
 - Blackouts (`/admin/settings/availability/blackouts`)
-  - [ ] List via `GET /api/admin/availability/blackouts`
-  - [ ] Add/remove via POST/DELETE; invalidate
-  - [ ] Loading/error, and verification protocol
+  - [x] List via `GET /api/admin/availability/blackouts`
+  - [x] Add via POST; invalidate (remove pending)
+  - [x] Loading/error, and verification protocol (pending QA)
 
 ### Services
 - Admin Services (`/admin/settings/services`)
@@ -95,12 +95,12 @@ This document tracks progress to fully resolve the UI not showing existing backe
 
 ### Invoices & Payments
 - Invoices list/detail
-  - [ ] Lists and detail: standardized fetch, loading/error; PDF link
+  - [x] List: standardized fetch, loading/error; PDF link
   - [x] Webhook reconciliation and receipt emails
   - [ ] Verification protocol completed
 
 - Payments (`/payments`)
-  - [ ] Fetch, filters, refund actions with loading/error; verification completed
+  - [x] Fetch, filters, refund actions with loading/error; verification pending
 
 ### Messaging
 - Conversations/send (`/admin/messages`)

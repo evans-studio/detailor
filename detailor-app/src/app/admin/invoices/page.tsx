@@ -5,15 +5,22 @@ import { RoleGuard } from '@/components/RoleGuard';
 import { DataTable } from '@/components/DataTable';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent } from '@/ui/card';
+import { Button } from '@/ui/button';
 import { api } from '@/lib/api';
 
 type Invoice = { id: string; number: string; total: number; paid_amount: number; balance: number; created_at: string; booking_id?: string | null };
 
 export default function AdminInvoicesPage() {
   const [q, setQ] = React.useState('');
-  const { data: invoices = [] } = useQuery({
+  const { data: invoices = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['invoices'],
-    queryFn: async (): Promise<Invoice[]> => (await api<{ ok: boolean; invoices: Invoice[] }>(`/api/invoices`)).invoices || [],
+    queryFn: async (): Promise<Invoice[]> => {
+      const res = await fetch('/api/invoices', { cache: 'no-store' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json?.error?.message || 'Failed to load invoices');
+      return json.data?.invoices || json.invoices || [];
+    },
   });
   function exportCsv(list: Invoice[]) {
     const headers = ['Number','Date','Total','Paid','Balance'];
@@ -42,6 +49,19 @@ export default function AdminInvoicesPage() {
           <h1 className="text-[var(--font-size-2xl)] font-semibold">Invoices</h1>
           <button className="underline" onClick={() => exportCsv(filtered)}>Export CSV</button>
         </div>
+        {/* Loading / Error */}
+        {isLoading && (
+          <Card><CardContent className="p-6 text-[var(--color-text-muted)]">Loading invoices…</CardContent></Card>
+        )}
+        {isError && (
+          <Card>
+            <CardContent className="p-6 text-[var(--color-danger)]">
+              {(error as Error)?.message || 'Failed to load invoices'}
+              <div className="mt-3"><Button size="sm" intent="ghost" onClick={() => refetch()}>Retry</Button></div>
+            </CardContent>
+          </Card>
+        )}
+
         <DataTable
           data={filtered}
           columns={[

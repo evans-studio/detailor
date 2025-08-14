@@ -53,4 +53,43 @@ export async function POST(req: Request) {
   }
 }
 
+export async function DELETE(req: Request) {
+  try {
+    const { user } = await getUserFromRequest(req);
+    const admin = getSupabaseAdmin();
+    const url = new URL(req.url);
+    const idFromQuery = url.searchParams.get('id');
+    let id = idFromQuery as string | null;
+    if (!id) {
+      try {
+        const body = await req.json();
+        id = body?.id || null;
+      } catch {
+        // ignore body parse errors
+      }
+    }
+    if (!id) {
+      return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'Missing blackout id', undefined, 400);
+    }
+    const { data: profile } = await admin.from('profiles').select('tenant_id, role').eq('id', user.id).single();
+    if (!profile || profile.role !== 'admin') {
+      return createErrorResponse(API_ERROR_CODES.ADMIN_ONLY, 'Admin only', undefined, 403);
+    }
+    const { error } = await admin
+      .from('blackouts')
+      .delete()
+      .eq('id', id)
+      .eq('tenant_id', profile.tenant_id);
+    if (error) throw error;
+    return createSuccessResponse({ id });
+  } catch (error: unknown) {
+    return createErrorResponse(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      (error as Error).message,
+      { endpoint: 'DELETE /api/admin/availability/blackouts' },
+      400
+    );
+  }
+}
+
 

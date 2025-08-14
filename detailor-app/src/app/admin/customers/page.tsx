@@ -23,14 +23,21 @@ type Customer = CustomerData;
 export default function AdminCustomersPage() {
   const queryClient = useQueryClient();
   
-  // System Bible Pattern: Real-time admin updates
-  useRealtimeAdminUpdates('detail-flow', true);
+  // System Bible Pattern: Real-time admin updates (tenant-aware)
+  const [tenantId, setTenantId] = React.useState<string>('');
+  React.useEffect(() => {
+    try {
+      const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+      if (cookie) setTenantId(decodeURIComponent(cookie.split('=')[1]));
+    } catch {}
+  }, []);
+  useRealtimeAdminUpdates(tenantId || '', true);
   const [activeTab, setActiveTab] = React.useState('all');
   const [q, setQ] = React.useState('');
   const [status, setStatus] = React.useState<'all'|'active'|'inactive'>('all');
   const [segment, setSegment] = React.useState<'all'|'new'|'regular'|'vip'>('all');
   
-  const { data: customers = [] } = useQuery({
+  const { data: customers = [], isLoading, isError, error, refetch } = useQuery({
     queryKey: ['customers', { q, status, segment }],
     queryFn: async (): Promise<Customer[]> => {
       const qs = new URLSearchParams();
@@ -39,7 +46,8 @@ export default function AdminCustomersPage() {
       if (segment !== 'all') qs.set('segment', segment);
       const res = await fetch(`/api/customers${qs.toString() ? `?${qs.toString()}` : ''}`, { cache: 'no-store' });
       const json = await res.json();
-      return json.data || json.customers || [];
+      if (!json.success) throw new Error(json?.error?.message || 'Failed to load customers');
+      return json.data?.customers || json.customers || json.data || [];
     },
     refetchInterval: 60000, // Real-time updates
   });
@@ -172,10 +180,27 @@ export default function AdminCustomersPage() {
             </div>
           </div>
 
+          {/* Loading / Error States */}
+          {isLoading && (
+            <Card>
+              <CardContent className="p-6 text-[var(--color-text-muted)]">Loading customers…</CardContent>
+            </Card>
+          )}
+          {isError && (
+            <Card>
+              <CardContent className="p-6 text-[var(--color-danger)]">
+                {(error as Error)?.message || 'Failed to load customers'}
+                <div className="mt-3">
+                  <Button size="sm" intent="ghost" onClick={() => refetch()}>Retry</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Enterprise Customer Grid */}
           <EnterpriseCustomerGrid
             customers={customers}
-            loading={false}
+            loading={isLoading}
             onCustomerClick={handleCustomerClick}
             onCustomerEdit={handleCustomerEdit}
             onBookService={handleBookService}
