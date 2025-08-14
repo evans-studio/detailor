@@ -37,6 +37,20 @@ describe('AdminMessagesPage', () => {
     const thread = await screen.findByTestId('thread-title');
     expect(thread.textContent).toMatch(/Jane Smith/);
   });
+
+  it('supports basic thread actions', async () => {
+    renderWithProviders(<AdminMessagesPage />);
+    await screen.findByTestId('conversations-list');
+    fireEvent.click(await screen.findByTestId('conversation-item-m1'));
+    // Action buttons visible
+    const markResolved = await screen.findByRole('button', { name: /Mark Resolved/i });
+    expect(markResolved).toBeInTheDocument();
+    fireEvent.click(markResolved);
+    // New message action exists in header
+    const newMessage = await screen.findByRole('button', { name: /New Message/i });
+    expect(newMessage).toBeInTheDocument();
+    fireEvent.click(newMessage);
+  });
 });
 
 
