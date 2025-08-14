@@ -42,7 +42,8 @@ This document tracks progress to fully resolve the UI not showing existing backe
   - [x] Robust fetch: prefer `json.data.tenant`
   - [x] Save validation (check `json.success`)
   - [x] Show loading/error; disable save while saving; success confirmation
-  - [ ] Verification protocol completed
+  - [x] Tenant-aware palette and live apply after save (BrandProvider + brand-updated event)
+  - [x] Verification protocol completed
 
 - Payments (`/admin/settings/payments`)
   - [x] Deposit defaults load/save (`tenants.business_prefs.deposit_percent`, `deposit_min_gbp`)
