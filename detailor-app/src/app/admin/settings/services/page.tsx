@@ -40,9 +40,10 @@ export default function AdminServicesPage() {
   const { data: services = [], isLoading } = useQuery({
     queryKey: ['admin-services'],
     queryFn: async (): Promise<Service[]> => {
-      const res = await fetch('/api/admin/services');
+      const res = await fetch('/api/admin/services', { cache: 'no-store' });
       const json = await res.json();
-      return json.services || [];
+      if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to load services');
+      return json.data?.services || json.services || [];
     },
   });
 
@@ -53,8 +54,9 @@ export default function AdminServicesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(serviceData)
       });
-      if (!res.ok) throw new Error('Failed to create service');
-      return res.json();
+      const json = await res.json().catch(()=>({}));
+      if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to create service');
+      return json;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-services'] });
@@ -78,8 +80,9 @@ export default function AdminServicesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      if (!res.ok) throw new Error('Failed to update service');
-      return res.json();
+      const json = await res.json().catch(()=>({}));
+      if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to update service');
+      return json;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-services'] });
@@ -92,8 +95,9 @@ export default function AdminServicesPage() {
       const res = await fetch(`/api/admin/services/${id}`, {
         method: 'DELETE'
       });
-      if (!res.ok) throw new Error('Failed to delete service');
-      return res.json();
+      const json = await res.json().catch(()=>({}));
+      if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to delete service');
+      return json;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-services'] });

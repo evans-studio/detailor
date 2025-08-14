@@ -13,13 +13,26 @@ export default function BookingDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   type Booking = { id: string; start_at: string; status: string; payment_status: string; price_breakdown?: { total?: number } };
+  type Invoice = { id: string; number: string; total: number; paid_amount: number; balance: number };
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ['booking', id],
     queryFn: async (): Promise<Booking | null> => {
-      const list = await api<{ ok: boolean; bookings: Booking[] }>(`/api/bookings`);
-      return list.bookings.find((b) => b.id === id) || null;
+      const res = await fetch(`/api/bookings/${id}`, { cache: 'no-store' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error?.message || 'Failed to load booking');
+      return json.data?.booking || json.booking || null;
     },
+  });
+  const { data: invoices = [], isLoading: invLoading } = useQuery({
+    queryKey: ['invoices', { bookingId: id }],
+    queryFn: async (): Promise<Invoice[]> => {
+      const res = await fetch(`/api/invoices?booking_id=${id}`, { cache: 'no-store' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error?.message || 'Failed to load invoices');
+      return json.data?.invoices || json.invoices || [];
+    },
+    enabled: Boolean(id),
   });
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [action, setAction] = React.useState<'confirm'|'cancel'|null>(null);
@@ -34,6 +47,37 @@ export default function BookingDetailPage() {
       await queryClient.invalidateQueries({ queryKey: ['invoices'] });
     },
   });
+  async function collectDeposit() {
+    if (!data) return;
+    try {
+      const total = Math.round(Number(data.price_breakdown?.total || 0) * 100);
+      // Resolve tenant deposit preferences
+      let depositPercent = 20; let minGbp = 5;
+      try {
+        const t = await fetch('/api/settings/tenant');
+        const tj = await t.json();
+        const prefs = tj?.data?.tenant?.business_prefs || tj?.tenant?.business_prefs || {};
+        depositPercent = Number(prefs.deposit_percent ?? 20);
+        minGbp = Number(prefs.deposit_min_gbp ?? 5);
+      } catch {}
+      const deposit = Math.max(minGbp * 100, Math.round(total * (depositPercent / 100)));
+      const res = await fetch('/api/payments/checkout-booking', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: total, deposit_amount: deposit, currency: 'gbp', booking_reference: data.id })
+      });
+      const json = await res.json();
+      const url = json?.data?.url || json?.url;
+      if (url) window.open(url as string, '_blank');
+    } catch {}
+  }
+  async function collectBalance(inv: Invoice) {
+    try {
+      const res = await fetch('/api/payments/checkout-invoice', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ invoice_id: inv.id }) });
+      const json = await res.json();
+      const url = json?.data?.url || json?.url;
+      if (url) window.open(url as string, '_blank');
+    } catch {}
+  }
   async function onConfirmAction() {
     if (!data || !action) return;
     await updateStatus.mutateAsync(action === 'confirm' ? 'confirmed' : 'cancelled');
@@ -54,6 +98,34 @@ export default function BookingDetailPage() {
           <div className="grid gap-1">
             <div>Date: {new Date(data.start_at).toLocaleString()}</div>
             <div>Price: £{data.price_breakdown?.total ?? 0}</div>
+          </div>
+          {/* Payments panel */}
+          <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+            <div className="font-medium mb-2">Payments</div>
+            {invLoading ? <div>Loading…</div> : (
+              <div className="grid gap-2">
+                {invoices.length === 0 ? (
+                  <div className="text-[var(--color-text-muted)]">No invoice yet.</div>
+                ) : (
+                  invoices.map((inv) => (
+                    <div key={inv.id} className="flex items-center justify-between">
+                      <div className="text-[var(--color-text)]">
+                        Invoice {inv.number} • Balance £{Number(inv.balance ?? Math.max(0, (inv.total||0) - (inv.paid_amount||0))).toFixed(2)}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <a className="underline" href={`/api/invoices/${inv.id}?format=pdf`} target="_blank" rel="noreferrer">Download</a>
+                        {Number(inv.balance) > 0 ? (
+                          <Button size="sm" onClick={() => collectBalance(inv)}>Collect Balance</Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))
+                )}
+                {data.payment_status !== 'paid' ? (
+                  <Button intent="secondary" onClick={collectDeposit}>Collect Deposit</Button>
+                ) : null}
+              </div>
+            )}
           </div>
           <div className="fixed inset-x-0 bottom-2 z-40 mx-auto flex max-w-xl justify-center gap-2 md:static md:justify-start">
             <Button intent="primary" onClick={() => { setAction('confirm'); setConfirmOpen(true); }}>Confirm</Button>

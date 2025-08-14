@@ -27,6 +27,30 @@ export async function middleware(req: NextRequest) {
   const subdomainMatch = isWildcardSub ? host.split('.')[0] : undefined;
   const roleHint = req.cookies.get('df-role')?.value || '';
 
+  // Security headers baseline
+  const res = NextResponse.next();
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  res.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  // Lightweight CSP aligned with next.config.ts (this path-level header helps for dynamic routes)
+  res.headers.set('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com blob:",
+    "worker-src 'self' blob:",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https:",
+    "font-src 'self'",
+    "connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://*.sentry.io",
+    "frame-src https://js.stripe.com https://hooks.stripe.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests"
+  ].join('; '));
+
   // Subdomain routing for customer microsites
   if (isWildcardSub) {
     const blockedSubdomains = new Set(['app', 'www', 'mail', 'ftp']);
@@ -65,7 +89,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Always allow API and public paths
-  if (pathname.startsWith('/api') || isPublicPath(pathname)) return NextResponse.next();
+  if (pathname.startsWith('/api') || isPublicPath(pathname)) return res;
 
   // Auth check via cookie/header
   const cookieToken = req.cookies.get('sb-access-token')?.value;
@@ -86,7 +110,7 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return NextResponse.next();
+  return res;
 }
 
 export const config = { matcher: ['/((?!_next|_vercel|static|favicon.ico).*)'] };

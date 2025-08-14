@@ -28,18 +28,19 @@ export default function AdminMessagesPage() {
   const { data: conversations = [], isLoading } = useQuery({
     queryKey: ['admin-messages'],
     queryFn: async (): Promise<Message[]> => {
-      const res = await fetch('/api/messages');
+      const res = await fetch('/api/messages', { cache: 'no-store' });
       const json = await res.json();
-      return json.conversations || [];
+      if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to load messages');
+      return json.data?.conversations || json.conversations || [];
     },
   });
 
   const { data: smsCredits } = useQuery({
     queryKey: ['sms-credits'],
     queryFn: async () => {
-      const res = await fetch('/api/billing/usage');
+      const res = await fetch('/api/billing/usage', { cache: 'no-store' });
       const json = await res.json();
-      return json.usage?.sms_credits || 0;
+      return json.data?.usage?.sms_credits || json.usage?.sms_credits || 0;
     },
   });
 

@@ -35,8 +35,8 @@ export function useMutation<TInput extends object, TOut>(
 }
 
 // Common fetchers
-export const fetchInvoices = async () => (await api<{ ok: boolean; invoices: unknown[] }>(`/api/invoices`)).invoices;
-export const fetchCustomers = async (qs = '') => (await api<{ ok: boolean; customers: unknown[] }>(`/api/customers${qs}`)).customers;
-export const fetchJobs = async (qs = '') => (await api<{ ok: boolean; jobs: unknown[] }>(`/api/jobs${qs}`)).jobs;
+export const fetchInvoices = async () => (await api<{ invoices: unknown[] }>(`/api/invoices`)).invoices;
+export const fetchCustomers = async (qs = '') => (await api<{ customers: unknown[] }>(`/api/customers${qs}`)).customers;
+export const fetchJobs = async (qs = '') => (await api<{ jobs: unknown[] }>(`/api/jobs${qs}`)).jobs;
 
 

@@ -13,14 +13,14 @@ export default function InventoryPage() {
   const qc = useQueryClient();
   const { data: items = [] } = useQuery<Item[]>({
     queryKey: ['inventory'],
-    queryFn: async () => { const r = await fetch('/api/inventory', { cache: 'no-store' }); const j = await r.json(); return j.data?.items || j.items || []; }
+    queryFn: async () => { const r = await fetch('/api/inventory', { cache: 'no-store' }); const j = await r.json(); if (!r.ok || j?.success === false) throw new Error(j?.error?.message || 'Failed to load inventory'); return j.data?.items || j.items || []; }
   });
   const create = useMutation({
-    mutationFn: async (body: Partial<Item>) => { await fetch('/api/inventory', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(body) }); },
+    mutationFn: async (body: Partial<Item>) => { const r = await fetch('/api/inventory', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(body) }); const j = await r.json().catch(()=>({})); if (!r.ok || j?.success === false) throw new Error(j?.error?.message || 'Failed to create item'); },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory'] }),
   });
   const update = useMutation({
-    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Item> }) => { await fetch(`/api/inventory/${id}`, { method: 'PATCH', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(patch) }); },
+    mutationFn: async ({ id, patch }: { id: string; patch: Partial<Item> }) => { const r = await fetch(`/api/inventory/${id}`, { method: 'PATCH', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(patch) }); const j = await r.json().catch(()=>({})); if (!r.ok || j?.success === false) throw new Error(j?.error?.message || 'Failed to update item'); },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['inventory'] }),
   });
   const [name, setName] = React.useState('');

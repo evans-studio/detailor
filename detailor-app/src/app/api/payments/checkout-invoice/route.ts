@@ -3,10 +3,15 @@ import { NextResponse } from 'next/server';
 import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import Stripe from 'stripe';
 import { getUserFromRequest } from '@/lib/authServer';
+import { checkRateLimit } from '@/lib/security';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkRateLimit(`checkout-inv-${ip}`, 30, 60000)) {
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Too many requests', { window: '1m', limit: 30 }, 429);
+    }
     const secret = process.env.STRIPE_SECRET_KEY as string | undefined;
     if (!secret) throw new Error('Server not configured');
     const stripe = new Stripe(secret);

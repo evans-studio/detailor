@@ -5,6 +5,7 @@ import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { sendTenantEmail } from '@/lib/messaging';
 import { sendTenantSMS } from '@/lib/messaging-sms';
+import { checkRateLimit, sanitizeEmail } from '@/lib/security';
 
 const channelSchema = z.enum(['email','sms']);
 
@@ -24,7 +25,15 @@ export async function POST(req: Request) {
   try {
     const { user } = await getUserFromRequest(req);
     const admin = getSupabaseAdmin();
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkRateLimit(`msg-${user.id}-${ip}`, 60, 60000)) {
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Too many requests', { window: '1m', limit: 60 }, 429);
+    }
     const payload = schema.parse(await req.json());
+    const safeTo = sanitizeEmail(payload.to);
+    if (!safeTo) {
+      return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'Invalid recipient', { field: 'to' }, 400);
+    }
     const { data: profile } = await admin.from('profiles').select('tenant_id, role, email').eq('id', user.id).single();
     if (!profile || !['staff','admin'].includes(profile.role)) {
       return createErrorResponse(API_ERROR_CODES.FORBIDDEN, 'Insufficient permissions', { required_roles: ['staff','admin'] }, 403);
@@ -58,7 +67,7 @@ export async function POST(req: Request) {
         })
       : await sendTenantEmail({
           tenantId: profile.tenant_id,
-          to: payload.to,
+          to: safeTo,
           subject: payload.subject,
           html: payload.html,
           text: payload.text,

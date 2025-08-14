@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
+import { checkRateLimit } from '@/lib/security';
 import { createClient } from '@supabase/supabase-js';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { z } from 'zod';
@@ -8,6 +9,10 @@ const schema = z.object({ access_token: z.string().min(10) });
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkRateLimit(`session-set-${ip}`, 30, 60000)) {
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Too many session attempts', { window: '1m', limit: 30 }, 429);
+    }
     const body = await req.json();
     const { access_token } = schema.parse(body);
     const res = NextResponse.json({ success: true, meta: { timestamp: new Date().toISOString() } });

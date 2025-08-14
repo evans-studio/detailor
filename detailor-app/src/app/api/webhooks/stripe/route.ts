@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { createErrorResponse } from '@/lib/api-response';
 import Stripe from 'stripe';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { sendTenantEmail } from '@/lib/messaging';
 import crypto from 'node:crypto';
 
 function generateTempPassword(): string {
@@ -153,11 +154,13 @@ export async function POST(req: Request) {
               // Upsert invoice (deposit or final payment)
               const total = Math.round(Number(booking.price_breakdown?.total || 0) * 100) / 100;
               // Create invoice if not exists for this booking
-              const invExisting = await admin2.from('invoices').select('id, total, paid_amount, balance').eq('booking_id', booking.id).eq('tenant_id', booking.tenant_id).maybeSingle();
+              const invExisting = await admin2.from('invoices').select('id, total, paid_amount, balance, number, tenant_id, booking_id').eq('booking_id', booking.id).eq('tenant_id', booking.tenant_id).maybeSingle();
               let invoiceId = invExisting.data?.id as string | undefined;
+              let invoiceNumber = invExisting.data?.number as string | undefined;
               if (!invoiceId) {
                 const numGen = await admin2.rpc('generate_invoice_number', { p_tenant_id: booking.tenant_id });
-                const createInv = await admin2.from('invoices').insert({ tenant_id: booking.tenant_id, booking_id: booking.id, number: String(numGen.data || ''), total, paid_amount: 0, balance: total }).select('id').single();
+                invoiceNumber = String(numGen.data || '');
+                const createInv = await admin2.from('invoices').insert({ tenant_id: booking.tenant_id, booking_id: booking.id, number: invoiceNumber, total, paid_amount: 0, balance: total }).select('id, number').single();
                 invoiceId = createInv.data?.id as string | undefined;
               }
               // Record payment
@@ -173,13 +176,46 @@ export async function POST(req: Request) {
               });
               // Reconcile invoice
               if (invoiceId) {
-                const invRes = await admin2.from('invoices').select('id, total, paid_amount').eq('id', invoiceId).single();
-                const inv = invRes.data as { id: string; total: number; paid_amount: number };
+                const invRes = await admin2.from('invoices').select('id, total, paid_amount, number, tenant_id, booking_id').eq('id', invoiceId).single();
+                const inv = invRes.data as { id: string; total: number; paid_amount: number; number: string; tenant_id: string; booking_id?: string | null };
                 const newPaid = Number(inv.paid_amount || 0) + Number(session.amount_total || 0) / 100;
                 const newBalance = Math.max(0, Number(inv.total || 0) - newPaid);
                 await admin2.from('invoices').update({ paid_amount: newPaid, balance: newBalance }).eq('id', inv.id);
                 const newPaymentStatus = newBalance <= 0 ? 'paid' : 'deposit_paid';
                 await admin2.from('bookings').update({ payment_status: newPaymentStatus }).eq('id', booking.id).eq('tenant_id', booking.tenant_id);
+
+                // Send branded receipt email (best effort)
+                try {
+                  const { data: custJoin } = await admin2
+                    .from('bookings')
+                    .select('customer_id')
+                    .eq('id', booking.id)
+                    .single();
+                  const { data: customer } = await admin2
+                    .from('customers')
+                    .select('email, name')
+                    .eq('id', (custJoin as any)?.customer_id)
+                    .single();
+                  const { data: tenantRec } = await admin2
+                    .from('tenants')
+                    .select('trading_name')
+                    .eq('id', booking.tenant_id)
+                    .single();
+                  if (customer?.email) {
+                    const tenantName = tenantRec?.trading_name || 'Detailor';
+                    const amountPaid = (Number(session.amount_total || 0)/100).toFixed(2);
+                    const receiptLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk'}/api/invoices/${inv.id}?format=pdf`;
+                    await sendTenantEmail({
+                      tenantId: booking.tenant_id,
+                      to: customer.email,
+                      subject: `Your Payment Receipt from ${tenantName} (Invoice ${inv.number})`,
+                      html: `<p>Dear ${customer.name || 'Customer'},</p><p>Thank you for your payment of £${amountPaid} for Invoice ${inv.number}.</p><p>Your current balance is £${newBalance.toFixed(2)}.</p><p>You can view and download your invoice here: <a href="${receiptLink}">${receiptLink}</a></p><p>Best regards,<br>${tenantName}</p>`,
+                      bookingId: booking.id,
+                      customerId: (custJoin as any)?.customer_id,
+                      idempotencyKey: `receipt-${session.id}`,
+                    });
+                  }
+                } catch {}
               }
             }
           }
@@ -387,8 +423,8 @@ export async function POST(req: Request) {
         // Apply payment to our invoice and ledger
         try {
           console.log(`[webhook] Processing invoice payment for ${appInvoiceId}`);
-          const invRes = await admin.from('invoices').select('id, tenant_id, booking_id, total, paid_amount, balance').eq('id', appInvoiceId).maybeSingle();
-          const inv = invRes.data as { id: string; tenant_id: string; booking_id?: string | null; total: number; paid_amount: number; balance: number } | null;
+          const invRes = await admin.from('invoices').select('id, tenant_id, booking_id, total, paid_amount, balance, number').eq('id', appInvoiceId).maybeSingle();
+          const inv = invRes.data as { id: string; tenant_id: string; booking_id?: string | null; total: number; paid_amount: number; balance: number; number: string } | null;
           if (inv) {
             const paidNow = Number(session.amount_total ? session.amount_total / 100 : inv.balance);
             const newPaid = Number(inv.paid_amount || 0) + paidNow;
@@ -410,6 +446,37 @@ export async function POST(req: Request) {
             });
             if (inv.booking_id) {
               await admin.from('bookings').update({ payment_status: 'paid' }).eq('id', inv.booking_id).eq('tenant_id', inv.tenant_id);
+              // Send receipt email (best effort)
+              try {
+                const { data: customerJoin } = await admin
+                  .from('bookings')
+                  .select('customer_id, tenant_id')
+                  .eq('id', inv.booking_id)
+                  .single();
+                const { data: customer } = await admin
+                  .from('customers')
+                  .select('email, name')
+                  .eq('id', (customerJoin as any)?.customer_id)
+                  .single();
+                const { data: tenantRec } = await admin
+                  .from('tenants')
+                  .select('trading_name')
+                  .eq('id', inv.tenant_id)
+                  .single();
+                if (customer?.email) {
+                  const tenantName = tenantRec?.trading_name || 'Detailor';
+                  const receiptLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk'}/api/invoices/${inv.id}?format=pdf`;
+                  await sendTenantEmail({
+                    tenantId: inv.tenant_id,
+                    to: customer.email,
+                    subject: `Your Payment Receipt from ${tenantName} (Invoice ${inv.number})`,
+                    html: `<p>Dear ${customer.name || 'Customer'},</p><p>Thank you for your payment of £${paidNow.toFixed(2)} for Invoice ${inv.number}.</p><p>Your current balance is £${newBalance.toFixed(2)}.</p><p>You can view and download your invoice here: <a href=\"${receiptLink}\">${receiptLink}</a></p><p>Best regards,<br>${tenantName}</p>`,
+                    bookingId: inv.booking_id,
+                    customerId: (customerJoin as any)?.customer_id,
+                    idempotencyKey: `receipt-${session.id}`,
+                  });
+                }
+              } catch {}
             }
             console.log(`[webhook] Invoice payment processed successfully`);
           }

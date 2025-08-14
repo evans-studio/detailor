@@ -14,13 +14,16 @@ export default function BrandingSettings() {
     (async () => {
       const res = await fetch('/api/settings/tenant');
       const json = await res.json();
-      setTenant(json.tenant || null);
+      if (json?.success === false) return;
+      setTenant(json.data?.tenant || json.tenant || null);
     })();
   }, []);
   async function onSave() {
     setSaving(true);
     try {
-      await fetch('/api/settings/tenant', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brand_theme: tenant?.brand_theme || {} }) });
+      const res = await fetch('/api/settings/tenant', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ brand_theme: tenant?.brand_theme || {} }) });
+      const json = await res.json().catch(()=>({}));
+      if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to save');
     } finally {
       setSaving(false);
     }

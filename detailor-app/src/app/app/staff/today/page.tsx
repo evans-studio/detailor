@@ -46,7 +46,7 @@ export default function StaffTodayPage() {
   async function start(id: string) { await fetch(`/api/jobs/${id}/start`, { method: 'POST' }); await load(); }
   async function complete(id: string) { await fetch(`/api/jobs/${id}/complete`, { method: 'POST' }); await load(); }
   return (
-    <DashboardShell role="admin" tenantName="Detailor">
+    <DashboardShell role="staff" tenantName="Detailor">
       <RoleGuard allowed={["admin","staff"]}>
         <div className="grid gap-3">
           <div className="text-[var(--font-size-2xl)] font-semibold">Today</div>

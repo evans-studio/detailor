@@ -273,6 +273,42 @@ export default function AdminBookingsPage() {
         <Link href={`/bookings/${booking.id}`}>
           <Button intent="ghost" size="sm">View Details</Button>
         </Link>
+        {['pending','confirmed'].includes(booking.status) && booking.payment_status !== 'paid' ? (
+          <Button
+            size="sm"
+            onClick={async () => {
+              try {
+                const total = Math.round(Number(booking.price_breakdown?.total || 0) * 100);
+                // Fetch tenant preferences for deposit percent/min
+                let depositPercent = 20; let minGbp = 5;
+                try {
+                  const t = await fetch('/api/settings/tenant');
+                  const tj = await t.json();
+                  const prefs = tj?.data?.tenant?.business_prefs || tj?.tenant?.business_prefs || {};
+                  depositPercent = Number(prefs.deposit_percent ?? 20);
+                  minGbp = Number(prefs.deposit_min_gbp ?? 5);
+                } catch {}
+                const deposit = Math.max(minGbp * 100, Math.round(total * (depositPercent / 100)));
+                const res = await fetch('/api/payments/checkout-booking', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    amount: total,
+                    deposit_amount: deposit,
+                    currency: 'gbp',
+                    booking_reference: booking.id,
+                  })
+                });
+                const json = await res.json();
+                if (json?.data?.url || json?.url) window.open((json.data?.url || json.url) as string, '_blank');
+              } catch (e) {
+                console.error('Failed to create deposit checkout:', e);
+              }
+            }}
+          >
+            Collect Deposit
+          </Button>
+        ) : null}
         
         <Select
           options={[

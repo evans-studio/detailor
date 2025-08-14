@@ -39,6 +39,16 @@ export async function POST(req: Request) {
       .single();
     if (error) throw error;
     await admin.from('job_activity').insert({ tenant_id: profile.tenant_id, job_id: data.id, actor_profile_id: profile.id, event: 'created', payload: {} });
+    // Dispatch notification (best effort): if booking has a customer email, send confirmation of job creation
+    try {
+      const custEmail = (booking?.customers as { email?: string } | null)?.email;
+      if (custEmail) {
+        const receiptLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk'}/bookings/${booking_id}`;
+        await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/messages/send`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ channel: 'email', to: custEmail, subject: 'Your service is scheduled', html: `<p>Your service has been scheduled.</p><p>Reference: ${(booking as { reference?: string })?.reference || ''}</p><p>Details: <a href="${receiptLink}">${receiptLink}</a></p>` })
+        }).catch(() => {});
+      }
+    } catch {}
     return createSuccessResponse({ job: data });
   } catch (e: unknown) {
     return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/jobs/create-from-booking' }, 400);

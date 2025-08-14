@@ -58,8 +58,8 @@ export default function AdminSettingsPage() {
     queryKey: ['tenant'],
     queryFn: async (): Promise<TenantSettings> => {
       const res = await fetch('/api/settings/tenant');
-      if (!res.ok) throw new Error('Failed to load settings');
       const json = await res.json();
+      if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to load settings');
       return json.data?.tenant || json.tenant || {
         id: '',
         business_prefs: {
@@ -138,13 +138,11 @@ export default function AdminSettingsPage() {
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify(draft)
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to save settings');
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok || json?.success === false) {
+        throw new Error(json?.error?.message || 'Failed to save settings');
       }
-      
-      return response.json();
+      return json;
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['tenant'] });
