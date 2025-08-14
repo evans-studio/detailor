@@ -28,13 +28,13 @@ export default function EmailSettings() {
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Email Settings</h1>
         {!tenant ? <div>Loading…</div> : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-testid="email-form">
             <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-2">
               <div className="font-medium">Sender & Reply-To</div>
-              <Input placeholder="Reply-To email" value={tenant.reply_to || ''} onChange={(e) => setTenant({ ...tenant, reply_to: e.target.value })} />
-              <Input placeholder="Sender domain" value={tenant.sender_domain || ''} onChange={(e) => setTenant({ ...tenant, sender_domain: e.target.value })} />
+              <Input placeholder="Reply-To email" value={tenant.reply_to || ''} onChange={(e) => setTenant({ ...tenant, reply_to: e.target.value })} data-testid="email-reply-to" />
+              <Input placeholder="Sender domain" value={tenant.sender_domain || ''} onChange={(e) => setTenant({ ...tenant, sender_domain: e.target.value })} data-testid="email-sender-domain" />
             </div>
-            <div className="flex justify-end"><Button onClick={onSave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button></div>
+            <div className="flex justify-end"><Button onClick={onSave} disabled={saving} data-testid="email-save">{saving ? 'Saving…' : 'Save'}</Button></div>
           </div>
         )}
       </RoleGuard>

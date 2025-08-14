@@ -45,11 +45,11 @@ export default function PaymentSettings() {
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Payments</h1>
         {error ? <div className="mb-2 text-[var(--color-danger)]">{error}</div> : null}
         {!tenant ? <div>Loading…</div> : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-testid="payments-form">
             {tenant?.is_demo ? <div className="text-[var(--color-warning)]">Demo tenant: Stripe live keys are blocked.</div> : null}
             <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-2">
               <div className="font-medium">Stripe</div>
-              <Input placeholder="Publishable key" value={tenant.stripe_public_key || ''} onChange={(e) => setTenant({ ...tenant, stripe_public_key: e.target.value })} />
+              <Input placeholder="Publishable key" value={tenant.stripe_public_key || ''} onChange={(e) => setTenant({ ...tenant, stripe_public_key: e.target.value })} data-testid="payments-stripe-pk" />
             </div>
             <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-2">
               <div className="font-medium">Deposit Defaults</div>
@@ -62,6 +62,7 @@ export default function PaymentSettings() {
                     max={100}
                     value={String(tenant.business_prefs?.deposit_percent ?? 20)}
                     onChange={(e) => setTenant({ ...tenant, business_prefs: { ...tenant.business_prefs, deposit_percent: Number(e.target.value || 0) } })}
+                    data-testid="payments-deposit-percent"
                   />
                 </div>
                 <div>
@@ -72,12 +73,13 @@ export default function PaymentSettings() {
                     step={1}
                     value={String(tenant.business_prefs?.deposit_min_gbp ?? 5)}
                     onChange={(e) => setTenant({ ...tenant, business_prefs: { ...tenant.business_prefs, deposit_min_gbp: Number(e.target.value || 0) } })}
+                    data-testid="payments-deposit-min"
                   />
                 </div>
               </div>
             </div>
             {success ? <div className="text-[var(--color-success)]">{success}</div> : null}
-            <div className="flex justify-end"><Button onClick={onSave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button></div>
+            <div className="flex justify-end"><Button onClick={onSave} disabled={saving} data-testid="payments-save">{saving ? 'Saving…' : 'Save'}</Button></div>
           </div>
         )}
       </RoleGuard>

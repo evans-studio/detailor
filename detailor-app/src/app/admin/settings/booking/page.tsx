@@ -92,7 +92,7 @@ export default function BookingDefaultsPage() {
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Working Hours</h1>
         {error ? <div className="mb-2 text-[var(--color-danger)]">{error}</div> : null}
         {success ? <div className="mb-2 text-[var(--color-success)]">{success}</div> : null}
-        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-3">
+        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-3" data-testid="working-hours">
           {[0,1,2,3,4,5,6].map((d) => (
             <div key={d} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center">
               <div className="md:col-span-1 font-medium">{['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]}</div>
@@ -107,12 +107,12 @@ export default function BookingDefaultsPage() {
             </div>
           ))}
         </div>
-        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-2 mt-3">
+        <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-2 mt-3" data-testid="service-radius">
           <div className="font-medium">Service Radius</div>
-          <Input placeholder="Radius in km" value={String(form.service_radius_km || '')} onChange={(e) => setForm({ ...form, service_radius_km: Number(e.target.value || 0) })} />
+          <Input placeholder="Radius in km" value={String(form.service_radius_km || '')} onChange={(e) => setForm({ ...form, service_radius_km: Number(e.target.value || 0) })} data-testid="service-radius-input" />
           <div className="text-[var(--color-text-muted)] text-sm">Used to validate addresses for booking requests.</div>
         </div>
-        <div className="flex justify-end mt-3"><Button onClick={onSave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button></div>
+        <div className="flex justify-end mt-3"><Button onClick={onSave} disabled={saving} data-testid="working-hours-save">{saving ? 'Saving…' : 'Save'}</Button></div>
       </RoleGuard>
     </DashboardShell>
   );

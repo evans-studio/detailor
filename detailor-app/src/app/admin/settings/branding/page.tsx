@@ -43,21 +43,21 @@ export default function BrandingSettings() {
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Branding</h1>
         {!tenant ? <div>Loading…</div> : (
-          <div className="grid gap-4">
+          <div className="grid gap-4" data-testid="branding-form">
             {saveError ? <div className="text-[var(--color-danger)]">{saveError}</div> : null}
             {saveSuccess ? <div className="text-[var(--color-success)]">{saveSuccess}</div> : null}
             <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3 grid gap-2">
               <div className="font-medium">Colors</div>
-              <Input placeholder="Primary" value={tenant.brand_theme?.brand?.primary || ''} onChange={(e) => setTenant({ ...tenant, brand_theme: { ...(tenant.brand_theme||{}), brand: { ...(tenant.brand_theme?.brand||{}), primary: e.target.value } } })} />
-              <Input placeholder="Secondary" value={tenant.brand_theme?.brand?.secondary || ''} onChange={(e) => setTenant({ ...tenant, brand_theme: { ...(tenant.brand_theme||{}), brand: { ...(tenant.brand_theme?.brand||{}), secondary: e.target.value } } })} />
+              <Input placeholder="Primary" value={tenant.brand_theme?.brand?.primary || ''} onChange={(e) => setTenant({ ...tenant, brand_theme: { ...(tenant.brand_theme||{}), brand: { ...(tenant.brand_theme?.brand||{}), primary: e.target.value } } })} data-testid="branding-primary" />
+              <Input placeholder="Secondary" value={tenant.brand_theme?.brand?.secondary || ''} onChange={(e) => setTenant({ ...tenant, brand_theme: { ...(tenant.brand_theme||{}), brand: { ...(tenant.brand_theme?.brand||{}), secondary: e.target.value } } })} data-testid="branding-secondary" />
             </div>
             <ThemeProvider>
               <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
                 <div className="font-medium mb-2">Live Preview</div>
-                <button className="rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 py-1 text-[var(--color-primary-foreground)]">Primary Button</button>
+                <button className="rounded-[var(--radius-sm)] bg-[var(--color-primary)] px-3 py-1 text-[var(--color-primary-foreground)]" data-testid="branding-preview">Primary Button</button>
               </div>
             </ThemeProvider>
-            <div className="flex justify-end"><Button onClick={onSave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button></div>
+            <div className="flex justify-end"><Button onClick={onSave} disabled={saving} data-testid="branding-save">{saving ? 'Saving…' : 'Save'}</Button></div>
           </div>
         )}
       </RoleGuard>
