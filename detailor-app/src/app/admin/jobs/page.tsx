@@ -25,8 +25,8 @@ export default function AdminJobsPage() {
   const [selectedJobId, setSelectedJobId] = React.useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
 
-  // Realtime invalidation (tenant-aware handled internally)
-  useRealtimeAdminUpdates();
+  // Realtime invalidation (tenant-aware handled internally via fallback)
+  useRealtimeAdminUpdates('');
 
   const { data: jobs = [], isLoading, error, refetch } = useQuery<Job[]>({
     queryKey: ['jobs', { scope: 'admin-list' }],
