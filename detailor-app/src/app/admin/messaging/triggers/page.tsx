@@ -5,6 +5,7 @@ import { RoleGuard } from '@/components/RoleGuard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
+import { useRealtimeAdminUpdates } from '@/lib/realtime';
 
 const EVENTS = [
   { key: 'user.created', label: 'Account: User Created' },
@@ -14,6 +15,7 @@ const EVENTS = [
 ];
 
 export default function MessagingTriggersPage() {
+  useRealtimeAdminUpdates('');
   const qc = useQueryClient();
   const { data: rules = {}, isLoading } = useQuery({
     queryKey: ['messaging-rules'],

@@ -7,10 +7,12 @@ import { Badge } from '@/ui/badge';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
 import { StripeTestBadge } from '@/components/StripeTestBadge';
+import { useRealtimeAdminUpdates } from '@/lib/realtime';
 
 type Invoice = { id: string; number: string; total: number; paid_amount: number; balance: number; created_at: string; booking_id?: string | null };
 
 export default function AdminInvoiceDetailPage() {
+  useRealtimeAdminUpdates('');
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
   const queryClient = useQueryClient();
