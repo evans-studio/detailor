@@ -25,6 +25,7 @@ export async function middleware(req: NextRequest) {
   const isAdminHost = host.startsWith('admin.');
   const isWildcardSub = !isAdminHost && !isRootHost && host.endsWith(baseDomain);
   const subdomainMatch = isWildcardSub ? host.split('.')[0] : undefined;
+  const roleHint = req.cookies.get('df-role')?.value || '';
 
   // Subdomain routing for customer microsites
   if (isWildcardSub) {
@@ -49,7 +50,7 @@ export async function middleware(req: NextRequest) {
   // Normalize legacy/admin roots
   if (pathname === '/dashboard') {
     const url = req.nextUrl.clone();
-    url.pathname = '/admin/dashboard';
+    url.pathname = roleHint === 'customer' ? '/customer/dashboard' : '/admin/dashboard';
     return NextResponse.redirect(url);
   }
   if (pathname === '/admin') {
@@ -78,10 +79,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Token present: if user hits root on admin host, push to admin dashboard
+  // Token present: if user hits root on admin host, route by role hint
   if (pathname === '/' && isAdminHost) {
     const url = req.nextUrl.clone();
-    url.pathname = '/admin/dashboard';
+    url.pathname = roleHint === 'customer' ? '/customer/dashboard' : '/admin/dashboard';
     return NextResponse.redirect(url);
   }
 

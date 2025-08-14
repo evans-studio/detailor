@@ -41,7 +41,8 @@ export default function StaffManagementPage() {
   const updateRole = useMutation({
     mutationFn: async ({ id, role }: { id: string; role: Profile['role'] }) => {
       const res = await fetch('/api/profiles', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, role }) });
-      if (!res.ok) throw new Error('update failed');
+      const json = await res.json();
+      if (!res.ok || !json.success) throw new Error(json?.error?.message || 'update failed');
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['profiles'] });

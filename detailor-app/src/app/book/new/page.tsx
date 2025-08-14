@@ -80,8 +80,8 @@ export default function NewBookingPage() {
             vehicle_size_tier: vehicle.size
           })
         });
-        const data = await res.json();
-        if (res.ok && (data.success ?? true)) setQuote(data.data?.quote || data.quote);
+         const data = await res.json();
+         if (res.ok && (data.success ?? true)) setQuote(data.data?.quote || data.quote);
       }
     } catch (error) {
       console.error('Failed to get quote:', error);
@@ -181,7 +181,7 @@ export default function NewBookingPage() {
            const tenantRes = await fetch('/api/guest/tenant');
            const tenantJson = await tenantRes.json();
            const tenantData = tenantJson.data || tenantJson.tenant;
-           if (tenantData) {
+            if (tenantData) {
              const tenantId = tenantData.id;
               const sRes = await fetch(`/api/guest/services?tenant_id=${tenantId}`);
               const s = await sRes.json();
