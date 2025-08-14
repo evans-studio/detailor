@@ -21,7 +21,7 @@ export type BookingStatus = typeof BOOKING_STATUS[keyof typeof BOOKING_STATUS];
 
 export const APP_PATHS = {
   HOME: '/',
-  DASHBOARD: '/admin/dashboard',
+  DASHBOARD: '/admin',
   ADMIN_DASHBOARD: '/admin/dashboard',
   ADMIN_BOOKINGS: '/admin/bookings',
   ADMIN_QUOTES: '/admin/quotes',
