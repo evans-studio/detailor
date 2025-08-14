@@ -50,14 +50,53 @@ This document summarizes the UI test strategy and the new tests added. The focus
 
 ### Mocking guidelines
 
-- For tests that render `DashboardShell`, mock `usePathname` from `next/navigation` to a route under test (e.g., `/admin/bookings`).
+- Centralized pathname mocking is configured in `src/__tests__/setup/vitest.setup.ts` so components like `DashboardShell` always have a default pathname.
+- To test a specific route, override in your test file:
+
+```ts
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/admin/bookings',
+}));
+```
+
 - Use `fetch` mocks per test to simulate API responses. Prefer concise success payloads aligned with API response shape.
+
+### Selector conventions
+
+- Prefer roles/labels where practical; otherwise use `data-testid`.
+- Use stable, descriptive IDs:
+  - KPI cards: `kpi-<metric>` and value: `kpi-<metric>-value`
+  - Lists: container IDs like `services-list`, `upcoming-bookings`
+  - Cards: `*-card-<id>` and field-level IDs like `service-name`, `booking-service`, `customer-name`
+- Outcome-focused assertions: check presence/format rather than exact strings where reasonable.
+
+### API mocking patterns
+
+Use `global.fetch` stubs that return `Response` objects and mirror the API envelope.
+
+```ts
+const fetchMock = vi.fn();
+(global as any).fetch = fetchMock;
+
+fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+  if (url.includes('/api/customers')) {
+    return Promise.resolve(new Response(JSON.stringify({ success: true, data: { customers: [{ id: 'c1', name: 'Jane' }] } }), { status: 200 }));
+  }
+  return Promise.resolve(new Response(JSON.stringify({ success: true }), { status: 200 }));
+});
+```
 
 ### How to run
 
 ```bash
 npm test
 ```
+
+### CI recommendations
+
+- Run tests on every PR and main push.
+- Add coverage thresholds once the suite stabilizes.
+- Silence noisy SDK warnings in tests (e.g., Sentry router transition hook) by exporting minimal no-op hooks or mocking as needed.
 
 ### Future coverage (recommended next)
 
