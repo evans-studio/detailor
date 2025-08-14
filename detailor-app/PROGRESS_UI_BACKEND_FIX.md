@@ -56,7 +56,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 
 - Blackouts (`/admin/settings/availability/blackouts`)
   - [x] List via `GET /api/admin/availability/blackouts`
-  - [x] Add via POST; invalidate (remove pending)
+  - [x] Add/remove via POST/DELETE; invalidate
   - [x] Loading/error, and verification protocol (pending QA)
 
 ### Services
@@ -65,9 +65,10 @@ This document tracks progress to fully resolve the UI not showing existing backe
   - [ ] Onboarding POSTs to `/api/admin/services` verified
   - [ ] Verification protocol completed
 
-### Customers & Inventory
+-### Customers & Inventory
 - Customers (`/admin/customers`)
-  - [ ] Fetch/bind/save with loading/error; verification complete
+  - [x] Fetch/bind with loading/error; tenant-aware realtime
+  - [ ] Save and verification complete
 - Inventory (`/admin/inventory`)
   - [x] Standardized to `json.success` with errors handled
   - [ ] Verification protocol completed
@@ -81,12 +82,10 @@ This document tracks progress to fully resolve the UI not showing existing backe
   - [ ] Verification protocol completed
 
 - Booking detail (`/bookings/[id]`)
-  - [ ] Ensure relationship data shown (names/labels)
+  - [x] Ensure relationship data shown (names/labels)
   - [x] Deposit and balance collection wired
-  - [ ] Loading/error states
+  - [x] Loading/error states with retry
   - [ ] Verification protocol completed
-  - [x] Relationship data shown (customer/service/vehicle/address)
-  - [x] Loading/error with retry
 
 - Jobs (`/admin/jobs`, `/api/jobs`)
   - [ ] Lists and detail views follow fetch‑bind‑save; show loading/error
