@@ -106,16 +106,14 @@ export default function AdminCustomersPage() {
   const CustomerCard = ({ customer }: { customer: Customer }) => {
     const status = getCustomerStatus(customer);
     return (
-      <Card className="transition-colors hover:border-[var(--color-primary)]/30">
+      <Card className="transition-colors hover:border-[var(--color-primary)]/30" data-testid={`customer-card-${customer.id}`}>
         <CardContent>
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
-              <div className="font-semibold text-[var(--color-text)] mb-1">
-                {customer.name}
-              </div>
+              <div className="font-semibold text-[var(--color-text)] mb-1" data-testid="customer-name">{customer.name}</div>
               <div className="text-[var(--color-text-muted)] text-[var(--font-size-sm)] space-y-1">
-                {customer.email && <div>{customer.email}</div>}
-                {customer.phone && <div>{customer.phone}</div>}
+                {customer.email && <div data-testid="customer-email">{customer.email}</div>}
+                {customer.phone && <div data-testid="customer-phone">{customer.phone}</div>}
               </div>
             </div>
             <Badge intent={status.intent}>{status.label}</Badge>
@@ -124,11 +122,11 @@ export default function AdminCustomersPage() {
           <div className="grid grid-cols-2 gap-4 mb-3 text-[var(--font-size-sm)]">
             <div>
               <div className="text-[var(--color-text-muted)]">Bookings</div>
-              <div className="font-medium text-[var(--color-text)]">{customer.total_bookings || 0}</div>
+              <div className="font-medium text-[var(--color-text)]" data-testid="customer-total-bookings">{customer.total_bookings || 0}</div>
             </div>
             <div>
               <div className="text-[var(--color-text-muted)]">Total Spent</div>
-              <div className="font-medium text-[var(--color-text)]">£{customer.total_spent || 0}</div>
+              <div className="font-medium text-[var(--color-text)]" data-testid="customer-total-spent">£{customer.total_spent || 0}</div>
             </div>
           </div>
           

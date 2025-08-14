@@ -22,6 +22,18 @@ vi.mock('next/server', () => ({
   },
 }));
 
+// Provide a default navigation mock so components like DashboardShell have a pathname
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/admin/dashboard',
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    prefetch: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+  }),
+}));
+
 // Setup environment variables for tests
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://test.supabase.co';
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'test-anon-key';

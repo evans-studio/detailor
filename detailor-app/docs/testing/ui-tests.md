@@ -26,6 +26,10 @@ This document summarizes the UI test strategy and the new tests added. The focus
   - Per booking card: `booking-card-<id>`
   - Within each card: `booking-service`, `booking-customer`, `booking-vehicle`, `booking-address`, `booking-total`
 
+ - `admin/customers` (`src/app/admin/customers/page.tsx`)
+  - Per customer card: `customer-card-<id>`
+  - Within each card: `customer-name`, `customer-email`, `customer-phone`, `customer-total-bookings`, `customer-total-spent`
+
 ### New/updated tests
 
 - `src/__tests__/ui/settings/services.page.test.tsx`
@@ -39,6 +43,10 @@ This document summarizes the UI test strategy and the new tests added. The focus
 - `src/__tests__/ui/bookings/bookings.page.test.tsx`
   - Renders booking list with key info
   - Outcome-based assertions using `booking-service` and `booking-customer`
+
+- `src/__tests__/ui/customers/customers.page.test.tsx`
+  - Renders customer grid/cards with key info
+  - Outcome-based assertions using `customer-*` test IDs
 
 ### Mocking guidelines
 
