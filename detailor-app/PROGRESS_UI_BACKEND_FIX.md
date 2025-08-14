@@ -41,7 +41,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 - Branding (`/admin/settings/branding`)
   - [x] Robust fetch: prefer `json.data.tenant`
   - [x] Save validation (check `json.success`)
-  - [ ] Show loading/error; disable save while saving
+  - [x] Show loading/error; disable save while saving; success confirmation
   - [ ] Verification protocol completed
 
 - Payments (`/admin/settings/payments`)
