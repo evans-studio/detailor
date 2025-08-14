@@ -4,6 +4,11 @@ import { screen, fireEvent } from '@testing-library/react';
 import AdminServicesPage from '@/app/admin/settings/services/page';
 import { renderWithProviders } from '../../setup/render';
 
+// Mock pathname for sidebar active state
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/admin/settings/services',
+}));
+
 // Ensure auth context returns admin for this suite
 vi.mock('@/lib/auth-context', () => ({
   useAuth: () => ({ user: { id: 'u1', email: 'a@b.com', role: 'admin' }, loading: false, isAuthenticated: true, signOut: async () => {}, refreshUser: async () => {} }),

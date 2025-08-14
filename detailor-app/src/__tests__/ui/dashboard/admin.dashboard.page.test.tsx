@@ -4,6 +4,10 @@ import { screen } from '@testing-library/react';
 import AdminDashboard from '@/app/admin/dashboard/page';
 import { renderWithProviders } from '../../setup/render';
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/admin/dashboard',
+}));
+
 // Mock auth to admin
 vi.mock('@/lib/auth-context', () => ({
   useAuth: () => ({ user: { id: 'u1', email: 'a@b.com', role: 'admin' }, loading: false, isAuthenticated: true, signOut: async () => {}, refreshUser: async () => {} }),

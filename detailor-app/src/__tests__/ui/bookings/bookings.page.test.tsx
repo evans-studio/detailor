@@ -4,6 +4,10 @@ import { screen } from '@testing-library/react';
 import AdminBookingsPage from '@/app/admin/bookings/page';
 import { renderWithProviders } from '../../setup/render';
 
+vi.mock('next/navigation', () => ({
+  usePathname: () => '/admin/bookings',
+}));
+
 vi.mock('@/lib/auth-context', () => ({
   useAuth: () => ({ user: { id: 'u1', email: 'a@b.com', role: 'admin' }, loading: false, isAuthenticated: true, signOut: async () => {}, refreshUser: async () => {} }),
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
