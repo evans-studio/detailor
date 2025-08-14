@@ -28,17 +28,26 @@ export async function GET(req: Request) {
     const to = url.searchParams.get('to') || undefined;
     const q = url.searchParams.get('q') || undefined;
 
-    let query;
+    // Relationship-select to provide names instead of just IDs
+    const relationshipSelect = `
+      id, start_at, end_at, status, payment_status, price_breakdown, reference,
+      customers:customers (id, name, email),
+      services:services (id, name),
+      vehicles:vehicles (make, model, year),
+      addresses:addresses (address_line1, address_line2, city, postcode)
+    `;
+
+    let query: any;
     if (profile?.tenant_id) {
       // staff/admin path: tenant scoped
-      query = admin.from('bookings').select('*').eq('tenant_id', profile.tenant_id);
+      query = admin.from('bookings').select(relationshipSelect).eq('tenant_id', profile.tenant_id);
       if (profile.role === 'customer' && selfCustomer) {
         // Guard: if role mislabeled, still self-scope
-        query = admin.from('bookings').select('*').eq('customer_id', selfCustomer.id);
+        query = admin.from('bookings').select(relationshipSelect).eq('customer_id', selfCustomer.id);
       }
     } else if (selfCustomer) {
       // customer path: self-scope
-      query = admin.from('bookings').select('*').eq('customer_id', selfCustomer.id);
+      query = admin.from('bookings').select(relationshipSelect).eq('customer_id', selfCustomer.id);
     } else {
       return createErrorResponse(
         API_ERROR_CODES.FORBIDDEN,
@@ -51,7 +60,10 @@ export async function GET(req: Request) {
     if (status) query = query.eq('status', status);
     if (from) query = query.gte('start_at', from);
     if (to) query = query.lte('start_at', to);
-    if (q) query = query.ilike('reference', `%${q}%`);
+    if (q) {
+      // Basic text search on reference; PostgREST cannot easily filter joined fields without rpc
+      query = query.or(`reference.ilike.%${q}%,customers.name.ilike.%${q}%`);
+    }
     const { data, error } = await query.order('start_at', { ascending: true });
     
     if (error) {
@@ -63,7 +75,28 @@ export async function GET(req: Request) {
       );
     }
     
-    return createSuccessResponse(data);
+    // Map nested relationships to flat display fields expected by UI
+    const bookings = (data || []).map((b: any) => {
+      const vehicle = b.vehicles as { make?: string; model?: string; year?: number } | null;
+      const addr = b.addresses as { address_line1?: string; address_line2?: string; city?: string; postcode?: string } | null;
+      const customer = b.customers as { name?: string; email?: string } | null;
+      const service = b.services as { name?: string } | null;
+      return {
+        id: b.id,
+        start_at: b.start_at,
+        end_at: b.end_at,
+        status: b.status,
+        payment_status: b.payment_status,
+        price_breakdown: b.price_breakdown,
+        reference: b.reference,
+        customer_name: customer?.name || null,
+        service_name: service?.name || null,
+        vehicle_name: vehicle ? `${vehicle.year ? vehicle.year + ' ' : ''}${vehicle.make || ''} ${vehicle.model || ''}`.trim() : null,
+        address: addr ? `${addr.address_line1 || ''}${addr.address_line2 ? ', ' + addr.address_line2 : ''}, ${addr.city || ''}, ${addr.postcode || ''}`.replace(/^,\s+|,\s+,/g, '').trim() : null,
+      };
+    });
+
+    return createSuccessResponse({ bookings });
   } catch (error: unknown) {
     return createErrorResponse(
       API_ERROR_CODES.INTERNAL_ERROR,

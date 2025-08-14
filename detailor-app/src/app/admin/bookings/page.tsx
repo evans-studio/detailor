@@ -69,7 +69,7 @@ export default function AdminBookingsPage() {
   const [calendarView, setCalendarView] = React.useState<'month' | 'week' | 'day'>('month');
   const [draggedBooking, setDraggedBooking] = React.useState<Booking | null>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
   
-  const { data: bookings = [] } = useQuery<Booking[]>({
+  const { data: bookings = [], isLoading, isError, error, refetch } = useQuery<Booking[]>({
     queryKey: ['bookings', { status, from, to, q, scope: 'admin' }],
     queryFn: async (): Promise<Booking[]> => {
       const qs = new URLSearchParams();
@@ -79,7 +79,8 @@ export default function AdminBookingsPage() {
       if (q) qs.set('q', q);
       const res = await fetch(`/api/bookings${qs.toString() ? `?${qs.toString()}` : ''}`, { cache: 'no-store' });
       const json = await res.json();
-      return json.data?.bookings || json.bookings || json.data || [];
+      if (!json.success) throw new Error(json?.error?.message || 'Failed to load bookings');
+      return json.data?.bookings || [];
     },
     refetchInterval: 30000, // Real-time updates
   });
@@ -476,6 +477,23 @@ export default function AdminBookingsPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Loading / Error States */}
+          {isLoading && (
+            <Card>
+              <CardContent className="p-6 text-[var(--color-text-muted)]">Loading bookings…</CardContent>
+            </Card>
+          )}
+          {isError && (
+            <Card>
+              <CardContent className="p-6 text-[var(--color-danger)]">
+                {(error as Error)?.message || 'Failed to load bookings'}
+                <div className="mt-3">
+                  <Button size="sm" intent="ghost" onClick={() => refetch()}>Retry</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* System Bible Workflow Tabs */}
           <Tabs defaultValue="all" onValueChange={setActiveTab}>
