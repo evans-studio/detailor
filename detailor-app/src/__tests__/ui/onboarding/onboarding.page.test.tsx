@@ -47,7 +47,8 @@ describe('OnboardingPage', () => {
     fetchMock.mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ success: true, data: { tenant_id: 'tid-1' } }), { status: 200 })));
     fireEvent.click(screen.getByRole('button', { name: /continue/i }));
 
-    await screen.findByText(/Your First Service/i);
+    // Headline text may appear in multiple elements; ensure step is visible by checking a labeled control
+    await screen.findByLabelText(/Service Name/i);
 
     // Create service
     fireEvent.change(screen.getByLabelText(/Service Name/i), { target: { value: 'Exterior Wash' } });
