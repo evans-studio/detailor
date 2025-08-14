@@ -10,24 +10,40 @@ type TenantPay = { stripe_public_key?: string; is_demo?: boolean; business_prefs
 export default function PaymentSettings() {
   const [tenant, setTenant] = React.useState<TenantPay>(null);
   const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [success, setSuccess] = React.useState<string | null>(null);
   React.useEffect(() => {
     (async () => {
-      const res = await fetch('/api/settings/tenant');
-      const json = await res.json();
-      if (!json.success) throw new Error(json.error?.message || 'Failed to load tenant settings');
-      setTenant(json.data?.tenant || json.tenant || null);
+      try {
+        setError(null);
+        const res = await fetch('/api/settings/tenant');
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error?.message || 'Failed to load tenant settings');
+        setTenant(json.data?.tenant || json.tenant || null);
+      } catch (e) {
+        setError((e as Error).message);
+      }
     })();
   }, []);
   async function onSave() {
     setSaving(true);
     try {
-      await fetch('/api/settings/tenant', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stripe_public_key: tenant?.stripe_public_key || '', business_prefs: tenant?.business_prefs || {} }) });
+      setError(null);
+      setSuccess(null);
+      const res = await fetch('/api/settings/tenant', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ stripe_public_key: tenant?.stripe_public_key || '', business_prefs: tenant?.business_prefs || {} }) });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to save payment settings');
+      setSuccess('Payment settings saved');
+      setTimeout(() => setSuccess(null), 2000);
+    } catch (e) {
+      setError((e as Error)?.message || 'Failed to save payment settings');
     } finally { setSaving(false); }
   }
   return (
     <DashboardShell role="admin" tenantName="Detailor">
       <RoleGuard allowed={["admin"]}>
         <h1 className="text-[var(--font-size-2xl)] font-semibold mb-3">Payments</h1>
+        {error ? <div className="mb-2 text-[var(--color-danger)]">{error}</div> : null}
         {!tenant ? <div>Loading…</div> : (
           <div className="grid gap-4">
             {tenant?.is_demo ? <div className="text-[var(--color-warning)]">Demo tenant: Stripe live keys are blocked.</div> : null}
@@ -60,6 +76,7 @@ export default function PaymentSettings() {
                 </div>
               </div>
             </div>
+            {success ? <div className="text-[var(--color-success)]">{success}</div> : null}
             <div className="flex justify-end"><Button onClick={onSave} disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button></div>
           </div>
         )}

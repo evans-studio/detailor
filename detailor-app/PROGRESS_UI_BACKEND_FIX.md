@@ -46,7 +46,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 
 - Payments (`/admin/settings/payments`)
   - [x] Deposit defaults load/save (`tenants.business_prefs.deposit_percent`, `deposit_min_gbp`)
-  - [ ] Show loading/error; disable save while saving
+  - [x] Show loading/error; disable save while saving; success confirmation
   - [ ] Verification protocol completed
 
 - Working hours (`/admin/settings/booking`)
