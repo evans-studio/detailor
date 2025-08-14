@@ -1,4 +1,5 @@
 import { beforeEach, vi, expect } from 'vitest';
+import matchers from '@testing-library/jest-dom/matchers';
 
 // Mock Next.js modules
 vi.mock('next/server', () => ({
@@ -49,6 +50,7 @@ declare global {
 }
 
 // Custom matchers
+expect.extend(matchers as any);
 expect.extend({
   toBeWithinRange(received: number, floor: number, ceiling: number) {
     const pass = received >= floor && received <= ceiling;
