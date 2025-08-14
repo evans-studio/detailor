@@ -2,38 +2,60 @@
 import * as React from 'react';
 
 export function BrandProvider({ children }: { children: React.ReactNode }) {
+  const applyPalette = React.useCallback(async () => {
+    try {
+      // Resolve tenant id from cookie or API fallback
+      let tenantId: string | null = null;
+      try {
+        const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+        if (cookie) tenantId = decodeURIComponent(cookie.split('=')[1]);
+      } catch {}
+      if (!tenantId) {
+        try {
+          const r = await fetch('/api/tenant/me', { cache: 'no-store' });
+          const j = await r.json();
+          tenantId = j?.data?.id || j?.id || null;
+        } catch {}
+      }
+
+      const url = tenantId ? `/api/brand?tenant_id=${encodeURIComponent(tenantId)}` : '/api/brand';
+      const res = await fetch(url, { cache: 'no-store' });
+      const json = await res.json();
+      const palette = json?.data?.palette || json?.palette;
+      if (!palette) return;
+      const root = document.documentElement;
+      const set = (name: string, value?: string) => {
+        if (!value) return;
+        root.style.setProperty(name, value);
+      };
+      set('--color-primary', palette.brand?.primary);
+      set('--color-secondary', palette.brand?.secondary);
+      set('--color-background', palette.neutrals?.bg);
+      set('--color-surface', palette.neutrals?.surface);
+      set('--color-border', palette.neutrals?.border);
+      set('--color-text', palette.text?.text);
+      set('--color-bg', palette.neutrals?.bg);
+      set('--color-primary-foreground', palette.brand?.['primary-foreground']);
+      set('--color-text-secondary', palette.text?.['text-muted']);
+      set('--color-text-muted', palette.text?.['text-muted']);
+      set('--color-border-strong', palette.neutrals?.border);
+    } catch {
+      // no-op
+    }
+  }, []);
+
   React.useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const res = await fetch('/api/brand', { cache: 'no-store' });
-        const json = await res.json();
-        const palette = json?.data?.palette || json?.palette;
-        if (!palette || cancelled) return;
-        const root = document.documentElement;
-        const set = (name: string, value?: string) => {
-          if (!value) return;
-          root.style.setProperty(name, value);
-        };
-        set('--color-primary', palette.brand?.primary);
-        set('--color-secondary', palette.brand?.secondary);
-        set('--color-background', palette.neutrals?.bg);
-        set('--color-surface', palette.neutrals?.surface);
-        set('--color-border', palette.neutrals?.border);
-        set('--color-text', palette.text?.text);
-        set('--color-bg', palette.neutrals?.bg);
-        set('--color-primary-foreground', palette.brand?.['primary-foreground']);
-        set('--color-text-secondary', palette.text?.['text-muted']);
-        set('--color-text-muted', palette.text?.['text-muted']);
-        set('--color-border-strong', palette.neutrals?.border);
-      } catch {
-        // no-op
-      }
+      if (!cancelled) await applyPalette();
     })();
+    const onBrandUpdated = async () => { if (!cancelled) await applyPalette(); };
+    window.addEventListener('brand-updated', onBrandUpdated as EventListener);
     return () => {
       cancelled = true;
+      window.removeEventListener('brand-updated', onBrandUpdated as EventListener);
     };
-  }, []);
+  }, [applyPalette]);
   return <>{children}</>;
 }
 

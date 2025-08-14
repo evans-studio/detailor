@@ -29,6 +29,8 @@ export default function BrandingSettings() {
       const json = await res.json().catch(()=>({}));
       if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to save');
       setSaveSuccess('Branding saved');
+      // Notify BrandProvider to re-apply palette immediately
+      try { window.dispatchEvent(new Event('brand-updated')); } catch {}
       setTimeout(() => setSaveSuccess(null), 2000);
     } catch (e) {
       setSaveError((e as Error)?.message || 'Failed to save');
