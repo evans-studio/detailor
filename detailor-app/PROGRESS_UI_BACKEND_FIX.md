@@ -6,14 +6,14 @@ This document tracks progress to fully resolve the UI not showing existing backe
 - [x] Standardize all data fetching to `api()` or `json.success` checks and read from `json.data`.
 - [x] Ensure every page loads existing data on mount, binds to controlled state, saves, and persists after refresh.
 - [x] Return relationship‑enriched responses (names, not IDs) where the UI displays relations.
-- [ ] Realtime subscriptions invalidate caches so multiple users see updates quickly.
+- [x] Realtime subscriptions invalidate caches so multiple users see updates quickly.
 - [ ] Loading and error states on all key lists/forms.
 - [ ] Verification testing protocol executed for each view.
 
 ### Cross‑cutting standards (apply everywhere)
 - [x] Use `json.success` and `json.data` (System Bible) and surface `json.error.message`.
 - [x] React Query: invalidate relevant keys on mutation; avoid stale data.
-- [ ] Realtime: subscribe with `useRealtimeAdminUpdates(tenantId)`; derive `tenantId` from `df-tenant` cookie or `/api/tenant/me`.
+- [x] Realtime: subscribe with `useRealtimeAdminUpdates(tenantId)`; derive `tenantId` from `df-tenant` cookie (fallback to `/api/tenant/me` pending).
 - [ ] Global UX: show skeletons/spinners on load; disable save buttons while saving; show error toasts.
 
 ### Verification protocol (run per page)
@@ -24,7 +24,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 
 ### Relationship data requirements
 - [x] Bookings API returns: `customer_name`, `service_name`, `vehicle_name`, `address` (flattened)
-- [ ] Booking detail also shows related names, not IDs
+- [x] Booking detail also shows related names, not IDs
 - [ ] Forms that need services/staff/customers load options via proper endpoints
 
 ---
@@ -36,7 +36,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
   - [ ] Fetch on mount via `/api/settings/tenant`
   - [ ] Bind controlled inputs; show errors; disable save while saving
   - [ ] Save via `PATCH /api/settings/tenant`; invalidate/refetch
-  - [ ] Verification protocol completed
+- [ ] Verification protocol completed (pending QA)
 
 - Branding (`/admin/settings/branding`)
   - [x] Robust fetch: prefer `json.data.tenant`
@@ -76,7 +76,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 - Bookings list (`/admin/bookings`)
   - [x] Use `json.success`; parse `json.data.bookings`
   - [x] Loading and error states with retry
-  - [ ] Realtime: pass actual tenant ID to `useRealtimeAdminUpdates`
+- [x] Realtime: pass actual tenant ID to `useRealtimeAdminUpdates`
   - [x] Relationship data displayed (names, not IDs)
   - [ ] Verification protocol completed
 

@@ -5,17 +5,19 @@ import { DashboardShell } from '@/components/layout/DashboardShell';
 import { api } from '@/lib/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/ui/button';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Badge } from '@/ui/badge';
+import { useRealtimeAdminUpdates } from '@/lib/realtime';
+import { useEffect, useState } from 'react';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { StripeTestBadge } from '@/components/StripeTestBadge';
 
 export default function BookingDetailPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id as string;
-  type Booking = { id: string; start_at: string; status: string; payment_status: string; price_breakdown?: { total?: number } };
+  type Booking = { id: string; start_at: string; end_at?: string | null; status: string; payment_status: string; price_breakdown?: { total?: number }; customer_name?: string | null; service_name?: string | null; vehicle_name?: string | null; address?: string | null };
   type Invoice = { id: string; number: string; total: number; paid_amount: number; balance: number };
   const queryClient = useQueryClient();
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['booking', id],
     queryFn: async (): Promise<Booking | null> => {
       const res = await fetch(`/api/bookings/${id}`, { cache: 'no-store' });
@@ -24,6 +26,15 @@ export default function BookingDetailPage() {
       return json.data?.booking || json.booking || null;
     },
   });
+  // Tenant-aware realtime invalidation (best-effort using df-tenant cookie)
+  const [tenantId, setTenantId] = useState<string>('');
+  useEffect(() => {
+    try {
+      const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+      if (cookie) setTenantId(decodeURIComponent(cookie.split('=')[1]));
+    } catch {}
+  }, []);
+  useRealtimeAdminUpdates(tenantId || '');
   const { data: invoices = [], isLoading: invLoading } = useQuery({
     queryKey: ['invoices', { bookingId: id }],
     queryFn: async (): Promise<Invoice[]> => {
@@ -85,8 +96,16 @@ export default function BookingDetailPage() {
   }
   return (
     <DashboardShell role="admin" tenantName="Detailor">
-      {isLoading || !data ? (
+      {/* Loading / Error */}
+      {isLoading ? (
         <div>Loading…</div>
+      ) : isError || !data ? (
+        <div className="text-[var(--color-danger)]">
+          {(error as Error)?.message || 'Failed to load booking'}
+          <div className="mt-3">
+            <Button size="sm" intent="ghost" onClick={() => refetch()}>Retry</Button>
+          </div>
+        </div>
       ) : (
         <div className="grid gap-3">
           <h1 className="text-[var(--font-size-2xl)] font-semibold">Booking Detail</h1>
@@ -97,6 +116,10 @@ export default function BookingDetailPage() {
           <StripeTestBadge />
           <div className="grid gap-1">
             <div>Date: {new Date(data.start_at).toLocaleString()}</div>
+            <div>Customer: {data.customer_name || '—'}</div>
+            <div>Service: {data.service_name || '—'}</div>
+            <div>Vehicle: {data.vehicle_name || '—'}</div>
+            <div>Address: {data.address || '—'}</div>
             <div>Price: £{data.price_breakdown?.total ?? 0}</div>
           </div>
           {/* Payments panel */}

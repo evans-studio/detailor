@@ -75,4 +75,92 @@ export async function PATCH(req: Request) {
   }
 }
 
+export async function GET(req: Request) {
+  try {
+    const { user } = await getUserFromRequest(req);
+    const admin = getSupabaseAdmin();
+    const { pathname } = new URL(req.url);
+    const id = pathname.split('/').pop() as string;
+
+    const { data: profile } = await admin
+      .from('profiles')
+      .select('tenant_id, role')
+      .eq('id', user.id)
+      .single();
+    const { data: selfCustomer } = await admin
+      .from('customers')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+
+    const relationshipSelect = `
+      id, start_at, end_at, status, payment_status, price_breakdown, reference, tenant_id,
+      customers:customers (id, name, email),
+      services:services (id, name),
+      vehicles:vehicles (make, model, year),
+      addresses:addresses (address_line1, address_line2, city, postcode)
+    `;
+
+    let query: any = admin.from('bookings').select(relationshipSelect).eq('id', id);
+    if (profile?.tenant_id && profile.role !== 'customer') {
+      query = query.eq('tenant_id', profile.tenant_id);
+    } else if (selfCustomer?.id) {
+      query = query.eq('customer_id', selfCustomer.id);
+    } else {
+      return createErrorResponse(
+        API_ERROR_CODES.FORBIDDEN,
+        'No profile or customer context found',
+        { hint: 'User must have a valid profile or customer record' },
+        403
+      );
+    }
+
+    const { data, error } = await query.single();
+    if (error) {
+      return createErrorResponse(
+        API_ERROR_CODES.DATABASE_ERROR,
+        'Failed to fetch booking',
+        { db_error: error.message },
+        500
+      );
+    }
+    if (!data) {
+      return createErrorResponse(
+        API_ERROR_CODES.RECORD_NOT_FOUND,
+        'Booking not found',
+        { id },
+        404
+      );
+    }
+
+    const vehicle = data.vehicles as { make?: string; model?: string; year?: number } | null;
+    const addr = data.addresses as { address_line1?: string; address_line2?: string; city?: string; postcode?: string } | null;
+    const customer = data.customers as { name?: string; email?: string } | null;
+    const service = data.services as { name?: string } | null;
+
+    const booking = {
+      id: data.id,
+      start_at: data.start_at,
+      end_at: data.end_at,
+      status: data.status,
+      payment_status: data.payment_status,
+      price_breakdown: data.price_breakdown,
+      reference: data.reference,
+      customer_name: customer?.name || null,
+      service_name: service?.name || null,
+      vehicle_name: vehicle ? `${vehicle.year ? vehicle.year + ' ' : ''}${vehicle.make || ''} ${vehicle.model || ''}`.trim() : null,
+      address: addr ? `${addr.address_line1 || ''}${addr.address_line2 ? ', ' + addr.address_line2 : ''}, ${addr.city || ''}, ${addr.postcode || ''}`.replace(/^,\s+|,\s+,/g, '').trim() : null,
+    };
+
+    return createSuccessResponse({ booking });
+  } catch (e: unknown) {
+    return createErrorResponse(
+      API_ERROR_CODES.INTERNAL_ERROR,
+      (e as Error).message,
+      { endpoint: 'GET /api/bookings/[id]' },
+      400
+    );
+  }
+}
+
 

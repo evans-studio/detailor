@@ -56,8 +56,15 @@ const getPaymentStatusIntent = (paymentStatus: string) => {
 export default function AdminBookingsPage() {
   const qc = useQueryClient();
   
-  // System Bible Pattern: Real-time admin updates
-  useRealtimeAdminUpdates('detail-flow', true);
+  // System Bible Pattern: Real-time admin updates (tenant-aware)
+  const [tenantId, setTenantId] = React.useState<string>('');
+  React.useEffect(() => {
+    try {
+      const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+      if (cookie) setTenantId(decodeURIComponent(cookie.split('=')[1]));
+    } catch {}
+  }, []);
+  useRealtimeAdminUpdates(tenantId || '', true);
   const [activeTab, setActiveTab] = React.useState('all'); // eslint-disable-line @typescript-eslint/no-unused-vars
   const [status, setStatus] = React.useState<'all'|'pending'|'confirmed'|'in_progress'|'completed'|'cancelled'>('all');
   const [from, setFrom] = React.useState('');
