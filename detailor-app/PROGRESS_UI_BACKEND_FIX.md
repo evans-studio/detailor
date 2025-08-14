@@ -113,7 +113,7 @@ This document tracks progress to fully resolve the UI not showing existing backe
 ### Staff Mobile
 - Today/Upcoming/Past (`/staff/*`)
   - [x] Use standardized `fetchJobs`; loading/error states; tenant-aware realtime
-  - [ ] Start/Complete actions update UI and logs; realtime invalidations
+  - [x] Start/Complete actions disable buttons, confirm success; realtime invalidations
   - [ ] Verification protocol completed (multi‑user sync)
 
 ### Public booking flow

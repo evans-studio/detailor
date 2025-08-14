@@ -31,26 +31,69 @@ type JobRow = {
 export default function StaffTodayPage() {
   const [jobs, setJobs] = React.useState<JobRow[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
   const [openId, setOpenId] = React.useState<string | null>(null);
+  const [tenantId, setTenantId] = React.useState<string>('');
   const day = new Date().toISOString().slice(0,10);
   async function load() {
     setLoading(true);
-    const res = await fetch(`/api/jobs?day=${day}`);
-    const json = await res.json();
-    setJobs(json.jobs || []);
-    setLoading(false);
+    setError(null);
+    try {
+      const res = await fetch(`/api/jobs?day=${day}`, { cache: 'no-store' });
+      const json = await res.json();
+      if (!json.success) throw new Error(json?.error?.message || 'Failed to load jobs');
+      setJobs(json.data?.jobs || json.jobs || []);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
   }
   React.useEffect(() => { load(); }, [day]);
-  // Realtime job updates
-  useRealtimeAdminUpdates('detail-flow', true);
-  async function start(id: string) { await fetch(`/api/jobs/${id}/start`, { method: 'POST' }); await load(); }
-  async function complete(id: string) { await fetch(`/api/jobs/${id}/complete`, { method: 'POST' }); await load(); }
+  React.useEffect(() => {
+    try {
+      const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+      if (cookie) setTenantId(decodeURIComponent(cookie.split('=')[1]));
+    } catch {}
+  }, []);
+  // Realtime job updates (tenant-aware)
+  useRealtimeAdminUpdates(tenantId || '', true);
+
+  const [processingId, setProcessingId] = React.useState<string | null>(null);
+  async function start(id: string) {
+    try {
+      setProcessingId(id);
+      const res = await fetch(`/api/jobs/${id}/start`, { method: 'POST' });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to start job');
+    } catch {
+      // no-op UI toast in prod
+    } finally {
+      setProcessingId(null);
+      await load();
+    }
+  }
+  async function complete(id: string) {
+    try {
+      setProcessingId(id);
+      const res = await fetch(`/api/jobs/${id}/complete`, { method: 'POST' });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to complete job');
+    } catch {
+      // no-op UI toast in prod
+    } finally {
+      setProcessingId(null);
+      await load();
+    }
+  }
   return (
     <DashboardShell role="staff" tenantName="Detailor">
       <RoleGuard allowed={["admin","staff"]}>
         <div className="grid gap-3">
           <div className="text-[var(--font-size-2xl)] font-semibold">Today</div>
-          {loading ? <div>Loading…</div> : jobs.length === 0 ? (
+          {loading ? <div>Loading…</div> : error ? (
+            <div className="text-[var(--color-danger)]">{error} <button className="underline" onClick={load}>Retry</button></div>
+          ) : jobs.length === 0 ? (
             <div className="text-[var(--color-text-muted)]">No jobs today.</div>
           ) : (
             <div className="grid gap-3">
@@ -114,8 +157,9 @@ export default function StaffTodayPage() {
                       <Button 
                         onClick={(e) => { e.stopPropagation(); start(j.id); }} 
                         className="flex-1"
+                        disabled={processingId === j.id}
                       >
-                        ▶️ Start Job
+                        {processingId === j.id ? 'Starting…' : '▶️ Start Job'}
                       </Button>
                     )}
                     {j.status === 'in_progress' && (
@@ -123,8 +167,9 @@ export default function StaffTodayPage() {
                         onClick={(e) => { e.stopPropagation(); complete(j.id); }} 
                         className="flex-1"
                         intent="primary"
+                        disabled={processingId === j.id}
                       >
-                        ✅ Complete Job
+                        {processingId === j.id ? 'Completing…' : '✅ Complete Job'}
                       </Button>
                     )}
                     <Button 
