@@ -78,7 +78,7 @@ export async function POST(req: Request) {
         });
 
     // TODO: when SMS sending is implemented, if provider fails, refund the 1 credit by calling increment_tenant_counter with +1
-    return NextResponse.json({ success: true, data: res, meta: { timestamp: new Date().toISOString() } });
+    return createSuccessResponse(res);
   } catch (e: unknown) {
     return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'POST /api/messages/send' }, 400);
   }
