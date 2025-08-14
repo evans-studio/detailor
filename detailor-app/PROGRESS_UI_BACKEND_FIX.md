@@ -101,7 +101,8 @@ This document tracks progress to fully resolve the UI not showing existing backe
   - [ ] Verification protocol completed
 
 - Payments (`/payments`)
-  - [x] Fetch, filters, refund actions with loading/error; verification pending
+  - [x] Fetch, filters, refund actions with loading/error; tenant-aware realtime
+  - [x] Verification protocol completed
 
 ### Messaging
 - Conversations/send (`/admin/messages`)

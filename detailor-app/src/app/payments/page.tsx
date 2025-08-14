@@ -3,6 +3,7 @@ import * as React from 'react';
 import { DashboardShell } from '@/components/layout/DashboardShell';
 import { RoleGuard } from '@/components/RoleGuard';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRealtimeAdminUpdates } from '@/lib/realtime';
 import { Card, CardContent } from '@/ui/card';
 import { Table, THead, TBody, TR, TH, TD } from '@/ui/table';
 import { Input } from '@/ui/input';
@@ -23,6 +24,14 @@ type Payment = {
 
 export default function AdminPaymentsPage() {
   const queryClient = useQueryClient();
+  const [tenantId, setTenantId] = React.useState('');
+  React.useEffect(() => {
+    try {
+      const cookie = document.cookie.split('; ').find(c => c.startsWith('df-tenant='));
+      if (cookie) setTenantId(decodeURIComponent(cookie.split('=')[1]));
+    } catch {}
+  }, []);
+  useRealtimeAdminUpdates(tenantId || '', true);
   const [q, setQ] = React.useState('');
   const [status, setStatus] = React.useState<'all'|Payment['status']>('all');
   const [provider, setProvider] = React.useState<'all'|'stripe'|'paypal'|'cash'>('all');
