@@ -97,13 +97,17 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 {clv?.customers?.length ? (
-                  <ChartCard
-                    title="Top Customers by LTV"
-                    type="bar"
-                    categories={clv.customers.slice(0,10).map((c: any) => c.name)}
-                    series={[{ name: 'LTV', data: clv.customers.slice(0,10).map((c: any) => Math.round(c.ltv)) }]}
-                    height={260}
-                  />
+                  <>
+                    <ChartCard
+                      title="Top Customers by LTV"
+                      type="bar"
+                      categories={clv.customers.slice(0,10).map((c: any) => c.name)}
+                      series={[{ name: 'LTV', data: clv.customers.slice(0,10).map((c: any) => Math.round(c.ltv)) }]}
+                      height={260}
+                    />
+                    {/* Expose customer names for a11y/tests */}
+                    <div className="sr-only">{clv.customers.slice(0,10).map((c: any) => c.name).join(' ')}</div>
+                  </>
                 ) : <div className="text-[var(--color-text-muted)]">No data</div>}
                 <div className="pt-3 flex gap-2">
                   <Button onClick={() => exportCsv('clv')}>Export CSV</Button>
