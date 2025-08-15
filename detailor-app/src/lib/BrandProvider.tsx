@@ -27,11 +27,18 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
       const root = document.documentElement;
       const set = (name: string, value?: string) => {
         if (!value) return;
+        // Diff before write to avoid unnecessary reflows
+        if (root.style.getPropertyValue(name) === value) return;
         root.style.setProperty(name, value);
       };
       // Compute shades + WCAG-safe foregrounds
-      const dynamicVars = buildBrandCSSVariables(String(palette.brand?.primary || '#3B82F6'), String(palette.brand?.secondary || ''));
-      Object.entries(dynamicVars).forEach(([k, v]) => root.style.setProperty(k, v));
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const dynamicVars = buildBrandCSSVariables(
+        String(palette.brand?.primary || '#3B82F6'),
+        String(palette.brand?.secondary || ''),
+        prefersDark ? 'dark' : 'light'
+      );
+      Object.entries(dynamicVars).forEach(([k, v]) => set(k, v));
       set('--color-secondary', palette.brand?.secondary);
       set('--color-background', palette.neutrals?.bg);
       set('--color-surface', palette.neutrals?.surface);

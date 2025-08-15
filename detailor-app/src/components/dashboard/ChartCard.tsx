@@ -25,7 +25,7 @@ const SERIES_COLORS = [
   'var(--color-primary-700)'
 ];
 
-export function ChartCard({ title, type, categories = [], series, height = 240, loading = false, emptyMessage = 'No data', error = null, className }: ChartCardProps) {
+export const ChartCard = React.memo(function ChartCard({ title, type, categories = [], series, height = 240, loading = false, emptyMessage = 'No data', error = null, className }: ChartCardProps) {
   const hasData = series && series.length > 0 && series.some(s => s.data && s.data.length > 0 && s.data.some((d) => d != null));
   const containerRef = React.useRef<HTMLDivElement>(null);
 
@@ -61,7 +61,28 @@ export function ChartCard({ title, type, categories = [], series, height = 240, 
       </div>
     </div>
   );
-}
+}, (prev, next) => {
+  // Avoid re-render if only unrelated props change; deep-compare series and categories
+  if (prev.type !== next.type || prev.height !== next.height || prev.loading !== next.loading || prev.error !== next.error) return false;
+  const eqArr = (a?: string[], b?: string[]) => {
+    if (a === b) return true;
+    if (!a || !b || a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  };
+  const eqSeries = (a: Series[], b: Series[]) => {
+    if (a === b) return true;
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i].name !== b[i].name) return false;
+      const da = a[i].data, db = b[i].data;
+      if (da.length !== db.length) return false;
+      for (let j = 0; j < da.length; j++) if (da[j] !== db[j]) return false;
+    }
+    return true;
+  };
+  return eqArr(prev.categories, next.categories) && eqSeries(prev.series, next.series) && prev.className === next.className && prev.title === next.title && prev.emptyMessage === next.emptyMessage;
+});
 
 function normalize(series: number[][]) {
   const all = series.flat();

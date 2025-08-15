@@ -72,18 +72,21 @@ export function bestTextOn(hexBackground: string): string {
  * Generates a 50..900 shade scale derived from a primary color.
  * The steps are tuned for visually pleasing Tailwind-like ramp.
  */
-export function generatePrimaryShades(primaryHex: string): Record<string, string> {
+export function generatePrimaryShades(primaryHex: string, mode: 'light' | 'dark' = 'light'): Record<string, string> {
+  // In dark mode, lean towards lighter tints for backgrounds and keep accents legible
+  const L = (amt: number) => (mode === 'dark' ? lighten(primaryHex, amt * 0.6) : lighten(primaryHex, amt));
+  const D = (amt: number) => (mode === 'dark' ? darken(primaryHex, amt * 0.8) : darken(primaryHex, amt));
   return {
-    '50': lighten(primaryHex, 0.88),
-    '100': lighten(primaryHex, 0.76),
-    '200': lighten(primaryHex, 0.6),
-    '300': lighten(primaryHex, 0.42),
-    '400': lighten(primaryHex, 0.24),
+    '50': L(0.88),
+    '100': L(0.76),
+    '200': L(0.6),
+    '300': L(0.42),
+    '400': L(0.24),
     '500': primaryHex,
-    '600': darken(primaryHex, 0.12),
-    '700': darken(primaryHex, 0.24),
-    '800': darken(primaryHex, 0.36),
-    '900': darken(primaryHex, 0.48),
+    '600': D(0.12),
+    '700': D(0.24),
+    '800': D(0.36),
+    '900': D(0.48),
   };
 }
 
@@ -93,8 +96,8 @@ export function ensureAAContrast(bg: string, preferredText: string): string {
   return bestTextOn(bg);
 }
 
-export function buildBrandCSSVariables(primary: string, secondary?: string) {
-  const shades = generatePrimaryShades(primary);
+export function buildBrandCSSVariables(primary: string, secondary?: string, mode: 'light' | 'dark' = 'light') {
+  const shades = generatePrimaryShades(primary, mode);
   const primaryForeground = ensureAAContrast(primary, bestTextOn(primary));
   const hoverPrimary = darken(primary, 0.12);
   const selection = lighten(primary, 0.75);
