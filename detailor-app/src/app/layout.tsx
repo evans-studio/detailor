@@ -46,6 +46,10 @@ export default function RootLayout({
           <QueryProvider>
             <AuthProvider>
               <BrandProvider>
+                {/* Inline minimal base tokens to reduce FOUC before BrandLoader applies tenant palette */}
+                <style suppressHydrationWarning>
+                  {`:root{--color-bg:#ffffff;--color-text:#111827;--color-surface:#f9fafb;--color-border:#e5e7eb;--color-muted:#f3f4f6;--color-text-muted:#6b7280;--color-primary:#3B82F6;--color-primary-foreground:#ffffff;--color-hover-surface:rgba(17,24,39,0.03);--color-active-surface:rgba(17,24,39,0.06);--color-success:#10B981;--color-success-foreground:#ffffff;--color-warning:#F59E0B;--color-warning-foreground:#111827;--color-error:#EF4444;--color-error-foreground:#ffffff;--color-info:#2563EB;}`}
+                </style>
                 <BrandLoader />
                 <RealtimeBridge />
                 <NotificationsProvider>{children}</NotificationsProvider>

@@ -75,9 +75,20 @@ export default function SignInPage() {
         return;
       }
 
-      // Success - let the auth context handle the user state
-      // The useEffect above will automatically redirect based on user role
-      window.location.reload(); // Refresh to trigger auth context update
+      // Success: set secure httpOnly cookies for server-side APIs and middleware
+      try {
+        const token = res.data.session?.access_token;
+        if (token) {
+          await fetch('/api/session/set', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ access_token: token })
+          });
+        }
+      } catch {}
+
+      // Let the auth context update and route accordingly
+      window.location.reload();
     } catch (err) {
       setError('An unexpected error occurred. Please try again.');
     } finally {
@@ -111,21 +122,21 @@ export default function SignInPage() {
         <div className="absolute inset-0 brand-gradient-primary opacity-90"></div>
         
         {/* Overlay Pattern */}
-        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-white/20"></div>
+        <div className="absolute inset-0 brand-gradient-subtle"></div>
         
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center px-12 text-white">
+        <div className="relative z-10 flex flex-col justify-center px-12 text-[var(--color-inverse-text)]">
           {/* Logo */}
           <div className="mb-12">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center glass-effect">
+                <svg className="w-6 h-6 text-[var(--color-inverse-text)]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2L2 7V17L12 22L22 17V7L12 2ZM12 4.11L19.53 8L12 11.89L4.47 8L12 4.11ZM4 9.53L11 13.42V20.47L4 16.58V9.53ZM13 20.47V13.42L20 9.53V16.58L13 20.47Z"/>
                 </svg>
               </div>
               <div>
                 <h1 className="text-2xl font-bold">Detailor</h1>
-                <p className="text-white/80 text-sm">Premium Business Management</p>
+                <p className="text-[var(--color-inverse-text)]/80 text-sm">Premium Business Management</p>
               </div>
             </div>
           </div>
@@ -136,7 +147,7 @@ export default function SignInPage() {
               <h2 className="text-4xl font-bold leading-tight">
                 Manage your detailing business with confidence
               </h2>
-              <p className="text-xl text-white/90 leading-relaxed">
+              <p className="text-xl text-[var(--color-inverse-text)]/90 leading-relaxed">
                 Join 500+ UK detailing businesses using Detailor to streamline bookings, 
                 manage customers, and grow their revenue.
               </p>
@@ -146,50 +157,50 @@ export default function SignInPage() {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <div className="w-5 h-5 bg-[var(--color-success)] rounded-full flex items-center justify-center text-[var(--color-success-foreground)]">
-                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-3 h-3 text-[var(--color-success-foreground)]" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="text-white/90">Online booking & scheduling</span>
+                <span className="text-[var(--color-inverse-text)]/90">Online booking & scheduling</span>
               </div>
               
               <div className="flex items-center space-x-3">
                 <div className="w-5 h-5 bg-[var(--color-success)] rounded-full flex items-center justify-center text-[var(--color-success-foreground)]">
-                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-3 h-3 text-[var(--color-success-foreground)]" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="text-white/90">Customer management & invoicing</span>
+                <span className="text-[var(--color-inverse-text)]/90">Customer management & invoicing</span>
               </div>
               
               <div className="flex items-center space-x-3">
                 <div className="w-5 h-5 bg-[var(--color-success)] rounded-full flex items-center justify-center text-[var(--color-success-foreground)]">
-                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-3 h-3 text-[var(--color-success-foreground)]" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="text-white/90">Automated SMS & email notifications</span>
+                <span className="text-[var(--color-inverse-text)]/90">Automated SMS & email notifications</span>
               </div>
 
               <div className="flex items-center space-x-3">
                 <div className="w-5 h-5 bg-[var(--color-success)] rounded-full flex items-center justify-center text-[var(--color-success-foreground)]">
-                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-3 h-3 text-[var(--color-success-foreground)]" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <span className="text-white/90">Business analytics & reporting</span>
+                <span className="text-[var(--color-inverse-text)]/90">Business analytics & reporting</span>
               </div>
             </div>
 
             {/* Testimonial */}
-            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+            <div className="glass-effect rounded-2xl p-6">
               <div className="flex items-start space-x-4">
-                <img src="/api/placeholder/48/48" alt="Customer" className="w-12 h-12 rounded-full bg-white/20" />
+                <img src="/api/placeholder/48/48" alt="Customer" className="w-12 h-12 rounded-full glass-effect" />
                 <div>
-                  <p className="text-white/90 italic mb-2">
+                  <p className="text-[var(--color-inverse-text)]/90 italic mb-2">
                     "Detailor transformed our business. We've increased bookings by 40% and reduced admin time by 60%."
                   </p>
-                  <p className="text-white/70 text-sm">
+                  <p className="text-[var(--color-inverse-text)]/70 text-sm">
                     <span className="font-medium">James Wilson</span> - Premium Auto Detail
                   </p>
                 </div>
@@ -206,7 +217,7 @@ export default function SignInPage() {
           <div className="lg:hidden mb-8">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-[var(--color-primary)] rounded-lg flex items-center justify-center text-[var(--color-primary-foreground)]">
-                <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-[var(--color-primary-foreground)]" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2L2 7V17L12 22L22 17V7L12 2ZM12 4.11L19.53 8L12 11.89L4.47 8L12 4.11ZM4 9.53L11 13.42V20.47L4 16.58V9.53ZM13 20.47V13.42L20 9.53V16.58L13 20.47Z"/>
                 </svg>
               </div>
@@ -335,7 +346,7 @@ export default function SignInPage() {
             >
               {isLoading ? (
                 <div className="flex items-center space-x-2">
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-[var(--color-primary-foreground)]" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>

@@ -43,7 +43,7 @@ export default function ReviewsPage() {
             <CardContent>
               <div className="flex gap-2 items-center">
                 <Input placeholder="Booking ID" value={bookingId} onChange={(e) => setBookingId(e.target.value)} />
-                <select className="border border-[var(--color-border)] bg-[var(--color-surface)] rounded px-2 py-1" value={channel} onChange={(e) => setChannel(e.target.value as any)}>
+                <select className="border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] rounded px-2 py-1" value={channel} onChange={(e) => setChannel(e.target.value as any)}>
                   <option value="email">Email</option>
                   <option value="sms">SMS</option>
                 </select>

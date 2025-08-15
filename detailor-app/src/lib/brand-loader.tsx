@@ -28,7 +28,7 @@ function applyPaletteToCSS(palette: Palette) {
     if (m.neutrals.surface) set('--color-surface', m.neutrals.surface);
     if (m.neutrals.border) set('--color-border', m.neutrals.border);
     if (m.neutrals.muted) set('--color-muted', m.neutrals.muted);
-    if (m.neutrals['muted-foreground']) set('--color-muted-foreground', m.neutrals['muted-foreground']);
+    if (m.neutrals['muted-foreground']) set('--color-text-muted', m.neutrals['muted-foreground']);
   }
   if (m.text) {
     if (m.text.text) set('--color-text', m.text.text);

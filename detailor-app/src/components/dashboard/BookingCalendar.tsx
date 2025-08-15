@@ -29,7 +29,9 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
   const [date, setDate] = React.useState(currentDate);
   React.useEffect(() => setDate(currentDate), [currentDate]);
   const liveRef = React.useRef<HTMLDivElement | null>(null);
+  const gridRef = React.useRef<HTMLDivElement | null>(null);
   const [grabbedEventId, setGrabbedEventId] = React.useState<string | null>(null);
+  const [shouldFocusFirstOfMonth, setShouldFocusFirstOfMonth] = React.useState(false);
   const instructionsId = 'calendar-dnd-instructions';
   const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
   const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -39,6 +41,13 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
   }
   const eventsByDay = groupByDay(events);
   const findEventById = React.useMemo(() => findEventByIdFactory(events), [events]);
+  React.useEffect(() => {
+    if (shouldFocusFirstOfMonth && gridRef.current) {
+      const firstCell = gridRef.current.querySelector('[role="gridcell"]') as HTMLElement | null;
+      if (firstCell) firstCell.focus();
+      setShouldFocusFirstOfMonth(false);
+    }
+  }, [shouldFocusFirstOfMonth, date]);
 
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4" role="region" aria-label="Booking calendar">
@@ -50,7 +59,7 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
           <button className="px-2 py-1 rounded border border-[var(--color-border)] hover:bg-[var(--color-hover-surface)]" onClick={() => changeMonth(1)} aria-label="Next month">→</button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-2" role="grid" aria-label="Month grid">
+      <div className="grid grid-cols-7 gap-2" role="grid" aria-label="Month grid" ref={gridRef}>
         {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => (
           <div key={d} className="text-[var(--color-text-muted)] text-center text-[var(--font-size-sm)]" role="columnheader">{d}</div>
         ))}
@@ -86,6 +95,11 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
                   onEventDrop?.(grabbed.id, start, end);
                   setGrabbedEventId(null);
                   liveRef.current && (liveRef.current.textContent = `${grabbed.title} dropped on ${start.toDateString()}`);
+                  // Return focus to the moved event
+                  requestAnimationFrame(() => {
+                    const target = document.querySelector(`[data-event-id="${grabbed.id}"]`) as HTMLElement | null;
+                    target?.focus();
+                  });
                 }
               }
             }}
@@ -102,6 +116,7 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
                   aria-roledescription="Event"
                   aria-describedby={instructionsId}
                   aria-grabbed={grabbedEventId === e.id}
+                  data-event-id={e.id}
                   onKeyDown={(ev) => {
                     if (ev.key === 'Enter') {
                       ev.preventDefault();
@@ -132,6 +147,11 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
                       const newEnd = new Date(newStart.getTime() + duration);
                       onEventDrop?.(e.id, newStart, newEnd);
                       liveRef.current && (liveRef.current.textContent = `${e.title} moved to ${newStart.toDateString()}`);
+                      // Return focus to the moved event in its new position
+                      requestAnimationFrame(() => {
+                        const target = document.querySelector(`[data-event-id="${e.id}"]`) as HTMLElement | null;
+                        target?.focus();
+                      });
                     }
                   }}
                   draggable
@@ -144,6 +164,11 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
                     const end = new Date(start.getTime() + 60 * 60 * 1000);
                     onEventDrop?.(id, start, end);
                     liveRef.current && (liveRef.current.textContent = `${e.title} moved to ${start.toDateString()}`);
+                    // Return focus to the moved event
+                    requestAnimationFrame(() => {
+                      const target = document.querySelector(`[data-event-id="${id}"]`) as HTMLElement | null;
+                      target?.focus();
+                    });
                   }}
                   aria-label={`${e.title}`}
                 >
@@ -163,8 +188,16 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
     const next = new Date(date.getFullYear(), date.getMonth() + delta, 1);
     setDate(next);
     onDateChange?.(next);
+    // Announce month change for screen readers
+    liveRef.current && (liveRef.current.textContent = `Showing ${next.toLocaleString(undefined, { month: 'long', year: 'numeric' })}`);
+    // Set focus to the first day of the newly rendered month
+    setShouldFocusFirstOfMonth(true);
   }
 }
+
+// After a month change triggered via navigation, move focus to day 1 of that month
+// Doing this outside the component ensures the effect runs after DOM updates
+// but we need it inside to access refs/state, so include within component scope
 
 function dateKey(d: Date) {
   return d.toISOString().slice(0, 10);

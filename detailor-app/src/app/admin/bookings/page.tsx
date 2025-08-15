@@ -13,6 +13,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/ui/tabs';
 import Link from 'next/link';
 import { EnterpriseCalendar, type CalendarEvent } from '@/components/calendar/EnterpriseCalendar';
+import { DataTable, type Column } from '@/components/dashboard/DataTable';
 
 // Calendar helpers
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -531,15 +532,14 @@ export default function AdminBookingsPage() {
 
             <TabsContent value="all">
               <div className="grid gap-4">
-                {groupedBookings.all.length === 0 ? (
-                  <div className="text-center py-8 text-[var(--color-text-muted)]">
-                    No bookings found with current filters
-                  </div>
-                ) : (
-                  groupedBookings.all.map((booking) => (
-                    <BookingCard key={booking.id} booking={booking} draggable />
-                  ))
-                )}
+                <DataTable<Booking>
+                  data-testid="bookings-table"
+                  columns={bookingsColumns}
+                  data={groupedBookings.all}
+                  loading={isLoading}
+                  emptyMessage="No bookings found with current filters"
+                  onRowClick={(row) => (window.location.href = `/bookings/${row.id}`)}
+                />
               </div>
             </TabsContent>
 
@@ -563,57 +563,45 @@ export default function AdminBookingsPage() {
 
             <TabsContent value="upcoming">
               <div className="grid gap-4">
-                {groupedBookings.upcoming.length === 0 ? (
-                  <div className="text-center py-8 text-[var(--color-text-muted)]">
-                    No upcoming confirmed bookings
-                  </div>
-                ) : (
-                  groupedBookings.upcoming.map((booking) => (
-                    <BookingCard key={booking.id} booking={booking} />
-                  ))
-                )}
+                <DataTable<Booking>
+                  columns={bookingsColumns}
+                  data={groupedBookings.upcoming}
+                  emptyMessage="No upcoming confirmed bookings"
+                  onRowClick={(row) => (window.location.href = `/bookings/${row.id}`)}
+                />
               </div>
             </TabsContent>
 
             <TabsContent value="pending">
               <div className="grid gap-4">
-                {groupedBookings.pending.length === 0 ? (
-                  <div className="text-center py-8 text-[var(--color-text-muted)]">
-                    No pending bookings requiring attention
-                  </div>
-                ) : (
-                  groupedBookings.pending.map((booking) => (
-                    <BookingCard key={booking.id} booking={booking} />
-                  ))
-                )}
+                <DataTable<Booking>
+                  columns={bookingsColumns}
+                  data={groupedBookings.pending}
+                  emptyMessage="No pending bookings requiring attention"
+                  onRowClick={(row) => (window.location.href = `/bookings/${row.id}`)}
+                />
               </div>
             </TabsContent>
 
             <TabsContent value="inProgress">
               <div className="grid gap-4">
-                {groupedBookings.inProgress.length === 0 ? (
-                  <div className="text-center py-8 text-[var(--color-text-muted)]">
-                    No jobs currently in progress
-                  </div>
-                ) : (
-                  groupedBookings.inProgress.map((booking) => (
-                    <BookingCard key={booking.id} booking={booking} />
-                  ))
-                )}
+                <DataTable<Booking>
+                  columns={bookingsColumns}
+                  data={groupedBookings.inProgress}
+                  emptyMessage="No jobs currently in progress"
+                  onRowClick={(row) => (window.location.href = `/bookings/${row.id}`)}
+                />
               </div>
             </TabsContent>
 
             <TabsContent value="completed">
               <div className="grid gap-4">
-                {groupedBookings.completed.length === 0 ? (
-                  <div className="text-center py-8 text-[var(--color-text-muted)]">
-                    No completed bookings
-                  </div>
-                ) : (
-                  groupedBookings.completed.map((booking) => (
-                    <BookingCard key={booking.id} booking={booking} />
-                  ))
-                )}
+                <DataTable<Booking>
+                  columns={bookingsColumns}
+                  data={groupedBookings.completed}
+                  emptyMessage="No completed bookings"
+                  onRowClick={(row) => (window.location.href = `/bookings/${row.id}`)}
+                />
               </div>
             </TabsContent>
           </Tabs>
@@ -622,5 +610,17 @@ export default function AdminBookingsPage() {
     </DashboardShell>
   );
 }
+
+const bookingsColumns: Column<Booking>[] = [
+  { key: 'start_at', header: 'Date', render: (b) => new Date(b.start_at).toLocaleDateString() },
+  { key: 'time', header: 'Time', render: (b) => `${new Date(b.start_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${b.end_at ? ' - ' + new Date(b.end_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}` },
+  { key: 'customer_name', header: 'Customer', render: (b) => <span data-testid="booking-customer">{b.customer_name || 'Customer'}</span> },
+  { key: 'service_name', header: 'Service', render: (b) => <span data-testid="booking-service">{b.service_name || 'Service'}</span> },
+  { key: 'vehicle_name', header: 'Vehicle' },
+  { key: 'address', header: 'Address', render: (b) => <span className="text-[var(--color-text-muted)]">{b.address || ''}</span> },
+  { key: 'status', header: 'Status', render: (b) => <Badge intent={getStatusIntent(b.status)}>{b.status}</Badge>, width: '120px' },
+  { key: 'payment_status', header: 'Payment', render: (b) => <Badge intent={getPaymentStatusIntent(b.payment_status)}>{b.payment_status}</Badge>, width: '120px' },
+  { key: 'total', header: 'Total', render: (b) => `£${b.price_breakdown?.total ?? 0}`, width: '100px' },
+];
 
 

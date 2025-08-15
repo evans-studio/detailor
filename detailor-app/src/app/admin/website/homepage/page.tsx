@@ -63,8 +63,8 @@ export default function HomepageAdminPage() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['homepage-settings'] }),
   });
 
-  if (isLoading || !draft) return <div className="p-6">Loading…</div>;
-  if (error) return <div className="p-6 text-red-600">Failed to load</div>;
+  if (isLoading || !draft) return <div className="p-6 text-[var(--color-text-secondary)]">Loading…</div>;
+  if (error) return <div className="p-6 text-[var(--color-error)]">Failed to load</div>;
 
   const plan = draft.plan_id || 'starter';
   const isStarter = /starter/i.test(plan);
@@ -100,12 +100,12 @@ export default function HomepageAdminPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Homepage</h1>
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
             <input type="checkbox" checked={draft.homepage_published} onChange={e => set('homepage_published', e.target.checked)} />
             Publish
           </label>
           <button
-            className="px-4 py-2 rounded-md bg-[var(--color-primary)] text-[var(--color-primary-foreground)] disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-[var(--color-primary)] hover:bg-[var(--color-hover-primary)] text-[var(--color-primary-foreground)] disabled:opacity-50"
             disabled={saveMutation.isPending}
             onClick={() => saveMutation.mutate({
               homepage_template: draft.homepage_template,

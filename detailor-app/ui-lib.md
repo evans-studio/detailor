@@ -172,13 +172,13 @@ With this library, changing a tenant's brand color will instantly update every d
   - [ ] Dedicated calendar views (if separate)
 - Replace tables with `DataTable`
   - [x] Invoices
-  - [ ] Bookings list views
+  - [x] Bookings list views
   - [ ] Customers (where a table is used; grid remains grid)
 - Tokenize remaining pages
-  - [ ] Auth Sign-in page
-  - [ ] Website/Homepage admin
-  - [ ] Messages subpages (bulk/history/schedules/templates/triggers)
-  - [ ] Inventory, Reviews
+  - [x] Auth Sign-in page
+  - [x] Website/Homepage admin
+  - [x] Messages subpages (bulk/history/schedules/templates/triggers)
+  - [x] Inventory, Reviews
 
 
 ## USAGE EXAMPLES
@@ -244,7 +244,8 @@ With this library, changing a tenant's brand color will instantly update every d
 
 ## NEXT STEPS
 
-- Migrate bookings/customer list views to `DataTable` where appropriate.
-- Tokenize remaining pages (auth, website/homepage, messaging subpages, inventory, reviews).
-- Add keyboard a11y interactions for `BookingCalendar` drag/drop.
+- Migrate customers list table variants to `DataTable` where appropriate (grid remains grid).
+- Theming hardening: minimize SSR FOUC (inline base tokens in `head`, cache per-tenant palette); ensure neutrals map `muted-foreground` to `--color-text-muted`.
+  - SSR FOUC minimized: base tokens inlined in `app/layout.tsx`; per-tenant palette caching added (sessionStorage + in-memory) in `use-tenant-brand` with `brand-updated` cache busting.
+- Add tests for month-change SR announcement and focus return after drop. [Done]
 - Expand chart tests for bar/pie multi-series and legend a11y.

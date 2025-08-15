@@ -59,6 +59,10 @@ export const ChartCard = React.memo(function ChartCard({ title, type, categories
           <PieChart categories={categories} series={series} height={height} />
         )}
       </div>
+      {/* SR-only series list for legend accessibility */}
+      <div className="sr-only" data-testid="chart-series">
+        {series.map((s) => s.name).join(' ')}
+      </div>
     </div>
   );
 }, (prev, next) => {
