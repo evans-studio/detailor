@@ -104,7 +104,7 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)] flex">
       {/* Left Side - Brand Showcase */}
       <div className="hidden lg:flex lg:flex-1 relative overflow-hidden">
         {/* Background Gradient */}
@@ -205,24 +205,24 @@ export default function SignInPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden mb-8">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-[var(--color-primary)] rounded-lg flex items-center justify-center text-[var(--color-primary-foreground)]">
                 <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2L2 7V17L12 22L22 17V7L12 2ZM12 4.11L19.53 8L12 11.89L4.47 8L12 4.11ZM4 9.53L11 13.42V20.47L4 16.58V9.53ZM13 20.47V13.42L20 9.53V16.58L13 20.47Z"/>
                 </svg>
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Detailor</h1>
-                <p className="text-gray-600 text-sm">Business Management</p>
+                <h1 className="text-xl font-bold text-[var(--color-text)]">Detailor</h1>
+                <p className="text-[var(--color-text-secondary)] text-sm">Business Management</p>
               </div>
             </div>
           </div>
 
           {/* Sign In Header */}
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-bold text-[var(--color-text)] mb-2">
               Welcome back
             </h2>
-            <p className="text-gray-600">
+            <p className="text-[var(--color-text-secondary)]">
               Sign in to your Detailor account to continue managing your business.
             </p>
           </div>
@@ -230,18 +230,18 @@ export default function SignInPage() {
           {/* Form */}
           <form onSubmit={onSubmit} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="bg-[var(--color-error-50)] border border-[var(--color-error-100)] rounded-lg p-4">
                 <div className="flex items-center space-x-2">
-                  <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-[var(--color-error)]" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                   </svg>
                   <div className="flex-1">
-                    <p className="text-red-700 text-sm">{error}</p>
+                    <p className="text-[var(--color-error-600)] text-sm">{error}</p>
                     {process.env.NODE_ENV === 'development' && email && (
                       <button
                         type="button"
                         onClick={debugAccount}
-                        className="mt-2 text-xs text-red-600 underline hover:text-red-800"
+                        className="mt-2 text-xs text-[var(--color-error)] underline"
                       >
                         Debug Account Info
                       </button>
@@ -253,9 +253,9 @@ export default function SignInPage() {
             
             {/* Debug Info Panel (Development Only) */}
             {process.env.NODE_ENV === 'development' && showDebug && debugInfo && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-xs">
-                <h4 className="font-semibold text-yellow-800 mb-2">Debug Information:</h4>
-                <div className="space-y-1 text-yellow-700">
+              <div className="bg-[var(--color-warning-50)] border border-[var(--color-warning-100)] rounded-lg p-4 text-xs">
+                <h4 className="font-semibold text-[var(--color-warning-600)] mb-2">Debug Information:</h4>
+                <div className="space-y-1 text-[var(--color-warning-600)]">
                   <div><strong>Email:</strong> {debugInfo.email}</div>
                   <div><strong>User Exists:</strong> {debugInfo.userExists ? 'Yes' : 'No'}</div>
                   {debugInfo.userExists && (
@@ -272,7 +272,7 @@ export default function SignInPage() {
                 <button
                   type="button"
                   onClick={() => setShowDebug(false)}
-                  className="mt-2 text-yellow-600 underline hover:text-yellow-800"
+                  className="mt-2 text-[var(--color-warning-600)] underline"
                 >
                   Close Debug
                 </button>
@@ -280,7 +280,7 @@ export default function SignInPage() {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-[var(--color-text)] mb-2">
                 Email address
               </label>
               <Input 
@@ -289,13 +289,13 @@ export default function SignInPage() {
                 placeholder="Enter your email" 
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="h-12 px-4 border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition-colors"
                 required
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-[var(--color-text)] mb-2">
                 Password
               </label>
               <Input 
@@ -304,7 +304,7 @@ export default function SignInPage() {
                 placeholder="Enter your password" 
                 value={password} 
                 onChange={(e) => setPassword(e.target.value)}
-                className="h-12 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                className="h-12 px-4 border border-[var(--color-border)] rounded-lg focus:ring-2 focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] transition-colors"
                 required
               />
             </div>
@@ -315,14 +315,14 @@ export default function SignInPage() {
                   id="remember-me" 
                   name="remember-me" 
                   type="checkbox" 
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-[var(--color-primary)] focus:ring-[var(--color-primary)] border-[var(--color-border)] rounded"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-[var(--color-text)]">
                   Remember me
                 </label>
               </div>
 
-              <Link href="/reset-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+              <Link href="/reset-password" className="text-sm text-[var(--color-primary)] font-medium">
                 Forgot your password?
               </Link>
             </div>
@@ -330,7 +330,8 @@ export default function SignInPage() {
             <Button 
               type="submit" 
               disabled={isLoading}
-              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              intent="primary"
+              className="w-full h-12"
             >
               {isLoading ? (
                 <div className="flex items-center space-x-2">
@@ -348,17 +349,17 @@ export default function SignInPage() {
 
           {/* Footer */}
           <div className="mt-8 text-center">
-            <p className="text-gray-600 text-sm">
+            <p className="text-[var(--color-text-secondary)] text-sm">
               Don't have an account?{' '}
-              <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+              <Link href="/signup" className="text-[var(--color-primary)] font-medium">
                 Start your free trial
               </Link>
             </p>
           </div>
 
           {/* Trust Indicators */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="flex items-center justify-center space-x-6 text-gray-500">
+          <div className="mt-8 pt-6 border-t border-[var(--color-border)]">
+            <div className="flex items-center justify-center space-x-6 text-[var(--color-text-muted)]">
               <div className="flex items-center space-x-2">
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
