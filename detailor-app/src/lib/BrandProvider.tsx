@@ -1,5 +1,6 @@
 "use client";
 import * as React from 'react';
+import { buildBrandCSSVariables } from '@/lib/color';
 
 export function BrandProvider({ children }: { children: React.ReactNode }) {
   const applyPalette = React.useCallback(async () => {
@@ -28,14 +29,15 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
         if (!value) return;
         root.style.setProperty(name, value);
       };
-      set('--color-primary', palette.brand?.primary);
+      // Compute shades + WCAG-safe foregrounds
+      const dynamicVars = buildBrandCSSVariables(String(palette.brand?.primary || '#3B82F6'), String(palette.brand?.secondary || ''));
+      Object.entries(dynamicVars).forEach(([k, v]) => root.style.setProperty(k, v));
       set('--color-secondary', palette.brand?.secondary);
       set('--color-background', palette.neutrals?.bg);
       set('--color-surface', palette.neutrals?.surface);
       set('--color-border', palette.neutrals?.border);
       set('--color-text', palette.text?.text);
       set('--color-bg', palette.neutrals?.bg);
-      set('--color-primary-foreground', palette.brand?.['primary-foreground']);
       set('--color-text-secondary', palette.text?.['text-muted']);
       set('--color-text-muted', palette.text?.['text-muted']);
       set('--color-border-strong', palette.neutrals?.border);

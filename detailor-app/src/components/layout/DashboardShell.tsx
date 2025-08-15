@@ -68,7 +68,7 @@ export function DashboardShell({
   const items = getNavForRole(resolvedRole);
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text)]">
       {/* Skip to main content link for keyboard navigation */}
       <SkipLink />
       
@@ -93,7 +93,7 @@ export function DashboardShell({
         <main 
           id="main-content"
           className={`
-            flex-1 overflow-auto bg-gray-50
+            flex-1 overflow-auto bg-[var(--color-bg)]
             transition-all duration-300 ease-out
             ${sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'} 
           `}
@@ -133,7 +133,7 @@ function EnterpriseHeader({
   return (
     <header 
       className="
-        h-16 bg-white border-b border-gray-200
+        h-16 bg-[var(--color-surface)] border-b border-[var(--color-border)]
         flex items-center justify-between px-6
         shadow-sm
         sticky top-0 z-40
@@ -174,16 +174,15 @@ function EnterpriseHeader({
         {/* Brand */}
         <div className="flex items-center gap-3">
           <div className="
-            w-10 h-10 rounded-xl bg-gradient-to-br 
-            from-blue-600 to-blue-700
-            flex items-center justify-center text-white font-bold text-sm
+            w-10 h-10 rounded-xl bg-[var(--color-primary)]
+            flex items-center justify-center text-[var(--color-primary-foreground)] font-bold text-sm
             shadow-md hover:shadow-lg transition-shadow duration-200
           ">
             {tenantName.charAt(0)}
           </div>
           <h1 className="
             text-lg font-semibold
-            text-gray-900 tracking-tight
+            text-[var(--color-text)] tracking-tight
           ">
             {tenantName}
           </h1>
@@ -194,9 +193,9 @@ function EnterpriseHeader({
       <div className="hidden md:flex flex-1 max-w-md mx-8">
         <div className="
           relative w-full
-          bg-gray-100 border border-gray-200
+          bg-[var(--color-muted)] border border-[var(--color-border)]
           rounded-xl transition-all duration-200
-          focus-within:bg-white focus-within:border-blue-500 focus-within:shadow-md
+          focus-within:bg-[var(--color-surface)] focus-within:border-[var(--color-primary)] focus-within:shadow-md
         ">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z" />
@@ -206,8 +205,8 @@ function EnterpriseHeader({
             placeholder="Search..."
             className="
               w-full pl-10 pr-4 py-2.5 bg-transparent 
-              text-sm text-gray-900
-              placeholder:text-gray-500
+              text-sm text-[var(--color-text)]
+              placeholder:text-[var(--color-text-muted)]
               focus:outline-none
             "
           />
@@ -217,13 +216,13 @@ function EnterpriseHeader({
       {/* Right Section */}
       <div className="flex items-center gap-2">
         {/* Notifications */}
-        <Button intent="ghost" size="sm" className="relative hover:bg-gray-100">
+        <Button intent="ghost" size="sm" className="relative hover:bg-[var(--color-hover-surface)]">
           <BellIcon />
           <Badge 
             className="
               absolute -top-1 -right-1 h-5 w-5 p-0 
               text-xs font-medium
-              bg-red-500 text-white border-2 border-white
+              bg-[var(--color-error)] text-[var(--color-error-foreground)] border-2 border-[var(--color-surface)]
               flex items-center justify-center
             "
           >
@@ -232,13 +231,13 @@ function EnterpriseHeader({
         </Button>
 
         {/* User Menu */}
-        <Button intent="ghost" size="sm" className="hover:bg-gray-100">
+        <Button intent="ghost" size="sm" className="hover:bg-[var(--color-hover-surface)]">
           <UserIcon />
         </Button>
 
         {/* Settings Link */}
         <Link href="/admin/settings">
-          <Button intent="ghost" size="sm" className="hover:bg-gray-100 font-medium">
+          <Button intent="ghost" size="sm" className="hover:bg-[var(--color-hover-surface)] font-medium">
             Settings
           </Button>
         </Link>
@@ -273,7 +272,7 @@ function EnterpriseSidebar({
       {/* Mobile-First Responsive Sidebar */}
       <aside className={`
         fixed top-16 left-0 h-[calc(100vh-4rem)] z-50
-        bg-white border-r border-gray-200
+        bg-[var(--color-surface)] border-r border-[var(--color-border)]
         transition-all duration-300 ease-out
         ${collapsed ? 'w-16' : 'w-64'}
         ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
@@ -295,8 +294,8 @@ function EnterpriseSidebar({
                   transition-all duration-200 ease-out
                   min-h-[44px] // Touch-friendly minimum height
                   ${active 
-                    ? 'bg-blue-600 text-white shadow-md transform scale-[1.02]' 
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 active:bg-gray-200'
+                    ? 'bg-[var(--color-primary)] text-[var(--color-primary-foreground)] shadow-md transform scale-[1.02]' 
+                    : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-hover-surface)] hover:text-[var(--color-text)] active:bg-[var(--color-active-surface)]'
                   }
                   ${collapsed ? 'justify-center md:justify-center' : 'justify-start'}
                 `}
@@ -322,9 +321,9 @@ function EnterpriseSidebar({
         </nav>
         
         {/* Sidebar Footer */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-[var(--color-border)] p-4">
           {!collapsed && (
-            <div className="text-xs text-gray-500 text-center font-medium">
+            <div className="text-xs text-[var(--color-text-muted)] text-center font-medium">
               Powered by Detailor
             </div>
           )}

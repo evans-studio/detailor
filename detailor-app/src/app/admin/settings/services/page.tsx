@@ -138,7 +138,7 @@ export default function AdminServicesPage() {
             </div>
             <Button 
               onClick={() => setIsCreating(true)}
-              className="bg-[var(--color-primary)] hover:bg-[var(--color-primary-600)]"
+              className="bg-[var(--color-primary)] hover:bg-[var(--color-hover-primary)] text-[var(--color-primary-foreground)]"
               data-testid="add-service-button"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -283,9 +283,9 @@ export default function AdminServicesPage() {
                   <Card key={i}>
                     <CardContent className="p-6">
                       <div className="animate-pulse space-y-3">
-                        <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                        <div className="h-4 bg-[var(--color-active-surface)] rounded w-1/4"></div>
+                        <div className="h-3 bg-[var(--color-active-surface)] rounded w-1/2"></div>
+                        <div className="h-3 bg-[var(--color-active-surface)] rounded w-1/3"></div>
                       </div>
                     </CardContent>
                   </Card>
@@ -294,24 +294,24 @@ export default function AdminServicesPage() {
             ) : error ? (
               <Card>
                 <CardContent className="p-12 text-center">
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Failed to load services</h3>
-                  <p className="text-gray-600 mb-6">{String((error as Error)?.message || 'Unknown error')}</p>
+                  <h3 className="text-lg font-medium text-[var(--color-text)] mb-2">Failed to load services</h3>
+                  <p className="text-[var(--color-text-secondary)] mb-6">{String((error as Error)?.message || 'Unknown error')}</p>
                   <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-services'] })}>Retry</Button>
                 </CardContent>
               </Card>
             ) : services.length === 0 ? (
               <Card>
                 <CardContent className="p-12 text-center">
-                  <div className="h-12 w-12 text-gray-400 mx-auto mb-4">
+                  <div className="h-12 w-12 text-[var(--color-text-muted)] mx-auto mb-4">
                     <DollarSign className="h-full w-full" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No services yet</h3>
-                  <p className="text-gray-600 mb-6">
+                  <h3 className="text-lg font-medium text-[var(--color-text)] mb-2">No services yet</h3>
+                  <p className="text-[var(--color-text-secondary)] mb-6">
                     Create your first service to start accepting bookings.
                   </p>
                   <Button 
                     onClick={() => setIsCreating(true)}
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-[var(--color-primary)] hover:bg-[var(--color-hover-primary)] text-[var(--color-primary-foreground)]"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Create First Service
@@ -326,25 +326,25 @@ export default function AdminServicesPage() {
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-lg text-gray-900" data-testid="service-name">
+                            <h3 className="font-semibold text-lg text-[var(--color-text)]" data-testid="service-name">
                               {service.name}
                             </h3>
                             {service.visible ? (
-                              <Badge className="bg-green-100 text-green-800">
+                              <Badge className="bg-[var(--color-success-100)] text-[var(--color-success-600)]">
                                 <Eye className="h-3 w-3 mr-1" />
                                 Visible
                               </Badge>
                             ) : (
-                              <Badge className="bg-gray-100 text-gray-800">
+                              <Badge className="bg-[var(--color-muted)] text-[var(--color-text)]">
                                 <EyeOff className="h-3 w-3 mr-1" />
                                 Hidden
                               </Badge>
                             )}
                           </div>
-                          <p className="text-gray-600 text-sm mb-3" data-testid="service-description">
+                          <p className="text-[var(--color-text-secondary)] text-sm mb-3" data-testid="service-description">
                             {service.description || 'No description'}
                           </p>
-                          <div className="flex items-center gap-4 text-sm text-gray-500">
+                          <div className="flex items-center gap-4 text-sm text-[var(--color-text-muted)]">
                             <span className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
                               {service.duration_minutes} min

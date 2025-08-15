@@ -64,7 +64,7 @@ export default function StaffPast() {
                       }) : 'Date unknown'}
                     </div>
                   </div>
-                  <div className="px-2 py-1 bg-green-100 text-green-800 rounded-[var(--radius-sm)] text-[var(--font-size-xs)] font-medium">
+                  <div className="px-2 py-1 bg-[var(--color-success-100)] text-[var(--color-success-600)] rounded-[var(--radius-sm)] text-[var(--font-size-xs)] font-medium">
                     COMPLETED
                   </div>
                 </div>

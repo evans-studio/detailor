@@ -71,10 +71,10 @@ export default function AdminMessagesPage() {
 
   const getStatusColor = (status: Message['status']) => {
     switch (status) {
-      case 'active': return 'bg-blue-100 text-blue-800';
-      case 'resolved': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'active': return 'bg-[var(--color-primary-100)] text-[var(--color-primary-700)]';
+      case 'resolved': return 'bg-[var(--color-success-100)] text-[var(--color-success-600)]';
+      case 'pending': return 'bg-[var(--color-warning-100)] text-[var(--color-warning-600)]';
+      default: return 'bg-[var(--color-muted)] text-[var(--color-text)]';
     }
   };
 
@@ -93,9 +93,9 @@ export default function AdminMessagesPage() {
                 <Plus className="h-4 w-4 mr-2" />
                 New Message
               </Button>
-              <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                <Phone className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-medium text-blue-700">
+              <div className="flex items-center gap-2 px-3 py-2 bg-[var(--color-primary-50)] border border-[var(--color-primary-200)] rounded-lg">
+                <Phone className="h-4 w-4 text-[var(--color-primary-600)]" />
+                <span className="text-sm font-medium text-[var(--color-primary-700)]">
                   {smsCredits} SMS credits
                 </span>
               </div>
@@ -117,7 +117,7 @@ export default function AdminMessagesPage() {
             <CardContent className="p-4">
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[var(--color-text-muted)] h-4 w-4" />
                   <Input
                     placeholder="Search conversations..."
                     value={searchTerm}
@@ -151,24 +151,24 @@ export default function AdminMessagesPage() {
                     <div className="space-y-4 p-4">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="animate-pulse space-y-2">
-                          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                          <div className="h-4 bg-[var(--color-active-surface)] rounded w-3/4"></div>
+                          <div className="h-3 bg-[var(--color-active-surface)] rounded w-1/2"></div>
                         </div>
                       ))}
                     </div>
                   ) : filteredConversations.length === 0 ? (
                     <div className="p-8 text-center">
-                      <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <MessageCircle className="h-12 w-12 text-[var(--color-text-muted)] mx-auto mb-4" />
                       <h3 className="font-medium text-[var(--color-text)] mb-2">No conversations</h3>
                       <p className="text-[var(--color-text-secondary)] text-sm">Start messaging customers to see conversations here.</p>
                     </div>
                   ) : (
-                    <div className="divide-y divide-gray-200">
+                    <div className="divide-y divide-[var(--color-border)]">
                       {filteredConversations.map((conversation) => (
                         <div
                           key={conversation.id}
-                          className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
-                            selectedConversation === conversation.id ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+                          className={`p-4 cursor-pointer hover:bg-[var(--color-hover-surface)] transition-colors ${
+                            selectedConversation === conversation.id ? 'bg-[var(--color-primary-50)] border-r-2 border-[var(--color-primary-500)]' : ''
                           }`}
                           onClick={() => setSelectedConversation(conversation.id)}
                           data-testid={`conversation-item-${conversation.id}`}
@@ -181,7 +181,7 @@ export default function AdminMessagesPage() {
                                   {conversation.customer_name}
                                 </p>
                                 {conversation.unread_count > 0 && (
-                                  <Badge className="bg-red-500 text-white text-xs">
+                                  <Badge className="bg-[var(--color-error)] text-[var(--color-error-foreground)] text-xs">
                                     {conversation.unread_count}
                                   </Badge>
                                 )}
@@ -189,7 +189,7 @@ export default function AdminMessagesPage() {
                               <p className="text-sm text-[var(--color-text-secondary)] truncate">
                                 {conversation.last_message}
                               </p>
-                              <p className="text-xs text-gray-400 mt-1">
+                              <p className="text-xs text-[var(--color-text-muted)] mt-1">
                                 {new Date(conversation.last_message_at).toLocaleDateString()}
                               </p>
                             </div>
@@ -230,12 +230,12 @@ export default function AdminMessagesPage() {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="flex-1 p-4 bg-gray-50">
+                    <CardContent className="flex-1 p-4 bg-[var(--color-muted)]">
                       <div className="flex items-center justify-center h-full">
                         <div className="text-center">
-                          <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <MessageCircle className="h-12 w-12 text-[var(--color-text-muted)] mx-auto mb-4" />
                           <p className="text-[var(--color-text-secondary)]">Message thread will be displayed here</p>
-                          <p className="text-sm text-gray-500 mt-2">Select a conversation to view messages</p>
+                          <p className="text-sm text-[var(--color-text-muted)] mt-2">Select a conversation to view messages</p>
                         </div>
                       </div>
                     </CardContent>
@@ -251,7 +251,7 @@ export default function AdminMessagesPage() {
                 ) : (
                   <CardContent className="flex items-center justify-center h-full">
                     <div className="text-center">
-                      <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <MessageCircle className="h-12 w-12 text-[var(--color-text-muted)] mx-auto mb-4" />
                       <h3 className="font-medium text-[var(--color-text)] mb-2">Select a conversation</h3>
                       <p className="text-[var(--color-text-secondary)]">Choose a conversation from the list to view messages</p>
                     </div>

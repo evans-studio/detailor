@@ -337,11 +337,11 @@ export default function AdminBookingsPage() {
   const CalendarBookingItem = ({ booking }: { booking: Booking }) => ( // eslint-disable-line @typescript-eslint/no-unused-vars
     <div
       className={`text-[var(--font-size-xs)] p-1 mb-1 rounded cursor-move border-l-2 ${
-        booking.status === 'pending' ? 'bg-yellow-50 border-yellow-400 text-yellow-800' :
-        booking.status === 'confirmed' ? 'bg-blue-50 border-blue-400 text-blue-800' :
-        booking.status === 'in_progress' ? 'bg-indigo-50 border-indigo-400 text-indigo-800' :
-        booking.status === 'completed' ? 'bg-green-50 border-green-400 text-green-800' :
-        'bg-gray-50 border-gray-400 text-gray-800'
+        booking.status === 'pending' ? 'bg-[var(--color-warning-50)] border-[var(--color-warning-400)] text-[var(--color-warning-600)]' :
+        booking.status === 'confirmed' ? 'bg-[var(--color-primary-50)] border-[var(--color-primary-400)] text-[var(--color-primary-700)]' :
+        booking.status === 'in_progress' ? 'bg-[var(--color-info)]/10 border-[var(--color-info)] text-[var(--color-info)]' :
+        booking.status === 'completed' ? 'bg-[var(--color-success-50)] border-[var(--color-success-400)] text-[var(--color-success-600)]' :
+        'bg-[var(--color-muted)] border-[var(--color-border)] text-[var(--color-text-secondary)]'
       }`}
       draggable
       onDragStart={(e) => handleDragStart(e, booking)}

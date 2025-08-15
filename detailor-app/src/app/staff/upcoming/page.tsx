@@ -64,7 +64,7 @@ export default function StaffUpcoming() {
                       }) : 'Time TBD'}
                     </div>
                   </div>
-                  <div className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-[var(--radius-sm)] text-[var(--font-size-xs)] font-medium">
+                  <div className="px-2 py-1 bg-[var(--color-warning-100)] text-[var(--color-warning-600)] rounded-[var(--radius-sm)] text-[var(--font-size-xs)] font-medium">
                     UPCOMING
                   </div>
                 </div>
