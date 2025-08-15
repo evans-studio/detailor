@@ -41,14 +41,14 @@ export function BarChart({
   const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
   return (
-    <Card className={twMerge('border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-white animate-fade-scale hover-lift', className)}>
+    <Card className={twMerge('border-[var(--color-border)] shadow-sm hover:shadow-lg transition-all duration-300 bg-[var(--color-surface)] animate-fade-scale hover-lift', className)}>
       {(title || description) && (
-        <CardHeader className="border-b border-gray-100 bg-gray-50">
-          {title && <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+        <CardHeader className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
+          {title && <CardTitle className="text-lg font-semibold text-[var(--color-text)] flex items-center gap-2">
+            <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full"></div>
             {title}
           </CardTitle>}
-          {description && <CardDescription className="text-gray-600 mt-1">{description}</CardDescription>}
+          {description && <CardDescription className="text-[var(--color-text-secondary)] mt-1">{description}</CardDescription>}
         </CardHeader>
       )}
       <CardContent className="p-6">
@@ -89,7 +89,7 @@ export function BarChart({
                   />
                   
                   {/* Label */}
-                  <div className="mt-2 text-xs text-gray-500 text-center font-medium min-h-[2rem] flex items-center">
+                  <div className="mt-2 text-xs text-[var(--color-text-muted)] text-center font-medium min-h-[2rem] flex items-center">
                     {item.label}
                   </div>
                 </div>
@@ -117,7 +117,7 @@ export function BarChart({
               return (
                 <div
                   key={i}
-                  className="text-xs text-gray-500 font-medium"
+                  className="text-xs text-[var(--color-text-muted)] font-medium"
                 >
                   {value.toLocaleString()}
                 </div>
@@ -128,14 +128,14 @@ export function BarChart({
 
         {/* Legend */}
         {showLegend && data.some(d => d.color) && (
-          <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-200">
+          <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-[var(--color-border)]">
             {data.map((item, index) => (
               <div key={index} className="flex items-center gap-2">
                 <div 
                   className="w-3 h-3 rounded-sm shadow-sm"
-                  style={{ backgroundColor: item.color || '#3B82F6' }}
+                  style={{ backgroundColor: item.color || 'var(--color-primary)' }}
                 />
-                <span className="text-sm text-gray-600 font-medium">
+                <span className="text-sm text-[var(--color-text-muted)] font-medium">
                   {item.label}
                 </span>
               </div>
@@ -176,14 +176,14 @@ export function LineChart({
   };
 
   return (
-    <Card className={twMerge('border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 bg-white animate-fade-scale hover-lift', className)}>
+    <Card className={twMerge('border-[var(--color-border)] shadow-sm hover:shadow-lg transition-all duration-300 bg-[var(--color-surface)] animate-fade-scale hover-lift', className)}>
       {(title || description) && (
-        <CardHeader className="border-b border-gray-100 bg-gray-50">
-          {title && <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+        <CardHeader className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
+          {title && <CardTitle className="text-lg font-semibold text-[var(--color-text)] flex items-center gap-2">
+            <div className="w-2 h-2 bg-[var(--color-success)] rounded-full"></div>
             {title}
           </CardTitle>}
-          {description && <CardDescription className="text-gray-600 mt-1">{description}</CardDescription>}
+          {description && <CardDescription className="text-[var(--color-text-secondary)] mt-1">{description}</CardDescription>}
         </CardHeader>
       )}
       <CardContent className="p-6">
@@ -215,8 +215,8 @@ export function LineChart({
               {/* Area under curve */}
               <defs>
                 <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#3B82F6" stopOpacity="0.2" />
-                  <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.05" />
+                  <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.05" />
                 </linearGradient>
               </defs>
               
@@ -229,7 +229,7 @@ export function LineChart({
               <path
                 d={generatePath()}
                 fill="none"
-                stroke="#3B82F6"
+                stroke="var(--color-primary)"
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -284,7 +284,7 @@ export function LineChart({
             {data.map((item, index) => (
               <div
                 key={index}
-                className="text-xs text-gray-500 font-medium"
+                className="text-xs text-[var(--color-text-muted)] font-medium"
               >
                 {item.label}
               </div>
@@ -298,7 +298,7 @@ export function LineChart({
               return (
                 <div
                   key={i}
-                  className="text-xs text-gray-500 font-medium"
+                  className="text-xs text-[var(--color-text-muted)] font-medium"
                 >
                   {value.toLocaleString()}
                 </div>
@@ -373,14 +373,14 @@ export function DonutChart({
   }
 
   return (
-    <Card className={twMerge('border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white', className)}>
+    <Card className={twMerge('border-[var(--color-border)] shadow-sm hover:shadow-md transition-shadow duration-200 bg-[var(--color-surface)]', className)}>
       {(title || description) && (
-        <CardHeader className="border-b border-gray-100 bg-gray-50">
-          {title && <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+        <CardHeader className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
+          {title && <CardTitle className="text-lg font-semibold text-[var(--color-text)] flex items-center gap-2">
+            <div className="w-2 h-2 bg-[var(--color-primary)] rounded-full"></div>
             {title}
           </CardTitle>}
-          {description && <CardDescription className="text-gray-600 mt-1">{description}</CardDescription>}
+          {description && <CardDescription className="text-[var(--color-text-secondary)] mt-1">{description}</CardDescription>}
         </CardHeader>
       )}
       <CardContent className="p-6">
@@ -411,10 +411,10 @@ export function DonutChart({
             <div className="absolute inset-0 flex items-center justify-center">
               {centerContent || (
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-bold text-[var(--color-text)]">
                     {total.toLocaleString()}
                   </div>
-                  <div className="text-sm text-gray-600 font-medium">
+                  <div className="text-sm text-[var(--color-text-secondary)] font-medium">
                     Total
                   </div>
                 </div>
@@ -430,7 +430,7 @@ export function DonutChart({
                   key={index}
                   className={`
                     flex items-center justify-between p-3 rounded-lg transition-all duration-200 cursor-pointer
-                    ${hoveredIndex === index ? 'bg-gray-50 shadow-sm' : 'hover:bg-gray-50'}
+                    ${hoveredIndex === index ? 'bg-[var(--color-hover-surface)] shadow-sm' : 'hover:bg-[var(--color-hover-surface)]'}
                   `}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
@@ -440,15 +440,15 @@ export function DonutChart({
                       className="w-4 h-4 rounded-sm"
                       style={{ backgroundColor: segment.color || `hsl(${index * 137.5 % 360}, 70%, 60%)` }}
                     />
-                    <span className="text-sm font-medium text-gray-900">
+                    <span className="text-sm font-medium text-[var(--color-text)]">
                       {segment.label}
                     </span>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">
+                    <div className="text-sm font-semibold text-[var(--color-text)]">
                       {segment.value.toLocaleString()}
                     </div>
-                    <div className="text-xs text-gray-500 font-medium">
+                    <div className="text-xs text-[var(--color-text-muted)] font-medium">
                       {(segment.percentage * 100).toFixed(1)}%
                     </div>
                   </div>
@@ -465,19 +465,19 @@ export function DonutChart({
 // Modern Chart Loading Skeleton
 export function ChartSkeleton({ height = 300, className }: { height?: number; className?: string }) {
   return (
-    <Card className={twMerge('border-gray-200 bg-white', className)}>
-      <CardHeader className="border-b border-gray-100 bg-gray-50">
+    <Card className={twMerge('border-[var(--color-border)] bg-[var(--color-surface)]', className)}>
+      <CardHeader className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
         <div className="animate-pulse space-y-3">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-gray-300 rounded-full" />
-            <div className="h-5 bg-gray-300 rounded w-32" />
+            <div className="w-2 h-2 bg-[var(--color-text-muted)] rounded-full" />
+            <div className="h-5 bg-[var(--color-active-surface)] rounded w-32" />
           </div>
-          <div className="h-4 bg-gray-200 rounded w-48" />
+          <div className="h-4 bg-[var(--color-active-surface)] rounded w-48" />
         </div>
       </CardHeader>
       <CardContent className="p-6">
         <div className="animate-pulse" style={{ height }}>
-          <div className="h-full bg-gray-200 rounded-lg" />
+          <div className="h-full bg-[var(--color-active-surface)] rounded-lg" />
         </div>
       </CardContent>
     </Card>

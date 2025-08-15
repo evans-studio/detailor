@@ -128,7 +128,7 @@ const getActivityColor = (type: ActivityType, priority?: string) => {
       return 'var(--color-error)';
     case 'system_notification':
     default:
-      return 'var(--color-slate-500)';
+      return 'var(--color-text-muted)';
   }
 };
 
@@ -161,9 +161,9 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
     <div 
       className={`
         group relative flex gap-4 p-4 rounded-xl transition-all duration-200
-        ${activity.onClick ? 'cursor-pointer hover:bg-gray-50 hover:shadow-sm' : ''}
-        ${!activity.read ? 'bg-blue-50 border-l-4 border-blue-500' : 'border-l-4 border-transparent'}
-        ${activity.priority === 'urgent' ? 'ring-1 ring-red-200 bg-red-50' : ''}
+        ${activity.onClick ? 'cursor-pointer hover:bg-[var(--color-hover-surface)] hover:shadow-sm' : ''}
+        ${!activity.read ? 'bg-[var(--color-primary-50)] border-l-4 border-[var(--color-primary-500)]' : 'border-l-4 border-transparent'}
+        ${activity.priority === 'urgent' ? 'ring-1 ring-[var(--color-error-100)] bg-[var(--color-error-50)]' : ''}
       `}
       onClick={activity.onClick}
     >
@@ -175,7 +175,7 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
         >
           <IconComponent />
         </div>
-        <div className="w-px h-full bg-gray-200 mt-2 group-last:hidden" />
+        <div className="w-px h-full bg-[var(--color-border)] mt-2 group-last:hidden" />
       </div>
 
       {/* Content */}
@@ -183,7 +183,7 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <h4 className="text-sm font-semibold text-gray-900 truncate">
+              <h4 className="text-sm font-semibold text-[var(--color-text)] truncate">
                 {activity.title}
               </h4>
               {activity.priority && activity.priority !== 'low' && (
@@ -196,17 +196,17 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
                 </Badge>
               )}
               {!activity.read && (
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                <div className="w-2 h-2 rounded-full bg-[var(--color-primary)] animate-pulse" />
               )}
             </div>
             
-            <p className="text-sm text-gray-700 mb-3 line-clamp-2">
+            <p className="text-sm text-[var(--color-text-secondary)] mb-3 line-clamp-2">
               {activity.description}
             </p>
 
             {/* Metadata */}
             {activity.metadata && (
-              <div className="flex flex-wrap gap-3 text-xs text-gray-600">
+              <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-muted)]">
                 {activity.metadata.bookingReference && (
                   <span className="bg-gray-100 px-2 py-1 rounded font-medium">
                     {activity.metadata.bookingReference}
@@ -216,7 +216,7 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
                   <span className="font-medium">{activity.metadata.customerName}</span>
                 )}
                 {activity.metadata.amount && (
-                  <span className="font-semibold text-green-600">
+                  <span className="font-semibold text-[var(--color-success)]">
                     {activity.metadata.currency || '£'}{activity.metadata.amount.toFixed(2)}
                   </span>
                 )}
@@ -229,7 +229,7 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
             <time className="font-medium">{formatRelativeTime(activity.timestamp)}</time>
           </div>
         </div>
@@ -242,7 +242,7 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
                 {activity.user.initials}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs text-gray-500 truncate">
+            <span className="text-xs text-[var(--color-text-muted)] truncate">
               {activity.user.name}
             </span>
           </div>
@@ -251,10 +251,10 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
         {/* Quick actions */}
         {activity.actionable && (
           <div className="flex gap-2 mt-4 opacity-0 group-hover:opacity-100 transition-all duration-200">
-            <Button size="sm" intent="ghost" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium">
+            <Button size="sm" intent="ghost" className="text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] font-medium">
               View
             </Button>
-            <Button size="sm" intent="ghost" className="text-gray-600 hover:text-gray-700 hover:bg-gray-100 font-medium">
+            <Button size="sm" intent="ghost" className="text-[var(--color-text-muted)] hover:bg-[var(--color-hover-surface)] font-medium">
               Mark Read
             </Button>
           </div>
