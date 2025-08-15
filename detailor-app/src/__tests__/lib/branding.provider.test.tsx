@@ -34,19 +34,19 @@ describe('BrandProvider', () => {
     await new Promise((r) => setTimeout(r, 0));
     expect(document.documentElement.style.getPropertyValue('--color-primary')).toBe('#3B82F6');
 
-    // Change response to a new brand color
-    fetchMock.mockImplementationOnce((url: string) => {
-      if (url.includes('/api/brand')) {
-        return Promise.resolve(
+    // Next two calls: /api/tenant/me (401) then /api/brand (new color)
+    fetchMock
+      .mockImplementationOnce(() => Promise.resolve(new Response(JSON.stringify({ success: false }), { status: 401 })))
+      .mockImplementationOnce(() =>
+        Promise.resolve(
           new Response(
             JSON.stringify({ success: true, data: { palette: { brand: { primary: '#EF4444' } } } }),
             { status: 200 }
           )
-        );
-      }
-      return Promise.resolve(new Response(JSON.stringify({ success: true }), { status: 200 }));
-    });
+        )
+      );
     window.dispatchEvent(new Event('brand-updated'));
+    await new Promise((r) => setTimeout(r, 0));
     await new Promise((r) => setTimeout(r, 0));
     expect(document.documentElement.style.getPropertyValue('--color-primary')).toBe('#EF4444');
   });
