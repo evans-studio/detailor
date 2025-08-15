@@ -18,28 +18,24 @@ const kpiCardStyles = cva(
     variants: {
       variant: {
         default: [
-          'bg-white border-gray-200',
-          'hover:border-gray-300',
+          'bg-[var(--color-surface)] border-[var(--color-border)]',
+          'hover:shadow-md',
         ],
         primary: [
-          'bg-gradient-to-br from-blue-500 to-blue-600',
-          'border-blue-600 text-white shadow-blue-500/20',
-          'hover:shadow-blue-500/30',
+          'bg-[var(--color-primary)] text-[var(--color-primary-foreground)]',
+          'border-[var(--color-primary)] shadow-[var(--shadow-md)]',
         ],
         success: [
-          'bg-gradient-to-br from-green-500 to-green-600',
-          'border-green-600 text-white shadow-green-500/20',
-          'hover:shadow-green-500/30',
+          'bg-[var(--color-success)] text-[var(--color-success-foreground)]',
+          'border-[var(--color-success)] shadow-[var(--shadow-md)]',
         ],
         warning: [
-          'bg-gradient-to-br from-amber-500 to-amber-600',
-          'border-amber-600 text-white shadow-amber-500/20',
-          'hover:shadow-amber-500/30',
+          'bg-[var(--color-warning)] text-[var(--color-warning-foreground)]',
+          'border-[var(--color-warning)] shadow-[var(--shadow-md)]',
         ],
         error: [
-          'bg-gradient-to-br from-red-500 to-red-600',
-          'border-red-600 text-white shadow-red-500/20',
-          'hover:shadow-red-500/30',
+          'bg-[var(--color-error)] text-[var(--color-error-foreground)]',
+          'border-[var(--color-error)] shadow-[var(--shadow-md)]',
         ],
       },
       size: {
@@ -202,8 +198,8 @@ export function KPICard({
             <div className={`
               p-2 sm:p-3 rounded-lg transition-all duration-200
               ${isColored 
-                ? 'bg-white/20 text-white backdrop-blur-sm' 
-                : 'bg-blue-50 text-blue-600'
+                ? 'bg-[var(--color-primary-50)] text-[var(--color-primary-700)]' 
+                : 'bg-[var(--color-primary-50)] text-[var(--color-primary-700)]'
               }
               group-hover:scale-110 group-hover:rotate-2
             `}>
@@ -212,14 +208,14 @@ export function KPICard({
             <div className="flex-1 min-w-0">
               <h3 className={`
                 text-xs sm:text-sm font-semibold mb-1 truncate
-                ${isColored ? 'text-white/95' : 'text-gray-600'}
+                ${isColored ? 'text-[var(--color-primary-foreground)]/95' : 'text-[var(--color-text-secondary)]'}
               `}>
                 {label}
               </h3>
               {subtitle && (
                 <p className={`
                   text-xs leading-tight line-clamp-2
-                  ${isColored ? 'text-white/75' : 'text-gray-500'}
+                  ${isColored ? 'text-[var(--color-primary-foreground)]/75' : 'text-[var(--color-text-muted)]'}
                 `}>
                   {subtitle}
                 </p>
@@ -238,7 +234,7 @@ export function KPICard({
         <div className="flex-1 flex items-center py-1 sm:py-2">
           <div className={`
             text-2xl sm:text-3xl font-bold leading-none
-            ${isColored ? 'text-white' : 'text-gray-900'}
+            ${isColored ? 'text-[var(--color-primary-foreground)]' : 'text-[var(--color-text)]'}
             transition-transform group-hover:scale-105
           `}>
             {loading ? (
@@ -257,12 +253,12 @@ export function KPICard({
             <div className={`
               flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full font-medium text-xs self-start
               ${isColored 
-                ? 'bg-white/20 text-white backdrop-blur-sm' 
+                ? 'bg-[var(--color-primary-50)] text-[var(--color-primary-700)]' 
                 : trend === 'up' 
-                  ? 'bg-green-100 text-green-700'
+                  ? 'bg-[var(--color-success-100)] text-[var(--color-success-700)]'
                   : trend === 'down'
-                    ? 'bg-red-100 text-red-700'
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-[var(--color-error-100)] text-[var(--color-error-700)]'
+                    : 'bg-[var(--color-muted)] text-[var(--color-text-secondary)]'
               }
             `}>
               {trendData.direction === 'up' ? (
@@ -277,7 +273,7 @@ export function KPICard({
             
             <span className={`
               text-xs font-medium truncate
-              ${isColored ? 'text-white/80' : 'text-gray-500'}
+              ${isColored ? 'text-[var(--color-primary-foreground)]/80' : 'text-[var(--color-text-muted)]'}
             `}>
               {trendData.label}
             </span>
@@ -289,7 +285,7 @@ export function KPICard({
           <div className="absolute top-4 right-4">
             <div className={`
               w-2 h-2 rounded-full
-              ${isColored ? 'bg-white/60' : 'bg-green-500'}
+              ${isColored ? 'bg-[var(--color-primary-foreground)]/60' : 'bg-[var(--color-success)]'}
               animate-pulse
             `} />
           </div>
@@ -320,19 +316,19 @@ export function KPICardSkeleton({ count = 4 }: { count?: number }) {
     <KPIGrid>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="animate-pulse" style={{ animationDelay: `${i * 0.1}s` }}>
-          <Card className="min-h-[160px] border-gray-200 bg-white">
+          <Card className="min-h-[160px] border-[var(--color-border)] bg-[var(--color-surface)]">
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-gray-200 rounded-lg" />
+                <div className="w-12 h-12 bg-[var(--color-active-surface)] rounded-lg" />
                 <div className="flex-1">
-                  <div className="h-4 bg-gray-200 rounded w-20 mb-2" />
-                  <div className="h-3 bg-gray-200 rounded w-16" />
+                  <div className="h-4 bg-[var(--color-active-surface)] rounded w-20 mb-2" />
+                  <div className="h-3 bg-[var(--color-active-surface)] rounded w-16" />
                 </div>
               </div>
-              <div className="h-8 bg-gray-200 rounded w-24 mb-6" />
+              <div className="h-8 bg-[var(--color-active-surface)] rounded w-24 mb-6" />
               <div className="flex items-center justify-between">
-                <div className="h-6 bg-gray-200 rounded w-16" />
-                <div className="h-3 bg-gray-200 rounded w-12" />
+                <div className="h-6 bg-[var(--color-active-surface)] rounded w-16" />
+                <div className="h-3 bg-[var(--color-active-surface)] rounded w-12" />
               </div>
             </CardContent>
           </Card>
