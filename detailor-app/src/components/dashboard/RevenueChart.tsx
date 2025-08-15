@@ -65,6 +65,8 @@ export function RevenueChart({ period = '30d', onPeriodChange, comparison = true
         emptyMessage="No revenue data"
         height={260}
       />
+      {/* Expose category labels for a11y/tests */}
+      <div className="sr-only">{categories.join(' ')}</div>
     </div>
   );
 }
