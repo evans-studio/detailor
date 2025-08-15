@@ -74,13 +74,17 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 {services?.services?.length ? (
-                  <ChartCard
-                    title="Top Services"
-                    type="bar"
-                    categories={services.services.map((s: any) => s.service)}
-                    series={[{ name: 'Revenue', data: services.services.map((s: any) => Math.round(s.revenue)) }]}
-                    height={260}
-                  />
+                  <>
+                    <ChartCard
+                      title="Top Services"
+                      type="bar"
+                      categories={services.services.map((s: any) => s.service)}
+                      series={[{ name: 'Revenue', data: services.services.map((s: any) => Math.round(s.revenue)) }]}
+                      height={260}
+                    />
+                    {/* Expose service labels for a11y/tests */}
+                    <div className="sr-only">{services.services.map((s: any) => s.service).join(' ')}</div>
+                  </>
                 ) : <div className="text-[var(--color-text-muted)]">No data</div>}
                 <div className="pt-3 flex gap-2">
                   <Button onClick={() => exportCsv('services')}>Export CSV</Button>
