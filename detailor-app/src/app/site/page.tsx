@@ -84,8 +84,8 @@ export default async function SitePage({ searchParams }: { searchParams?: Promis
   const tenant = sub ? await loadTenantForSubdomain(sub) : null;
   if (!tenant || tenant.homepage_published !== true) {
     return (
-      <main className="min-h-screen grid place-items-center p-6">
-        <div className="text-center text-gray-600">Site unavailable.</div>
+      <main className="min-h-screen grid place-items-center p-6 bg-[var(--color-bg)] text-[var(--color-text)]">
+        <div className="text-center text-[var(--color-text-secondary)]">Site unavailable.</div>
       </main>
     );
   }
@@ -227,21 +227,21 @@ function ServiceFocused({ name, brand, content }: { name: string; brand: BrandSe
   const primary = brand.primary_color || '#1a365d';
   const heroUrl = content?.hero?.hero_image_url;
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text)]">
       <section className="relative min-h-[60vh] flex items-center">
         {heroUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={heroUrl} alt="Hero" className="absolute inset-0 w-full h-full object-cover" />
         ) : null}
         <div className="relative max-w-5xl mx-auto px-6 py-20">
-          <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur px-4 py-2 rounded-full">
-            <div className="w-8 h-8 rounded-full bg-gray-200 overflow-hidden">
+          <div className="inline-flex items-center gap-3 bg-[var(--color-surface)]/80 backdrop-blur px-4 py-2 rounded-full">
+            <div className="w-8 h-8 rounded-full bg-[var(--color-muted)] overflow-hidden">
               {brand.logo_url ? <Image src={brand.logo_url} alt="Logo" width={32} height={32} /> : null}
             </div>
-            <span className="text-gray-700 font-medium">{name}</span>
+            <span className="text-[var(--color-text)] font-medium">{name}</span>
           </div>
-          <h1 className="mt-4 text-4xl md:text-5xl font-bold text-gray-900 drop-shadow">{content?.hero?.tagline || 'Premium Detailing, On‑Site'}</h1>
-          <p className="mt-3 text-gray-700 max-w-2xl">{content?.hero?.description || 'We come to you for showroom results.'}</p>
+          <h1 className="mt-4 text-4xl md:text-5xl font-bold text-[var(--color-text)] drop-shadow">{content?.hero?.tagline || 'Premium Detailing, On‑Site'}</h1>
+          <p className="mt-3 text-[var(--color-text-secondary)] max-w-2xl">{content?.hero?.description || 'We come to you for showroom results.'}</p>
           <a href="/book" className="mt-6 inline-block px-5 py-3 rounded-lg text-white" style={{ background: primary }}>{content?.hero?.cta_text || 'Book Now'}</a>
         </div>
       </section>
@@ -265,7 +265,7 @@ function ServiceFocused({ name, brand, content }: { name: string; brand: BrandSe
 function LocalExpert({ name, brand, content }: { name: string; brand: BrandSettings; content: HomepageContent }) {
   const primary = brand.primary_color || '#1a365d';
   return (
-    <main className="min-h-screen bg-white">
+    <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text)]">
       <header className="max-w-6xl mx-auto px-6 py-6">
         <div className="flex items-center gap-3">
           {brand.logo_url ? <Image src={brand.logo_url} alt="Logo" width={32} height={32} /> : null}
@@ -274,11 +274,11 @@ function LocalExpert({ name, brand, content }: { name: string; brand: BrandSetti
       </header>
       <section className="max-w-6xl mx-auto px-6 py-10">
         <h1 className="text-3xl font-bold">{content?.hero?.tagline || 'Trusted local detailing experts'}</h1>
-        <p className="mt-3 text-gray-600">{content?.hero?.description || 'Serving your community with pride and care.'}</p>
+        <p className="mt-3 text-[var(--color-text-secondary)]">{content?.hero?.description || 'Serving your community with pride and care.'}</p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <span className="px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm">Fully insured</span>
-          <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm">5+ years experience</span>
-          <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-sm">Satisfaction guaranteed</span>
+          <span className="px-3 py-1 rounded-full bg-[var(--color-success-50)] text-[var(--color-success-700)] text-sm">Fully insured</span>
+          <span className="px-3 py-1 rounded-full bg-[var(--color-primary-50)] text-[var(--color-primary-700)] text-sm">5+ years experience</span>
+          <span className="px-3 py-1 rounded-full bg-[var(--color-warning-50)] text-[var(--color-warning-700)] text-sm">Satisfaction guaranteed</span>
         </div>
         <a href="/book" className="mt-6 inline-block px-5 py-3 rounded-lg text-white" style={{ background: primary }}>{content?.hero?.cta_text || 'Book Now'}</a>
       </section>

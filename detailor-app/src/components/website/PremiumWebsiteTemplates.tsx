@@ -97,9 +97,9 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text)]">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md shadow-sm z-50">
+      <nav className="fixed top-0 w-full bg-[var(--color-surface)]/95 backdrop-blur-md shadow-sm z-50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
@@ -127,19 +127,19 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#services" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
+              <a href="#services" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)] font-medium transition-colors">
                 Services
               </a>
-              <a href="#about" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
+              <a href="#about" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)] font-medium transition-colors">
                 About
               </a>
-              <a href="#gallery" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
+              <a href="#gallery" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)] font-medium transition-colors">
                 Gallery
               </a>
-              <a href="#testimonials" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
+              <a href="#testimonials" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)] font-medium transition-colors">
                 Reviews
               </a>
-              <a href="#contact" className="text-gray-700 hover:text-gray-900 font-medium transition-colors">
+              <a href="#contact" className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)] font-medium transition-colors">
                 Contact
               </a>
               <Button 
@@ -163,13 +163,13 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
 
           {/* Mobile Navigation */}
           {isMenuOpen && (
-            <div className="md:hidden py-4 border-t">
+            <div className="md:hidden py-4 border-t border-[var(--color-border)]">
               <div className="space-y-4">
-                <a href="#services" className="block text-gray-700 font-medium">Services</a>
-                <a href="#about" className="block text-gray-700 font-medium">About</a>
-                <a href="#gallery" className="block text-gray-700 font-medium">Gallery</a>
-                <a href="#testimonials" className="block text-gray-700 font-medium">Reviews</a>
-                <a href="#contact" className="block text-gray-700 font-medium">Contact</a>
+                <a href="#services" className="block text-[var(--color-text)] font-medium">Services</a>
+                <a href="#about" className="block text-[var(--color-text)] font-medium">About</a>
+                <a href="#gallery" className="block text-[var(--color-text)] font-medium">Gallery</a>
+                <a href="#testimonials" className="block text-[var(--color-text)] font-medium">Reviews</a>
+                <a href="#contact" className="block text-[var(--color-text)] font-medium">Contact</a>
                 <Button 
                   className="w-full text-white font-semibold"
                   style={{ backgroundColor: primaryColor }}
@@ -184,7 +184,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
 
       {/* Hero Section */}
       <section className="relative pt-20 pb-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-white" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-muted)] to-[var(--color-surface)]" />
         {content.hero?.hero_image_url && (
           <div className="absolute inset-0 opacity-10">
             <Image 
@@ -207,11 +207,11 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                   ⭐ Premium Mobile Detailing Service
                 </Badge>
                 
-                <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+                <h1 className="text-5xl lg:text-6xl font-bold text-[var(--color-text)] leading-tight">
                   {content.hero?.tagline || 'Premium Mobile Detailing That Comes to You'}
                 </h1>
                 
-                <p className="text-xl text-gray-600 leading-relaxed">
+                <p className="text-xl text-[var(--color-text-secondary)] leading-relaxed">
                   {content.hero?.description || 'Professional car detailing services delivered to your location. Experience showroom-quality results with the convenience of mobile service.'}
                 </p>
               </div>
@@ -227,7 +227,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                 <Button 
                   intent="secondary" 
                   size="lg"
-                  className="font-semibold text-lg px-8 py-4 border-2 hover:bg-gray-50 transition-all"
+                  className="font-semibold text-lg px-8 py-4 border-2 hover:bg-[var(--color-hover-surface)] transition-all"
                   style={{ borderColor: primaryColor, color: primaryColor }}
                 >
                   View Services
@@ -236,20 +236,20 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
 
               {/* Trust Indicators */}
               <div className="flex flex-wrap gap-6 pt-4">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
                   <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                   <span className="font-medium">Fully Insured</span>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
                   <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
                   <span className="font-medium">5-Star Rated</span>
                 </div>
                 {businessInfo.years_experience && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
                     <svg className="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
@@ -298,13 +298,13 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
       </section>
 
       {/* Services Section */}
-      <section id="services" className="py-20 bg-white">
+      <section id="services" className="py-20 bg-[var(--color-surface)]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-4xl font-bold text-[var(--color-text)] mb-4">
               Premium Detailing Services
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-[var(--color-text-secondary)] max-w-3xl mx-auto">
               From basic washes to full paint correction, we offer comprehensive detailing services 
               tailored to your vehicle&apos;s needs and your budget.
             </p>
@@ -327,14 +327,14 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                 
                 <CardContent className="p-6 space-y-4">
                   <div className="space-y-2">
-                    <h3 className="text-xl font-bold text-gray-900">{service.name}</h3>
-                    <p className="text-gray-600 leading-relaxed">{service.description}</p>
+                    <h3 className="text-xl font-bold text-[var(--color-text)]">{service.name}</h3>
+                    <p className="text-[var(--color-text-secondary)] leading-relaxed">{service.description}</p>
                   </div>
 
                   {service.features && (
                     <div className="space-y-2">
                       {service.features.slice(0, 3).map((feature, idx) => (
-                        <div key={idx} className="flex items-center gap-2 text-sm text-gray-600">
+                        <div key={idx} className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
                           <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
@@ -344,7 +344,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
                     <div className="space-y-1">
                       {service.price_from && (
                         <div className="text-2xl font-bold" style={{ color: primaryColor }}>
@@ -352,7 +352,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                         </div>
                       )}
                       {service.duration && (
-                        <div className="text-sm text-gray-500">
+                        <div className="text-sm text-[var(--color-text-muted)]">
                           Duration: {service.duration}
                         </div>
                       )}
@@ -373,20 +373,20 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
 
       {/* Testimonials Section */}
       {content.testimonials && content.testimonials.length > 0 && (
-        <section id="testimonials" className="py-20 bg-gray-50">
+        <section id="testimonials" className="py-20 bg-[var(--color-muted)]">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              <h2 className="text-4xl font-bold text-[var(--color-text)] mb-4">
                 What Our Customers Say
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-[var(--color-text-secondary)]">
                 Don&apos;t just take our word for it - hear from our satisfied customers
               </p>
             </div>
 
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8 stagger-children">
               {content.testimonials.slice(0, 6).map((testimonial, index) => (
-                <Card key={index} className="bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                <Card key={index} className="bg-[var(--color-surface)] border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                   <CardContent className="p-6 space-y-4">
                     {/* Stars */}
                     <div className="flex gap-1">
@@ -398,12 +398,12 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                     </div>
 
                     {/* Content */}
-                    <blockquote className="text-gray-700 italic leading-relaxed">
+                    <blockquote className="text-[var(--color-text)] italic leading-relaxed">
                       &ldquo;{testimonial.content}&rdquo;
                     </blockquote>
 
                     {/* Author */}
-                    <div className="flex items-center gap-3 pt-4 border-t">
+                    <div className="flex items-center gap-3 pt-4 border-t border-[var(--color-border)]">
                       {testimonial.image_url ? (
                         <Image 
                           src={testimonial.image_url}
@@ -421,9 +421,9 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                         </div>
                       )}
                       <div>
-                        <div className="font-semibold text-gray-900">{testimonial.name}</div>
+                        <div className="font-semibold text-[var(--color-text)]">{testimonial.name}</div>
                         {testimonial.location && (
-                          <div className="text-sm text-gray-500">{testimonial.location}</div>
+                          <div className="text-sm text-[var(--color-text-muted)]">{testimonial.location}</div>
                         )}
                       </div>
                     </div>
@@ -471,13 +471,13 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
       )}
 
       {/* Contact Section */}
-      <section id="contact" className="py-20 bg-gray-900 text-white">
+      <section id="contact" className="py-20 bg-[var(--color-surface-strong)] text-[var(--color-inverse-text)]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="space-y-4">
                 <h2 className="text-4xl font-bold">Ready to Book Your Detail?</h2>
-                <p className="text-xl text-gray-300 leading-relaxed">
+                <p className="text-xl text-[var(--color-inverse-text-muted)] leading-relaxed">
                   Experience the difference of professional mobile detailing. Contact us today 
                   to schedule your appointment and give your vehicle the care it deserves.
                 </p>
@@ -496,7 +496,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                     </div>
                     <div>
                       <div className="font-semibold">Call Us</div>
-                      <div className="text-gray-300">{businessInfo.phone}</div>
+                      <div className="text-[var(--color-inverse-text-muted)]">{businessInfo.phone}</div>
                     </div>
                   </div>
                 )}
@@ -513,7 +513,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                     </div>
                     <div>
                       <div className="font-semibold">Email Us</div>
-                      <div className="text-gray-300">{businessInfo.email}</div>
+                      <div className="text-[var(--color-inverse-text-muted)]">{businessInfo.email}</div>
                     </div>
                   </div>
                 )}
@@ -531,7 +531,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                     </div>
                     <div>
                       <div className="font-semibold">Service Area</div>
-                      <div className="text-gray-300">{businessInfo.service_area}</div>
+                      <div className="text-[var(--color-inverse-text-muted)]">{businessInfo.service_area}</div>
                     </div>
                   </div>
                 )}
@@ -547,7 +547,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
               >
                 Book Your Detail Now
               </Button>
-              <p className="mt-4 text-gray-400">
+              <p className="mt-4 text-[var(--color-inverse-text-muted)]">
                 Quick online booking • Instant confirmation
               </p>
             </div>
@@ -556,7 +556,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
       </section>
 
       {/* Footer */}
-      <footer className="py-8 bg-gray-950 text-gray-400">
+      <footer className="py-8 bg-[var(--color-surface-strong)] text-[var(--color-inverse-text-muted)]">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-sm">
