@@ -28,6 +28,7 @@ const statusToClasses: Record<BookingEvent['status'], string> = {
 export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate = new Date(), onDateChange }: BookingCalendarProps) {
   const [date, setDate] = React.useState(currentDate);
   React.useEffect(() => setDate(currentDate), [currentDate]);
+  const liveRef = React.useRef<HTMLDivElement | null>(null);
   const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
   const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
   const days: Date[] = [];
@@ -51,7 +52,28 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
           <div key={d} className="text-[var(--color-text-muted)] text-center text-[var(--font-size-sm)]" role="columnheader">{d}</div>
         ))}
         {days.map((d) => (
-          <div key={d.toISOString()} className="min-h-[100px] border border-[var(--color-border)] rounded-[var(--radius-sm)] p-1" role="gridcell" aria-label={d.toDateString()}>
+          <div
+            key={d.toISOString()}
+            className="min-h-[100px] border border-[var(--color-border)] rounded-[var(--radius-sm)] p-1"
+            role="gridcell"
+            aria-label={d.toDateString()}
+            tabIndex={0}
+            onKeyDown={(ev) => {
+              // Arrow navigation between days when cell focused
+              const index = days.findIndex(day => day.toDateString() === d.toDateString());
+              if (index === -1) return;
+              let nextIndex = index;
+              if (ev.key === 'ArrowRight') nextIndex = index + 1;
+              else if (ev.key === 'ArrowLeft') nextIndex = index - 1;
+              else if (ev.key === 'ArrowDown') nextIndex = index + 7;
+              else if (ev.key === 'ArrowUp') nextIndex = index - 7;
+              if (nextIndex !== index && days[nextIndex]) {
+                ev.preventDefault();
+                const el = (ev.currentTarget.parentElement?.children[nextIndex + 7] as HTMLElement) || null; // +7 to skip headers
+                el?.focus();
+              }
+            }}
+          >
             <div className="text-[var(--color-text-muted)] text-[var(--font-size-xs)] text-right" aria-hidden>{d.getDate()}</div>
             <div className="space-y-1">
               {(eventsByDay[dateKey(d)] || []).map((e) => (
@@ -74,6 +96,7 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
                       const duration = e.end.getTime() - e.start.getTime();
                       const newEnd = new Date(newStart.getTime() + duration);
                       onEventDrop?.(e.id, newStart, newEnd);
+                      liveRef.current && (liveRef.current.textContent = `${e.title} moved to ${newStart.toDateString()}`);
                     }
                   }}
                   draggable
@@ -85,6 +108,7 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
                     const start = new Date(d);
                     const end = new Date(start.getTime() + 60 * 60 * 1000);
                     onEventDrop?.(id, start, end);
+                    liveRef.current && (liveRef.current.textContent = `${e.title} moved to ${start.toDateString()}`);
                   }}
                   aria-label={`${e.title}`}
                 >
@@ -95,6 +119,7 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
           </div>
         ))}
       </div>
+      <div aria-live="polite" aria-atomic="true" className="sr-only" ref={liveRef} />
     </div>
   );
 
