@@ -29,6 +29,8 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
   const [date, setDate] = React.useState(currentDate);
   React.useEffect(() => setDate(currentDate), [currentDate]);
   const liveRef = React.useRef<HTMLDivElement | null>(null);
+  const [grabbedEventId, setGrabbedEventId] = React.useState<string | null>(null);
+  const instructionsId = 'calendar-dnd-instructions';
   const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
   const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
   const days: Date[] = [];
@@ -36,6 +38,7 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
     days.push(new Date(d));
   }
   const eventsByDay = groupByDay(events);
+  const findEventById = React.useMemo(() => findEventByIdFactory(events), [events]);
 
   return (
     <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4" role="region" aria-label="Booking calendar">
@@ -72,6 +75,19 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
                 const el = (ev.currentTarget.parentElement?.children[nextIndex + 7] as HTMLElement) || null; // +7 to skip headers
                 el?.focus();
               }
+              // Drop grabbed event into this day
+              if ((ev.key === 'Enter' || ev.key === ' ') && grabbedEventId) {
+                ev.preventDefault();
+                const grabbed = findEventById(grabbedEventId);
+                if (grabbed) {
+                  const start = new Date(d);
+                  const duration = grabbed.end.getTime() - grabbed.start.getTime();
+                  const end = new Date(start.getTime() + duration);
+                  onEventDrop?.(grabbed.id, start, end);
+                  setGrabbedEventId(null);
+                  liveRef.current && (liveRef.current.textContent = `${grabbed.title} dropped on ${start.toDateString()}`);
+                }
+              }
             }}
           >
             <div className="text-[var(--color-text-muted)] text-[var(--font-size-xs)] text-right" aria-hidden>{d.getDate()}</div>
@@ -82,13 +98,32 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
                   className={`text-[var(--font-size-xs)] p-1 rounded border ${statusToClasses[e.status]} cursor-pointer`}
                   onClick={() => onEventClick?.(e.id)}
                   tabIndex={0}
+                  role="button"
+                  aria-roledescription="Event"
+                  aria-describedby={instructionsId}
+                  aria-grabbed={grabbedEventId === e.id}
                   onKeyDown={(ev) => {
-                    if (ev.key === 'Enter' || ev.key === ' ') {
+                    if (ev.key === 'Enter') {
                       ev.preventDefault();
                       onEventClick?.(e.id);
                     }
-                    // Arrow keys move by day
-                    if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
+                    if (ev.key === ' ' && grabbedEventId !== e.id) {
+                      ev.preventDefault();
+                      setGrabbedEventId(e.id);
+                      liveRef.current && (liveRef.current.textContent = `${e.title} picked up. Use arrow keys to move by day. Press Enter on a day to drop, or Escape to cancel.`);
+                    } else if (ev.key === ' ' && grabbedEventId === e.id) {
+                      // Space again cancels grab
+                      ev.preventDefault();
+                      setGrabbedEventId(null);
+                      liveRef.current && (liveRef.current.textContent = `Cancelled moving ${e.title}.`);
+                    }
+                    if (ev.key === 'Escape' && grabbedEventId) {
+                      ev.preventDefault();
+                      setGrabbedEventId(null);
+                      liveRef.current && (liveRef.current.textContent = `Cancelled moving ${e.title}.`);
+                    }
+                    // Arrow keys move by day only when grabbed
+                    if ((ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') && grabbedEventId === e.id) {
                       ev.preventDefault();
                       const delta = ev.key === 'ArrowRight' ? 1 : -1;
                       const newStart = new Date(e.start);
@@ -119,6 +154,7 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
           </div>
         ))}
       </div>
+      <div id={instructionsId} className="sr-only">Use Space to pick up event, Arrow keys to move by day, Enter on a day to drop, Escape to cancel.</div>
       <div aria-live="polite" aria-atomic="true" className="sr-only" ref={liveRef} />
     </div>
   );
@@ -141,5 +177,12 @@ function groupByDay(events: BookingEvent[]) {
     return acc;
   }, {});
 }
+
+function findEventByIdFactory(events: BookingEvent[]) {
+  const map = new Map<string, BookingEvent>();
+  for (const e of events) map.set(e.id, e);
+  return (id: string) => map.get(id) || null;
+}
+
 
 
