@@ -67,7 +67,11 @@ Features: Responsive grid layout, consistent spacing, loading skeletons, empty s
 #### 1. BOOKING CALENDAR WIDGET
 Location: `src/components/dashboard/BookingCalendar.tsx`
 
-Features: Month/week/day views, brand-colored events, status indicators, click to view details, and real-time updates.
+Features: Month/week/day views, brand-colored events, status indicators, click to view details, real-time updates.
+
+Accessibility:
+- Keyboard support: Space to pick up/cancel event, Arrow keys to move by day, Enter/Space on a day cell to drop.
+- Screen reader: live announcements on move/drop and on month changes; `aria-grabbed` on events; instructions provided via visually hidden text.
 
 #### 2. REVENUE CHART WIDGET
 Location: `src/components/dashboard/RevenueChart.tsx`
