@@ -33,7 +33,8 @@ export async function GET(req: Request) {
     const status = url.searchParams.get('status');
     let query = admin
       .from('jobs')
-      .select('*, bookings(*), customers:bookings_customer_id_fkey(*), vehicles:bookings_vehicle_id_fkey(*)')
+      // Avoid referencing FK constraint names; nest via table names through bookings
+      .select('*, bookings(*, customers(*), vehicles(*))')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false });
     if (status) query = query.eq('status', status);

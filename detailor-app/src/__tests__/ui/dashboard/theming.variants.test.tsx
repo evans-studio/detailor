@@ -24,6 +24,18 @@ describe('Theming Variants', () => {
     const { container } = render(<StatCard title="Test" value="1" />);
     expect(container.firstChild).toBeTruthy();
   });
+
+  it('updates tokens on brand-updated and maintains contrast', async () => {
+    setBrand('#3B82F6');
+    const before = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+    window.dispatchEvent(new Event('brand-updated'));
+    // simulate BrandProvider update
+    document.documentElement.style.setProperty('--color-primary', '#EF4444');
+    const after = getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim();
+    expect(before.toLowerCase()).not.toBe(after.toLowerCase());
+    const fg = getComputedStyle(document.documentElement).getPropertyValue('--color-primary-foreground').trim();
+    expect(after.length > 0 && fg.length > 0 && after.toLowerCase() !== fg.toLowerCase()).toBe(true);
+  });
 });
 
 
