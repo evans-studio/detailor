@@ -6,6 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardContent } from '@/ui/card';
 import { Button } from '@/ui/button';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { RevenueChart } from '@/components/dashboard/RevenueChart';
+import { BookingCalendar } from '@/components/dashboard/BookingCalendar';
 
 type KPIs = {
   bookings_today: number;
@@ -36,6 +39,19 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/bookings?from=${from}`);
       const json = await res.json();
       return (json.data || json.bookings || []).slice(0, 5);
+    },
+  });
+
+  const { data: revenueSeries = [], isLoading: revenueLoading } = useQuery({
+    queryKey: ['revenue-series', { period: '30d', compare: true }],
+    queryFn: async (): Promise<Array<{ date: string; revenue: number; revenue_prev?: number }>> => {
+      try {
+        const res = await fetch('/api/analytics/revenue?period=30d&compare=1', { cache: 'no-store' });
+        const json = await res.json();
+        return json?.data?.points || json?.points || [];
+      } catch {
+        return [];
+      }
     },
   });
 
@@ -70,14 +86,17 @@ export default function AdminDashboard() {
         <div className="space-y-6">
           {/* KPI Row */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4" data-testid="kpi-row">
-            <MetricCard label="Today's Bookings" value={kpis?.bookings_today ?? 0} testId="kpi-bookings-today" />
-            <MetricCard label="Monthly Revenue" value={`£${(kpis?.revenue_mtd ?? 0).toLocaleString()}`} testId="kpi-revenue-mtd" />
-            <MetricCard label="Total Customers" value={kpis?.total_customers ?? 0} testId="kpi-total-customers" />
-            <MetricCard label="Active Jobs" value={kpis?.active_jobs ?? 0} testId="kpi-active-jobs" />
+            <StatCard title={"Today's Bookings"} value={<span data-testid="kpi-bookings-today-value">{kpis?.bookings_today ?? 0}</span>} />
+            <StatCard title={"Monthly Revenue"} value={<span data-testid="kpi-revenue-mtd-value">{`£${(kpis?.revenue_mtd ?? 0).toLocaleString()}`}</span>} />
+            <StatCard title={"Total Customers"} value={<span data-testid="kpi-total-customers-value">{kpis?.total_customers ?? 0}</span>} />
+            <StatCard title={"Active Jobs"} value={<span data-testid="kpi-active-jobs-value">{kpis?.active_jobs ?? 0}</span>} />
           </div>
 
           {/* Main Content: Upcoming and Activity */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <div>
+              <RevenueChart data={revenueSeries} loading={revenueLoading} />
+            </div>
             <Card data-testid="upcoming-bookings">
               <CardHeader>
                 <CardTitle>Upcoming Bookings</CardTitle>
@@ -147,25 +166,18 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Booking Calendar */}
+          <BookingCalendar
+            events={upcoming.map((b) => ({ id: b.id, title: b.service_name || 'Booking', start: new Date(b.start_at), end: new Date(new Date(b.start_at).getTime() + 60*60*1000), status: 'confirmed' as const }))}
+          />
         </div>
       </RoleGuard>
     </DashboardShell>
   );
 }
 
-function MetricCard({ label, value, testId }: { label: string; value: string | number; testId?: string }) {
-  return (
-    <Card data-testid={testId}
-    >
-      <CardHeader className="pb-2">
-        <CardTitle className="text-[var(--color-text-muted)] text-sm font-medium">{label}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold text-[var(--color-text)]" data-testid={`${testId}-value`}>{value}</div>
-      </CardContent>
-    </Card>
-  );
-}
+// MetricCard removed in favor of reusable StatCard
 
 
 
