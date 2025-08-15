@@ -5,6 +5,8 @@ import { RoleGuard } from '@/components/RoleGuard';
 import { Card, CardHeader, CardTitle, CardContent } from '@/ui/card';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
+import { ChartCard } from '@/components/dashboard/ChartCard';
+import { RevenueChart } from '@/components/dashboard/RevenueChart';
 import { useQuery } from '@tanstack/react-query';
 
 export default function AnalyticsPage() {
@@ -57,40 +59,28 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4" data-testid="analytics-panels">
-            <Card>
-              <CardHeader>
-                <CardTitle data-testid="analytics-revenue">Revenue (last 7 days)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {revenue?.daily_revenue?.length ? (
-                  <div className="space-y-1">
-                    {revenue.daily_revenue.map((r: any) => (
-                      <div key={r.date} className="flex items-center justify-between border-b border-[var(--color-border)] py-1">
-                        <div>{r.date}</div>
-                        <div>£{Math.round(r.revenue)}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : <div className="text-[var(--color-text-muted)]">No data</div>}
-                <div className="pt-3 flex gap-2">
-                  <Button onClick={() => exportCsv('revenue')}>Export CSV</Button>
-                </div>
-              </CardContent>
-            </Card>
+            <div>
+              <RevenueChart
+                data={(revenue?.daily_revenue || []).map((d: any) => ({ date: d.date, revenue: d.revenue }))}
+                loading={!revenue}
+              />
+              <div className="pt-3 flex gap-2">
+                <Button onClick={() => exportCsv('revenue')}>Export CSV</Button>
+              </div>
+            </div>
             <Card>
               <CardHeader>
                 <CardTitle data-testid="analytics-services">Service Popularity</CardTitle>
               </CardHeader>
               <CardContent>
                 {services?.services?.length ? (
-                  <div className="space-y-1">
-                    {services.services.map((s: any) => (
-                      <div key={s.service} className="flex items-center justify-between border-b border-[var(--color-border)] py-1">
-                        <div>{s.service}</div>
-                        <div>£{Math.round(s.revenue)} ({s.bookings} bookings)</div>
-                      </div>
-                    ))}
-                  </div>
+                  <ChartCard
+                    title="Top Services"
+                    type="bar"
+                    categories={services.services.map((s: any) => s.service)}
+                    series={[{ name: 'Revenue', data: services.services.map((s: any) => Math.round(s.revenue)) }]}
+                    height={260}
+                  />
                 ) : <div className="text-[var(--color-text-muted)]">No data</div>}
                 <div className="pt-3 flex gap-2">
                   <Button onClick={() => exportCsv('services')}>Export CSV</Button>
@@ -103,14 +93,13 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 {clv?.customers?.length ? (
-                  <div className="space-y-1">
-                    {clv.customers.slice(0, 10).map((c: any) => (
-                      <div key={c.id} className="flex items-center justify-between border-b border-[var(--color-border)] py-1">
-                        <div>{c.name}</div>
-                        <div>£{Math.round(c.ltv)}</div>
-                      </div>
-                    ))}
-                  </div>
+                  <ChartCard
+                    title="Top Customers by LTV"
+                    type="bar"
+                    categories={clv.customers.slice(0,10).map((c: any) => c.name)}
+                    series={[{ name: 'LTV', data: clv.customers.slice(0,10).map((c: any) => Math.round(c.ltv)) }]}
+                    height={260}
+                  />
                 ) : <div className="text-[var(--color-text-muted)]">No data</div>}
                 <div className="pt-3 flex gap-2">
                   <Button onClick={() => exportCsv('clv')}>Export CSV</Button>
