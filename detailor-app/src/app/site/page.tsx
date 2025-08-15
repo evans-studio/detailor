@@ -251,8 +251,8 @@ function ServiceFocused({ name, brand, content }: { name: string; brand: BrandSe
           <div className="mt-6 grid md:grid-cols-3 gap-6">
             {content!.testimonials!.slice(0,3).map((t, idx) => (
               <div key={idx} className="border rounded-lg p-5">
-                <div className="font-medium text-gray-900">{t.name}</div>
-                <div className="mt-2 text-gray-600">{t.content}</div>
+                <div className="font-medium text-[var(--color-text)]">{t.name}</div>
+                <div className="mt-2 text-[var(--color-text-secondary)]">{t.content}</div>
               </div>
             ))}
           </div>

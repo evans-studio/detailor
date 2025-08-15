@@ -285,10 +285,10 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                   style={{ backgroundColor: `${primaryColor}10` }}
                 >
                   <div className="text-center p-8">
-                    <svg className="w-24 h-24 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-24 h-24 mx-auto mb-4 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                     </svg>
-                    <p className="text-gray-500 text-lg">Professional Service Image</p>
+                    <p className="text-[var(--color-text-muted)] text-lg">Professional Service Image</p>
                   </div>
                 </div>
               )}
@@ -440,10 +440,10 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
         <section id="gallery" className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              <h2 className="text-4xl font-bold text-[var(--color-text)] mb-4">
                 {content.gallery.title || 'Our Work Gallery'}
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-[var(--color-text-secondary)]">
                 See the amazing transformations we deliver for our customers
               </p>
             </div>
