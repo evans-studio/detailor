@@ -20,6 +20,8 @@ describe('BookingCalendar', () => {
     render(<BookingCalendar events={events} onEventDrop={(id, s, e) => onDrop(id, s, e)} currentDate={new Date('2025-01-01T00:00:00Z')} />);
     const eventEl = screen.getByText('Test Event');
     eventEl.focus();
+    // grab with Space, then move one day with ArrowRight
+    fireEvent.keyDown(eventEl, { key: ' ' });
     fireEvent.keyDown(eventEl, { key: 'ArrowRight' });
     expect(onDrop).toHaveBeenCalled();
   });
