@@ -96,7 +96,7 @@ export default function HomepageAdminPage() {
   const canAdvanced = !isStarter;
 
   return (
-    <div className="p-6 space-y-8">
+    <div className="p-6 space-y-8 text-[var(--color-text)]">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Homepage</h1>
         <div className="flex items-center gap-3">
@@ -105,7 +105,7 @@ export default function HomepageAdminPage() {
             Publish
           </label>
           <button
-            className="px-4 py-2 rounded-md bg-blue-600 text-white disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-[var(--color-primary)] text-[var(--color-primary-foreground)] disabled:opacity-50"
             disabled={saveMutation.isPending}
             onClick={() => saveMutation.mutate({
               homepage_template: draft.homepage_template,
@@ -121,12 +121,12 @@ export default function HomepageAdminPage() {
         {(['professional-clean','service-focused','local-expert'] as TemplateKey[]).map(tpl => (
           <button
             key={tpl}
-            className={`border rounded-lg p-4 text-left ${draft.homepage_template === tpl ? 'border-blue-600 ring-2 ring-blue-100' : 'border-gray-200'}`}
+            className={`border rounded-lg p-4 text-left ${draft.homepage_template === tpl ? 'border-[var(--color-primary)] ring-2 ring-[var(--color-primary-100)]' : 'border-[var(--color-border)]'}`}
             onClick={() => set('homepage_template', tpl)}
           >
             <div className="font-medium capitalize">{tpl.replace('-', ' ')}</div>
-            <div className="mt-2 text-xs text-gray-500">Click to select</div>
-            <div className="mt-3 h-28 bg-gray-50 rounded-md grid place-items-center text-gray-400">Preview</div>
+            <div className="mt-2 text-xs text-[var(--color-text-muted)]">Click to select</div>
+            <div className="mt-3 h-28 bg-[var(--color-muted)] rounded-md grid place-items-center text-[var(--color-text-muted)]">Preview</div>
           </button>
         ))}
       </section>
@@ -136,19 +136,19 @@ export default function HomepageAdminPage() {
           <h2 className="font-semibold">Content</h2>
           <div className="grid gap-3">
             <label className="text-sm">Hero tagline
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.hero?.tagline || ''}
+              <input className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]" value={draft.homepage_content?.hero?.tagline || ''}
                 onChange={e => updateContent(['hero','tagline'], e.target.value)} />
             </label>
             <label className="text-sm">Hero description
-              <textarea className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.hero?.description || ''}
+              <textarea className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]" value={draft.homepage_content?.hero?.description || ''}
                 onChange={e => updateContent(['hero','description'], e.target.value)} />
             </label>
             <label className="text-sm">CTA text
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.hero?.cta_text || ''}
+              <input className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]" value={draft.homepage_content?.hero?.cta_text || ''}
                 onChange={e => updateContent(['hero','cta_text'], e.target.value)} />
             </label>
             <label className="text-sm">Hero image URL
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.hero?.hero_image_url || ''}
+              <input className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]" value={draft.homepage_content?.hero?.hero_image_url || ''}
                 onChange={e => updateContent(['hero','hero_image_url'], e.target.value)} />
             </label>
           </div>
@@ -156,15 +156,15 @@ export default function HomepageAdminPage() {
           <div className="grid gap-3 mt-6">
             <h3 className="font-medium">About</h3>
             <label className="text-sm">Title
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.about?.title || ''}
+              <input className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]" value={draft.homepage_content?.about?.title || ''}
                 onChange={e => updateContent(['about','title'], e.target.value)} />
             </label>
             <label className="text-sm">Content
-              <textarea className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.about?.content || ''}
+              <textarea className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]" value={draft.homepage_content?.about?.content || ''}
                 onChange={e => updateContent(['about','content'], e.target.value)} />
             </label>
             <label className="text-sm">Image URL
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.homepage_content?.about?.image_url || ''}
+              <input className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]" value={draft.homepage_content?.about?.image_url || ''}
                 onChange={e => updateContent(['about','image_url'], e.target.value)} />
             </label>
           </div>
@@ -172,7 +172,7 @@ export default function HomepageAdminPage() {
           <div className="grid gap-3 mt-6">
             <h3 className="font-medium">Services</h3>
             <label className="text-sm">Featured (comma-separated)
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={(draft.homepage_content?.services?.featured || []).join(', ')}
+              <input className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]" value={(draft.homepage_content?.services?.featured || []).join(', ')}
                 onChange={e => updateContent(['services','featured'], e.target.value.split(',').map(s => s.trim()).filter(Boolean))} />
             </label>
             <label className="text-sm flex items-center gap-2">
@@ -192,7 +192,7 @@ export default function HomepageAdminPage() {
               </label>
             ))}
             <label className="text-sm">Service radius (km)
-              <input type="number" className="mt-1 w-full border rounded-md px-3 py-2"
+              <input type="number" className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]"
                 value={draft.homepage_content?.contact?.service_area_radius ?? 0}
                 onChange={e => updateContent(['contact','service_area_radius'], Number(e.target.value))} />
             </label>
@@ -203,7 +203,7 @@ export default function HomepageAdminPage() {
           <h2 className="font-semibold">Brand</h2>
           <div className="grid gap-3">
             <label className="text-sm">Logo URL
-              <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.brand_settings?.logo_url || ''}
+              <input className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]" value={draft.brand_settings?.logo_url || ''}
                 onChange={e => updateBrand('logo_url', e.target.value)} />
             </label>
             <form className="flex items-center gap-3" onSubmit={async e => {
@@ -217,10 +217,10 @@ export default function HomepageAdminPage() {
               if (res.ok && (json.success ?? true)) updateBrand('logo_url', json.data?.url || json.url);
             }}>
               <input type="file" name="file" accept="image/*" className="text-sm" />
-              <button className="px-3 py-1.5 rounded-md border">Upload</button>
+              <button className="px-3 py-1.5 rounded-md border border-[var(--color-border)] hover:bg-[var(--color-hover-surface)]">Upload</button>
             </form>
             <label className="text-sm">Primary color
-              <input type="color" className="mt-1 h-10 w-16" value={draft.brand_settings?.primary_color || '#1a365d'}
+              <input type="color" className="mt-1 h-10 w-16" value={draft.brand_settings?.primary_color || '#3B82F6'}
                 onChange={e => updateBrand('primary_color', e.target.value)} />
             </label>
             {canAdvanced && (
@@ -234,7 +234,7 @@ export default function HomepageAdminPage() {
                     onChange={e => updateBrand('accent_color', e.target.value)} />
                 </label>
                 <label className="text-sm">Font family
-                  <input className="mt-1 w-full border rounded-md px-3 py-2" value={draft.brand_settings?.font_family || 'Inter'}
+                  <input className="mt-1 w-full border border-[var(--color-border)] rounded-md px-3 py-2 bg-[var(--color-surface)]" value={draft.brand_settings?.font_family || 'Inter'}
                     onChange={e => updateBrand('font_family', e.target.value)} />
                 </label>
               </>
@@ -244,11 +244,11 @@ export default function HomepageAdminPage() {
           <div className="mt-8">
             <h2 className="font-semibold">Live Preview</h2>
             <iframe
-              className="mt-2 w-full aspect-[16/10] border rounded-lg"
+              className="mt-2 w-full aspect-[16/10] border border-[var(--color-border)] rounded-lg"
               src={`/site?subdomain=${encodeURIComponent(draft.subdomain || '')}`}
             />
             {!draft.homepage_published && (
-              <p className="mt-2 text-xs text-gray-500">Preview only. Publish to go live.</p>
+              <p className="mt-2 text-xs text-[var(--color-text-muted)]">Preview only. Publish to go live.</p>
             )}
           </div>
         </div>
