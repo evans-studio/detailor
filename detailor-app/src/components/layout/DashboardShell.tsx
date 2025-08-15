@@ -89,13 +89,12 @@ export function DashboardShell({
           onMobileClose={() => setMobileMenuOpen(false)}
         />
         
-        {/* Main Content Area - Mobile Optimized */}
+        {/* Main Content Area - rely on flex layout; no margin-left shifting */}
         <main 
           id="main-content"
           className={`
             flex-1 overflow-auto bg-[var(--color-bg)]
-            transition-all duration-300 ease-out
-            ${sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'} 
+            transition-[padding,width] duration-300 ease-out
           `}
           role="main"
           aria-label="Main content"
@@ -277,7 +276,7 @@ function EnterpriseSidebar({
         ${collapsed ? 'w-16' : 'w-64'}
         ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}
         md:translate-x-0 md:relative md:top-0 md:shadow-sm
-      `}>
+      `} aria-label="Sidebar navigation">
         <nav className="p-3 sm:p-4 space-y-1 h-full overflow-y-auto">
           {items.map((item) => {
             const active = pathname.startsWith(item.path);
