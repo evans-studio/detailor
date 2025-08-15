@@ -149,12 +149,12 @@ export const brandUtils = {
    * Get a consistent button class string
    */
   getButtonClasses: (variant: 'primary' | 'secondary' | 'ghost' = 'primary', size: 'sm' | 'md' | 'lg' = 'md') => {
-    const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-250 focus:outline-none focus:ring-3 focus:ring-blue-500/30';
+    const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-250 focus:outline-none focus:ring-3 focus:ring-[var(--color-primary)]/30';
     
     const variantClasses = {
-      primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transform hover:-translate-y-0.5',
-      secondary: 'bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 shadow-sm hover:shadow-md',
-      ghost: 'text-blue-600 hover:bg-blue-50 hover:text-blue-700'
+      primary: 'bg-[var(--color-primary)] hover:bg-[var(--color-hover-primary)] text-[var(--color-primary-foreground)] shadow-md hover:shadow-lg transform hover:-translate-y-0.5',
+      secondary: 'bg-[var(--color-surface)] hover:bg-[var(--color-hover-surface)] text-[var(--color-text)] border border-[var(--color-border)] shadow-sm hover:shadow-md',
+      ghost: 'text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]'
     };
 
     const sizeClasses = {
@@ -170,8 +170,8 @@ export const brandUtils = {
    * Get a consistent input class string
    */
   getInputClasses: (hasError = false) => {
-    const baseClasses = 'w-full h-11 px-4 rounded-lg border bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:outline-none focus:ring-3 focus:ring-blue-500/30';
-    const errorClasses = hasError ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500';
+    const baseClasses = 'w-full h-11 px-4 rounded-lg border bg-[var(--color-surface)] text-[var(--color-text)] placeholder-[var(--color-text-muted)] transition-colors duration-200 focus:outline-none focus:ring-3 focus:ring-[var(--color-primary)]/30';
+    const errorClasses = hasError ? 'border-[var(--color-error-300)] focus:border-[var(--color-error-500)]' : 'border-[var(--color-border)] focus:border-[var(--color-primary)]';
     
     return `${baseClasses} ${errorClasses}`;
   },
@@ -180,7 +180,7 @@ export const brandUtils = {
    * Get a consistent card class string
    */
   getCardClasses: (interactive = false) => {
-    const baseClasses = 'bg-white rounded-2xl border border-gray-200 shadow-md';
+    const baseClasses = 'bg-[var(--color-surface)] rounded-2xl border border-[var(--color-border)] shadow-md';
     const interactiveClasses = interactive ? 'hover:shadow-lg transition-shadow duration-250 cursor-pointer' : '';
     
     return `${baseClasses} ${interactiveClasses}`;
@@ -200,8 +200,8 @@ export const brandUtils = {
     const colors = {
       success: detailorTheme.colors.success,
       warning: detailorTheme.colors.warning,
-      error: '#EF4444',
-      info: detailorTheme.colors.brand.primary,
+      error: 'var(--color-error)',
+      info: 'var(--color-primary)'
     };
     return colors[status];
   }

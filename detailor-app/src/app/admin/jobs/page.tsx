@@ -86,7 +86,7 @@ export default function AdminJobsPage() {
               {isLoading ? (
                 <div className="space-y-3">
                   {[...Array(3)].map((_,i) => (
-                    <div key={i} className="h-10 bg-gray-100 rounded animate-pulse" />
+                    <div key={i} className="h-10 bg-[var(--color-active-surface)] rounded animate-pulse" />
                   ))}
                 </div>
               ) : error ? (

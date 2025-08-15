@@ -175,12 +175,12 @@ export const brandValidation = {
    */
   getComponentClasses: {
     button: (variant: 'primary' | 'secondary' | 'ghost' = 'primary', size: 'sm' | 'md' | 'lg' = 'md') => {
-      const baseClasses = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-3 focus:ring-blue-500/30 button-press';
+      const baseClasses = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-3 focus:ring-[var(--color-primary)]/30 button-press';
       
       const variantClasses = {
-        primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg hover:-translate-y-0.5',
-        secondary: 'bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 shadow-sm hover:shadow-md',
-        ghost: 'text-blue-600 hover:bg-blue-50 hover:text-blue-700'
+        primary: 'bg-[var(--color-primary)] hover:bg-[var(--color-hover-primary)] text-[var(--color-primary-foreground)] shadow-md hover:shadow-lg hover:-translate-y-0.5',
+        secondary: 'bg-[var(--color-surface)] hover:bg-[var(--color-hover-surface)] text-[var(--color-text)] border border-[var(--color-border)] shadow-sm hover:shadow-md',
+        ghost: 'text-[var(--color-primary)] hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]'
       };
 
       const sizeClasses = {
@@ -193,7 +193,7 @@ export const brandValidation = {
     },
 
     card: (variant: 'default' | 'elevated' | 'interactive' = 'default') => {
-      const baseClasses = 'bg-white rounded-xl border border-gray-200';
+      const baseClasses = 'bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)]';
       
       const variantClasses = {
         default: 'shadow-sm',
@@ -205,8 +205,8 @@ export const brandValidation = {
     },
 
     input: (hasError = false) => {
-      const baseClasses = 'w-full h-11 px-4 rounded-xl border bg-white text-gray-900 placeholder-gray-500 transition-all duration-200 focus:outline-none focus:ring-3 focus:ring-blue-500/30';
-      const errorClasses = hasError ? 'border-red-300 focus:border-red-500' : 'border-gray-300 focus:border-blue-500';
+      const baseClasses = 'w-full h-11 px-4 rounded-xl border bg-[var(--color-surface)] text-[var(--color-text)] placeholder-[var(--color-text-muted)] transition-all duration-200 focus:outline-none focus:ring-3 focus:ring-[var(--color-primary)]/30';
+      const errorClasses = hasError ? 'border-[var(--color-error-300)] focus:border-[var(--color-error-500)]' : 'border-[var(--color-border)] focus:border-[var(--color-primary)]';
       
       return `${baseClasses} ${errorClasses}`;
     }

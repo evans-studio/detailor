@@ -44,10 +44,10 @@ export function AuthGuard({
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
         <div className="text-center">
           <LoadingSkeleton rows={3} />
-          <p className="mt-4 text-sm text-gray-600">Loading...</p>
+          <p className="mt-4 text-sm text-[var(--color-text-secondary)]">Loading...</p>
         </div>
       </div>
     );
