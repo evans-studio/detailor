@@ -41,9 +41,9 @@ describe('AdminDashboard', () => {
     const bookingsKPI = await screen.findByTestId('kpi-bookings-today-value');
     // Focus on outcome: shows a numeric value
     expect(bookingsKPI.textContent).toMatch(/^[0-9]+$/);
-    expect(await screen.findByTestId('kpi-revenue-mtd')).toBeInTheDocument();
-    expect(await screen.findByTestId('kpi-total-customers')).toBeInTheDocument();
-    expect(await screen.findByTestId('kpi-active-jobs')).toBeInTheDocument();
+    expect(await screen.findByTestId('kpi-revenue-mtd-value')).toBeInTheDocument();
+    expect(await screen.findByTestId('kpi-total-customers-value')).toBeInTheDocument();
+    expect(await screen.findByTestId('kpi-active-jobs-value')).toBeInTheDocument();
     await screen.findByTestId('upcoming-bookings');
     await screen.findByTestId('recent-activity');
     await screen.findByTestId('live-jobs');

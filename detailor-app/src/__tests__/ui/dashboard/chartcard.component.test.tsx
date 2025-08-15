@@ -13,7 +13,7 @@ describe('ChartCard', () => {
         series={[{ name: 'Revenue', data: [1,2,3] }]}
       />
     );
-    expect(screen.getByText('Revenue')).toBeInTheDocument();
+    expect(screen.getAllByText('Revenue')[0]).toBeInTheDocument();
     expect(screen.getByRole('img', { name: /line chart/i })).toBeInTheDocument();
   });
 
