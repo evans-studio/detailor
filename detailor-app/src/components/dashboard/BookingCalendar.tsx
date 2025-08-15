@@ -1,0 +1,103 @@
+"use client";
+import * as React from 'react';
+
+export type BookingEvent = {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+};
+
+export interface BookingCalendarProps {
+  events: BookingEvent[];
+  onEventDrop?: (eventId: string, start: Date, end: Date) => void;
+  onEventClick?: (eventId: string) => void;
+  currentDate?: Date;
+  onDateChange?: (date: Date) => void;
+}
+
+const statusToClasses: Record<BookingEvent['status'], string> = {
+  pending: 'bg-[var(--color-warning-50)] border-[var(--color-warning-400)] text-[var(--color-warning-600)]',
+  confirmed: 'bg-[var(--color-primary-50)] border-[var(--color-primary-400)] text-[var(--color-primary-700)]',
+  in_progress: 'bg-[var(--color-info)]/10 border-[var(--color-info)] text-[var(--color-info)]',
+  completed: 'bg-[var(--color-success-50)] border-[var(--color-success-400)] text-[var(--color-success-600)]',
+  cancelled: 'bg-[var(--color-muted)] border-[var(--color-border)] text-[var(--color-text-muted)]',
+};
+
+export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate = new Date(), onDateChange }: BookingCalendarProps) {
+  const [date, setDate] = React.useState(currentDate);
+  React.useEffect(() => setDate(currentDate), [currentDate]);
+  const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+  const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  const days: Date[] = [];
+  for (let d = new Date(startOfMonth); d <= endOfMonth; d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1)) {
+    days.push(new Date(d));
+  }
+  const eventsByDay = groupByDay(events);
+
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="text-[var(--color-text)] font-[var(--font-weight-semibold)]">Booking Calendar</div>
+        <div className="flex items-center gap-2">
+          <button className="px-2 py-1 rounded border border-[var(--color-border)] hover:bg-[var(--color-hover-surface)]" onClick={() => changeMonth(-1)} aria-label="Previous month">←</button>
+          <div className="text-[var(--color-text)]">{date.toLocaleString(undefined, { month: 'long', year: 'numeric' })}</div>
+          <button className="px-2 py-1 rounded border border-[var(--color-border)] hover:bg-[var(--color-hover-surface)]" onClick={() => changeMonth(1)} aria-label="Next month">→</button>
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-2">
+        {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => (
+          <div key={d} className="text-[var(--color-text-muted)] text-center text-[var(--font-size-sm)]">{d}</div>
+        ))}
+        {days.map((d) => (
+          <div key={d.toISOString()} className="min-h-[100px] border border-[var(--color-border)] rounded-[var(--radius-sm)] p-1">
+            <div className="text-[var(--color-text-muted)] text-[var(--font-size-xs)] text-right">{d.getDate()}</div>
+            <div className="space-y-1">
+              {(eventsByDay[dateKey(d)] || []).map((e) => (
+                <div
+                  key={e.id}
+                  className={`text-[var(--font-size-xs)] p-1 rounded border ${statusToClasses[e.status]} cursor-pointer`}
+                  onClick={() => onEventClick?.(e.id)}
+                  draggable
+                  onDragStart={(ev) => ev.dataTransfer.setData('text/plain', e.id)}
+                  onDragOver={(ev) => ev.preventDefault()}
+                  onDrop={(ev) => {
+                    ev.preventDefault();
+                    const id = ev.dataTransfer.getData('text/plain');
+                    const start = new Date(d);
+                    const end = new Date(start.getTime() + 60 * 60 * 1000);
+                    onEventDrop?.(id, start, end);
+                  }}
+                  aria-label={`${e.title}`}
+                >
+                  {e.title}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  function changeMonth(delta: number) {
+    const next = new Date(date.getFullYear(), date.getMonth() + delta, 1);
+    setDate(next);
+    onDateChange?.(next);
+  }
+}
+
+function dateKey(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+
+function groupByDay(events: BookingEvent[]) {
+  return events.reduce<Record<string, BookingEvent[]>>((acc, e) => {
+    const key = dateKey(e.start);
+    (acc[key] ||= []).push(e);
+    return acc;
+  }, {});
+}
+
+
