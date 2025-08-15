@@ -13,7 +13,7 @@
     "test:all": "vitest",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "precommit:colors": "git diff --cached --name-only | xargs -I {} sh -c 'grep -nE \"text-(gray|slate|zinc|neutral|stone)-[0-9]{2,3}|bg-(blue|indigo|red|green|emerald|sky|slate|gray|zinc|neutral|stone|amber|yellow|orange|violet|purple|pink|rose)-[0-9]{2,3}|border-(gray|slate|zinc|neutral|stone)-[0-9]{2,3}\" {} && echo \"[warn] Hardcoded Tailwind color found in {}\" || true'"
+    "precommit:colors": "set -e; files=$(git diff --cached --name-only); if [ -n \"$files\" ]; then echo \"[check] scanning staged files for hardcoded Tailwind colors...\"; echo \"$files\" | xargs -I {} sh -c 'if grep -nE \"text-(gray|slate|zinc|neutral|stone)-[0-9]{2,3}|bg-(blue|indigo|red|green|emerald|sky|slate|gray|zinc|neutral|stone|amber|yellow|orange|violet|purple|pink|rose)-[0-9]{2,3}|border-(gray|slate|zinc|neutral|stone)-[0-9]{2,3}\" {} >/dev/null 2>&1; then echo \"[error] Hardcoded Tailwind color found in {}\"; exit 1; fi'; fi; echo \"[ok] no hardcoded colors in staged files\""
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.11",
