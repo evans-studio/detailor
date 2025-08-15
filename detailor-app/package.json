@@ -12,7 +12,8 @@
     "test:coverage": "vitest --project=unit --coverage",
     "test:all": "vitest",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "precommit:colors": "git diff --cached --name-only | xargs -I {} sh -c 'grep -nE \"text-(gray|slate|zinc|neutral|stone)-[0-9]{2,3}|bg-(blue|indigo|red|green|emerald|sky|slate|gray|zinc|neutral|stone|amber|yellow|orange|violet|purple|pink|rose)-[0-9]{2,3}|border-(gray|slate|zinc|neutral|stone)-[0-9]{2,3}\" {} && echo \"[warn] Hardcoded Tailwind color found in {}\" || true'"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.11",
