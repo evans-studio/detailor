@@ -197,7 +197,7 @@ function EnterpriseHeader({
           rounded-xl transition-all duration-200
           focus-within:bg-[var(--color-surface)] focus-within:border-[var(--color-primary)] focus-within:shadow-md
         ">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607z" />
           </svg>
           <input
@@ -292,7 +292,7 @@ function EnterpriseSidebar({
                   group flex items-center gap-3 px-3 py-3 sm:py-3 rounded-xl
                   text-sm font-medium
                   transition-all duration-200 ease-out
-                  min-h-[44px] // Touch-friendly minimum height
+                  min-h-[44px]
                   ${active 
                     ? 'bg-[var(--color-primary)] text-[var(--color-primary-foreground)] shadow-md transform scale-[1.02]' 
                     : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-hover-surface)] hover:text-[var(--color-text)] active:bg-[var(--color-active-surface)]'
@@ -313,7 +313,7 @@ function EnterpriseSidebar({
                   </span>
                 )}
                 {active && !collapsed && (
-                  <div className="ml-auto w-2 h-2 rounded-full bg-white/80" />
+                  <div className="ml-auto w-2 h-2 rounded-full bg-[var(--color-primary-foreground)]/80" />
                 )}
               </Link>
             );

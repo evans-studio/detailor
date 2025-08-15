@@ -171,7 +171,7 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
       <div className="flex flex-col items-center">
         <div 
           className="flex items-center justify-center w-10 h-10 rounded-full shadow-sm transition-all duration-200 group-hover:scale-110"
-          style={{ backgroundColor: activityColor, color: 'white' }}
+          style={{ backgroundColor: activityColor, color: 'var(--color-inverse-text)' }}
         >
           <IconComponent />
         </div>
@@ -208,7 +208,7 @@ function ActivityItemComponent({ activity, showAvatar = true }: {
             {activity.metadata && (
               <div className="flex flex-wrap gap-3 text-xs text-[var(--color-text-muted)]">
                 {activity.metadata.bookingReference && (
-                  <span className="bg-gray-100 px-2 py-1 rounded font-medium">
+                  <span className="bg-[var(--color-muted)] px-2 py-1 rounded font-medium">
                     {activity.metadata.bookingReference}
                   </span>
                 )}
@@ -296,23 +296,23 @@ export function ActivityFeed({
   }
 
   return (
-    <Card className={twMerge('border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 bg-white', className)}>
+    <Card className={twMerge('border-[var(--color-border)] shadow-sm hover:shadow-md transition-shadow duration-200 bg-[var(--color-surface)]', className)}>
       {showHeader && (
-        <CardHeader className="flex flex-row items-center justify-between border-b border-gray-100 bg-gray-50">
+        <CardHeader className="flex flex-row items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-muted)]">
           <div className="flex items-center gap-3">
-            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+            <CardTitle className="text-lg font-semibold text-[var(--color-text)] flex items-center gap-2">
+              <div className="w-2 h-2 bg-[var(--color-success)] rounded-full"></div>
               {title}
             </CardTitle>
             {unreadCount > 0 && (
-              <Badge variant="primary" size="sm" className="bg-blue-100 text-blue-700 border-blue-200 font-medium px-2.5 py-1">
+              <Badge variant="primary" size="sm" className="bg-[var(--color-primary-100)] text-[var(--color-primary-700)] border-[var(--color-primary-200)] font-medium px-2.5 py-1">
                 {unreadCount} new
               </Badge>
             )}
           </div>
           <div className="flex gap-2">
             {unreadCount > 0 && onMarkAllRead && (
-              <Button size="sm" intent="ghost" onClick={onMarkAllRead} className="text-gray-600 hover:text-gray-900 hover:bg-gray-100">
+              <Button size="sm" intent="ghost" onClick={onMarkAllRead} className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-hover-surface)]">
                 Mark all read
               </Button>
             )}
@@ -323,13 +323,13 @@ export function ActivityFeed({
       <CardContent className={`p-6 ${showHeader ? '' : 'pt-6'}`}>
         {displayedActivities.length === 0 ? (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-gray-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[var(--color-muted)] flex items-center justify-center">
+              <svg className="w-8 h-8 text-[var(--color-text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
-            <p className="text-gray-600 text-sm">
+            <h3 className="text-lg font-medium text-[var(--color-text)] mb-2">No activity yet</h3>
+            <p className="text-[var(--color-text-secondary)] text-sm">
               Recent activity will appear here
             </p>
           </div>
@@ -352,8 +352,8 @@ export function ActivityFeed({
 
         {/* Load More Button */}
         {maxItems && activities.length > maxItems && onLoadMore && (
-          <div className="mt-6 text-center border-t border-gray-100 pt-4">
-            <Button intent="ghost" size="sm" onClick={onLoadMore} className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium">
+          <div className="mt-6 text-center border-t border-[var(--color-border)] pt-4">
+            <Button intent="ghost" size="sm" onClick={onLoadMore} className="text-[var(--color-primary)] hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] font-medium">
               Load More Activity →
             </Button>
           </div>
@@ -366,30 +366,30 @@ export function ActivityFeed({
 // Modern Activity Feed Loading Skeleton
 export function ActivityFeedSkeleton({ className }: { className?: string }) {
   return (
-    <Card className={twMerge('border-gray-200 bg-white', className)}>
-      <CardHeader className="border-b border-gray-100 bg-gray-50">
+    <Card className={twMerge('border-[var(--color-border)] bg-[var(--color-surface)]', className)}>
+      <CardHeader className="border-b border-[var(--color-border)] bg-[var(--color-muted)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-gray-300 rounded-full animate-pulse" />
-            <div className="h-6 bg-gray-300 rounded w-32 animate-pulse" />
+            <div className="w-2 h-2 bg-[var(--color-muted)] rounded-full animate-pulse" />
+            <div className="h-6 bg-[var(--color-muted)] rounded w-32 animate-pulse" />
           </div>
-          <div className="h-5 bg-gray-200 rounded w-16 animate-pulse" />
+          <div className="h-5 bg-[var(--color-muted)] rounded w-16 animate-pulse" />
         </div>
       </CardHeader>
       <CardContent className="p-6">
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="flex gap-4 p-4 rounded-xl animate-pulse">
-              <div className="w-10 h-10 bg-gray-200 rounded-full" />
+              <div className="w-10 h-10 bg-[var(--color-active-surface)] rounded-full" />
               <div className="flex-1 space-y-3">
-                <div className="h-4 bg-gray-200 rounded w-3/4" />
-                <div className="h-3 bg-gray-200 rounded w-1/2" />
+                <div className="h-4 bg-[var(--color-active-surface)] rounded w-3/4" />
+                <div className="h-3 bg-[var(--color-active-surface)] rounded w-1/2" />
                 <div className="flex gap-2">
-                  <div className="h-3 bg-gray-200 rounded w-16" />
-                  <div className="h-3 bg-gray-200 rounded w-12" />
+                  <div className="h-3 bg-[var(--color-active-surface)] rounded w-16" />
+                  <div className="h-3 bg-[var(--color-active-surface)] rounded w-12" />
                 </div>
               </div>
-              <div className="h-3 bg-gray-200 rounded w-12" />
+              <div className="h-3 bg-[var(--color-active-surface)] rounded w-12" />
             </div>
           ))}
         </div>

@@ -254,7 +254,7 @@ export default function AdminServicesPage() {
                     <Button 
                       type="submit" 
                       disabled={createServiceMutation.isPending}
-                      className="bg-blue-600 hover:bg-blue-700"
+                      className="bg-[var(--color-primary)] hover:bg-[var(--color-hover-primary)] text-[var(--color-primary-foreground)]"
                       data-testid="create-service-button"
                     >
                       {createServiceMutation.isPending ? 'Creating...' : 'Create Service'}

@@ -68,7 +68,7 @@ export function PerformanceDevTools() {
       {/* Toggle Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 right-4 z-[9999] w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="fixed bottom-4 right-4 z-[9999] w-12 h-12 bg-[var(--color-primary)] text-[var(--color-primary-foreground)] rounded-full shadow-lg hover:bg-[var(--color-hover-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2"
         aria-label="Open performance dev tools"
       >
         ⚡
@@ -76,13 +76,13 @@ export function PerformanceDevTools() {
 
       {/* Dev Tools Panel */}
       {isOpen && (
-        <div className="fixed bottom-20 right-4 z-[9999] w-80 bg-white border border-gray-200 rounded-lg shadow-xl">
-          <div className="p-4 bg-gray-50 rounded-t-lg border-b border-gray-200">
+        <div className="fixed bottom-20 right-4 z-[9999] w-80 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg shadow-xl">
+          <div className="p-4 bg-[var(--color-muted)] rounded-t-lg border-b border-[var(--color-border)]">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900">Performance Tools</h3>
+              <h3 className="font-semibold text-[var(--color-text)]">Performance Tools</h3>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                className="text-[var(--color-text-muted)] hover:text-[var(--color-text)] focus:outline-none"
                 aria-label="Close dev tools"
               >
                 ×
@@ -92,13 +92,13 @@ export function PerformanceDevTools() {
           
           <div className="p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-700">Web Vitals Monitoring</span>
+              <span className="text-sm text-[var(--color-text)]">Web Vitals Monitoring</span>
               <button
                 onClick={togglePerformanceMonitoring}
                 className={`px-3 py-1 text-xs rounded-full ${
                   isEnabled 
-                    ? 'bg-green-100 text-green-800' 
-                    : 'bg-gray-100 text-gray-600'
+                    ? 'bg-[var(--color-success-100)] text-[var(--color-success-700)]' 
+                    : 'bg-[var(--color-muted)] text-[var(--color-text-muted)]'
                 }`}
               >
                 {isEnabled ? 'ON' : 'OFF'}
@@ -107,13 +107,13 @@ export function PerformanceDevTools() {
             
             <button
               onClick={analyzeBundleSize}
-              className="w-full px-3 py-2 text-sm bg-blue-50 text-blue-700 rounded border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-sm bg-[var(--color-primary-50)] text-[var(--color-primary-700)] rounded border border-[var(--color-primary-200)] hover:bg-[var(--color-primary-100)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
             >
               Analyze Bundle Size
             </button>
             
-            <div className="pt-2 border-t border-gray-200">
-              <p className="text-xs text-gray-500">
+            <div className="pt-2 border-t border-[var(--color-border)]">
+              <p className="text-xs text-[var(--color-text-muted)]">
                 Check the browser console for detailed metrics
               </p>
             </div>
