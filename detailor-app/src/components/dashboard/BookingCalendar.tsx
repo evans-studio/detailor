@@ -37,7 +37,7 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
   const eventsByDay = groupByDay(events);
 
   return (
-    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+    <div className="rounded-[var(--radius-lg)] border border-[var(--color-border)] bg-[var(--color-surface)] p-4" role="region" aria-label="Booking calendar">
       <div className="flex items-center justify-between mb-3">
         <div className="text-[var(--color-text)] font-[var(--font-weight-semibold)]">Booking Calendar</div>
         <div className="flex items-center gap-2">
@@ -46,19 +46,36 @@ export function BookingCalendar({ events, onEventDrop, onEventClick, currentDate
           <button className="px-2 py-1 rounded border border-[var(--color-border)] hover:bg-[var(--color-hover-surface)]" onClick={() => changeMonth(1)} aria-label="Next month">→</button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-2" role="grid" aria-label="Month grid">
         {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => (
-          <div key={d} className="text-[var(--color-text-muted)] text-center text-[var(--font-size-sm)]">{d}</div>
+          <div key={d} className="text-[var(--color-text-muted)] text-center text-[var(--font-size-sm)]" role="columnheader">{d}</div>
         ))}
         {days.map((d) => (
-          <div key={d.toISOString()} className="min-h-[100px] border border-[var(--color-border)] rounded-[var(--radius-sm)] p-1">
-            <div className="text-[var(--color-text-muted)] text-[var(--font-size-xs)] text-right">{d.getDate()}</div>
+          <div key={d.toISOString()} className="min-h-[100px] border border-[var(--color-border)] rounded-[var(--radius-sm)] p-1" role="gridcell" aria-label={d.toDateString()}>
+            <div className="text-[var(--color-text-muted)] text-[var(--font-size-xs)] text-right" aria-hidden>{d.getDate()}</div>
             <div className="space-y-1">
               {(eventsByDay[dateKey(d)] || []).map((e) => (
                 <div
                   key={e.id}
                   className={`text-[var(--font-size-xs)] p-1 rounded border ${statusToClasses[e.status]} cursor-pointer`}
                   onClick={() => onEventClick?.(e.id)}
+                  tabIndex={0}
+                  onKeyDown={(ev) => {
+                    if (ev.key === 'Enter' || ev.key === ' ') {
+                      ev.preventDefault();
+                      onEventClick?.(e.id);
+                    }
+                    // Arrow keys move by day
+                    if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
+                      ev.preventDefault();
+                      const delta = ev.key === 'ArrowRight' ? 1 : -1;
+                      const newStart = new Date(e.start);
+                      newStart.setDate(newStart.getDate() + delta);
+                      const duration = e.end.getTime() - e.start.getTime();
+                      const newEnd = new Date(newStart.getTime() + duration);
+                      onEventDrop?.(e.id, newStart, newEnd);
+                    }
+                  }}
                   draggable
                   onDragStart={(ev) => ev.dataTransfer.setData('text/plain', e.id)}
                   onDragOver={(ev) => ev.preventDefault()}
