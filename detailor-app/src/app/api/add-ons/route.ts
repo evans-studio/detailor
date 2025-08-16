@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
 import { getSupabaseAdmin as getSbAdmin } from '@/lib/supabaseAdmin';
-import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
+import { createSuccessResponse as success, createErrorResponse as failure, API_ERROR_CODES as CODES } from '@/lib/api-response';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const serviceId = req.nextUrl.searchParams.get('service_id') || '';
     const tenantId = req.nextUrl.searchParams.get('tenant_id') || '';
     if (!tenantId) {
-      return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'tenant_id is required', undefined, 400);
+      return failure(CODES.INVALID_INPUT, 'tenant_id is required', undefined, 400);
     }
     const supabase = getSbAdmin();
     if (!serviceId) {
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
         .eq('tenant_id', tenantId)
         .order('name');
       if (error) throw error;
-      return createSuccessResponse({ add_ons: data || [] });
+      return success({ add_ons: data || [] });
     }
     // Join service_addons
     const { data, error } = await supabase
@@ -29,9 +29,9 @@ export async function GET(req: NextRequest) {
       .eq('service_id', serviceId);
     if (error) throw error;
     const addOns = (data || []).map((row: any) => row.addon).filter(Boolean);
-    return createSuccessResponse({ add_ons: addOns });
+    return success({ add_ons: addOns });
   } catch (e) {
-    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/add-ons' }, 500);
+    return failure(CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/add-ons' }, 500);
   }
 }
 
