@@ -1,3 +1,29 @@
+import { NextRequest } from 'next/server';
+import { getSupabaseAdmin as getSbAdmin } from '@/lib/supabaseAdmin';
+import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
+
+export const dynamic = 'force-dynamic';
+
+export async function GET(req: NextRequest) {
+  try {
+    const tenantId = req.nextUrl.searchParams.get('tenant_id') || '';
+    if (!tenantId) {
+      return createErrorResponse(API_ERROR_CODES.INVALID_INPUT, 'tenant_id is required', undefined, 400);
+    }
+    const supabase = getSbAdmin();
+    const { data, error } = await supabase
+      .from('services')
+      .select('id,name,description,base_price,base_duration_min,category,visible')
+      .eq('tenant_id', tenantId)
+      .eq('visible', true)
+      .order('name');
+    if (error) throw error;
+    return createSuccessResponse({ services: data || [] });
+  } catch (e) {
+    return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/services' }, 500);
+  }
+}
+
 import { getUserFromRequest } from '@/lib/authServer';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
