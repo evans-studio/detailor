@@ -44,6 +44,9 @@ export default function NewBookingPage() {
   const [addresses, setAddresses] = React.useState<Array<{ id: string; label?: string; address_line1: string; postcode?: string }>>([]);
   const [useEnterpriseFlow, setUseEnterpriseFlow] = React.useState(true);
   const { notify } = useNotifications();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [loadingData, setLoadingData] = React.useState(true);
+  const stepHeadingRef = React.useRef<HTMLHeadingElement>(null);
 
   // Load persisted form state
   React.useEffect(() => {
@@ -54,13 +57,32 @@ export default function NewBookingPage() {
         if (saved.vehicle) setVehicle(saved.vehicle);
         if (saved.service) setService(saved.service);
         if (saved.location) setLocation(saved.location);
+        if (saved.step) setStep(saved.step as Step);
       }
     } catch {}
   }, []);
   React.useEffect(() => {
-    const toSave = JSON.stringify({ vehicle, service, location });
+    const toSave = JSON.stringify({ vehicle, service, location, step });
     localStorage.setItem('bookingFormState', toSave);
-  }, [vehicle, service, location]);
+  }, [vehicle, service, location, step]);
+
+  // Focus management on step change
+  React.useEffect(() => {
+    try { stepHeadingRef.current?.focus(); } catch {}
+  }, [step]);
+
+  // Unsaved changes warning
+  React.useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      const midFlow = ['vehicle','service','customer','schedule','review'].includes(step);
+      if (midFlow && !isSubmitting) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [step, isSubmitting]);
 
   async function refreshQuote() {
     if (!service.service_id || !customerId) return;
@@ -82,9 +104,11 @@ export default function NewBookingPage() {
         });
          const data = await res.json();
          if (res.ok && (data.success ?? true)) setQuote(data.data?.quote || data.quote);
+         else notify({ title: 'Failed to fetch quote', description: data?.error?.message || 'Please try again.' });
       }
     } catch (error) {
       console.error('Failed to get quote:', error);
+      notify({ title: 'Quote error', description: 'Unable to calculate quote. Check inputs and try again.' });
     }
   }
 
@@ -201,8 +225,10 @@ export default function NewBookingPage() {
           }
         } catch (e) {
           console.error('Failed to load guest data:', e);
+          notify({ title: 'Failed to load booking options', description: 'Please refresh the page.' });
         }
       }
+      setLoadingData(false);
     })();
   }, []);
 
@@ -256,8 +282,17 @@ export default function NewBookingPage() {
           </div>
         </div>
 
+        {loadingData && (
+          <div className="space-y-3 animate-pulse" role="status" aria-live="polite">
+            <div className="h-6 bg-[var(--color-active-surface)] rounded w-1/3" />
+            <div className="h-4 bg-[var(--color-active-surface)] rounded w-1/2" />
+            <div className="h-4 bg-[var(--color-active-surface)] rounded w-1/4" />
+          </div>
+        )}
+
       {step === 'vehicle' && (
         <div className="grid gap-3 max-w-lg">
+          <h2 ref={stepHeadingRef} tabIndex={-1} className="sr-only">Vehicle step</h2>
           <div className="grid gap-1">
             <div className="text-[var(--font-size-sm)]">Vehicle</div>
             {vehicles.length > 0 ? (
@@ -287,6 +322,7 @@ export default function NewBookingPage() {
 
       {step === 'service' && (
         <div className="grid gap-3 max-w-lg">
+          <h2 ref={stepHeadingRef} tabIndex={-1} className="sr-only">Service step</h2>
           <div className="grid gap-1">
             <div className="text-[var(--font-size-sm)]">Service</div>
             <Combobox options={services.map((s) => ({ label: s.name, value: s.id }))} value={service.service_id} onChange={(v) => setService({ ...service, service_id: v })} />
@@ -304,6 +340,7 @@ export default function NewBookingPage() {
 
       {step === 'customer' && (
         <div className="grid gap-3 max-w-lg">
+          <h2 ref={stepHeadingRef} tabIndex={-1} className="sr-only">Customer details step</h2>
           <div className="text-[var(--font-size-lg)] font-semibold text-[var(--color-text)]">Your Details</div>
           <div className="grid gap-3">
             <div className="grid gap-1">
@@ -355,11 +392,15 @@ export default function NewBookingPage() {
       )}
 
       {step === 'schedule' && (
-        <ScheduleStep addresses={addresses} selectedAddressId={location.address_id} onBack={() => setStep(isAuthenticated === false ? 'customer' : 'service')} onNext={() => setStep('review')} onSet={(s) => setLocation(s)} />
+        <>
+          <h2 ref={stepHeadingRef} tabIndex={-1} className="sr-only">Schedule step</h2>
+          <ScheduleStep addresses={addresses} selectedAddressId={location.address_id} onBack={() => setStep(isAuthenticated === false ? 'customer' : 'service')} onNext={() => setStep('review')} onSet={(s) => setLocation(s)} />
+        </>
       )}
 
       {step === 'review' && (
         <div className="grid gap-3 max-w-lg">
+          <h2 ref={stepHeadingRef} tabIndex={-1} className="sr-only">Review step</h2>
           <div>Review your booking:</div>
           <div>Vehicle: {vehicle.make} {vehicle.model} ({vehicle.size})</div>
           <div>Service: {service.service_id}</div>
@@ -468,6 +509,7 @@ export default function NewBookingPage() {
 
       {step === 'payment' && (
         <div className="grid gap-4 max-w-lg">
+          <h2 ref={stepHeadingRef} tabIndex={-1} className="sr-only">Payment step</h2>
           <div className="text-[var(--font-size-lg)] font-semibold text-[var(--color-text)]">Payment</div>
           
           <div className="border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 bg-[var(--color-surface)]">
@@ -516,6 +558,7 @@ export default function NewBookingPage() {
               intent="primary"
               onClick={async () => {
                 try {
+                  setIsSubmitting(true);
                   // Create Stripe checkout session for booking payment
                   const checkoutRes = await fetch('/api/payments/checkout-booking', {
                     method: 'POST',
@@ -539,6 +582,8 @@ export default function NewBookingPage() {
                   }
                 } catch (error) {
                   notify({ title: 'Payment setup failed. Please try again.' });
+                } finally {
+                  setIsSubmitting(false);
                 }
               }}
             >

@@ -56,6 +56,7 @@ export default function BookingDetailPage() {
       await queryClient.invalidateQueries({ queryKey: ['booking', id] });
       await queryClient.invalidateQueries({ queryKey: ['bookings'] });
       await queryClient.invalidateQueries({ queryKey: ['invoices'] });
+      try { (await import('@/lib/notifications')).useNotifications().notify({ title: 'Status updated' }); } catch {}
     },
   });
   async function collectDeposit() {
