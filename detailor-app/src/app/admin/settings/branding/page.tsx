@@ -5,6 +5,10 @@ import { RoleGuard } from '@/components/RoleGuard';
 import { Input } from '@/ui/input';
 import { Button } from '@/ui/button';
 import { ThemeProvider } from '@/lib/theme-provider';
+import { StatCard } from '@/components/dashboard/StatCard';
+import { ChartCard } from '@/components/dashboard/ChartCard';
+import { DataTable, type Column } from '@/components/dashboard/DataTable';
+import { useNotifications } from '@/lib/notifications';
 
 type TenantBrand = { brand_theme?: { brand?: { primary?: string; secondary?: string } } } | null;
 export default function BrandingSettings() {
@@ -13,6 +17,7 @@ export default function BrandingSettings() {
   const [saveError, setSaveError] = React.useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = React.useState<string | null>(null);
   const [previewTab, setPreviewTab] = React.useState<'admin'|'customer'|'documents'>('admin');
+  const { notify } = useNotifications?.() || { notify: (_: any) => {} };
   React.useEffect(() => {
     (async () => {
       const res = await fetch('/api/settings/tenant');
@@ -32,6 +37,7 @@ export default function BrandingSettings() {
       setSaveSuccess('Branding saved');
       // Notify BrandProvider to re-apply palette immediately
       try { window.dispatchEvent(new Event('brand-updated')); } catch {}
+      try { notify?.({ title: 'Branding updated', description: 'Applied across the platform.' }); } catch {}
       setTimeout(() => setSaveSuccess(null), 2000);
     } catch (e) {
       setSaveError((e as Error)?.message || 'Failed to save');
@@ -109,6 +115,20 @@ export default function BrandingSettings() {
   const fg = deriveForeground(primary);
   const ratio = contrastRatio(primary, fg);
   const passes = ratio >= 4.5;
+  const [previewPrimary, setPreviewPrimary] = React.useState(primary);
+  React.useEffect(() => {
+    const t = setTimeout(() => setPreviewPrimary(primary), 300);
+    return () => clearTimeout(t);
+  }, [primary]);
+
+  const previewColumns: Column<{ id: string; metric: string; value: string }>[] = [
+    { key: 'metric', header: 'Metric' },
+    { key: 'value', header: 'Value' },
+  ];
+  const previewRows = [
+    { id: 'r1', metric: 'Bookings', value: '12' },
+    { id: 'r2', metric: 'Revenue', value: '£2,340' },
+  ];
 
   return (
     <DashboardShell role="admin" tenantName="Detailor">
@@ -142,11 +162,15 @@ export default function BrandingSettings() {
                         setTenant({ ...tenant!, brand_theme: { ...(tenant!.brand_theme||{}), brand: { ...(tenant!.brand_theme?.brand||{}), primary: fixed.color } } });
                       }}>Fix automatically</Button>
                     </div>
-                    {/* Contrast badge */}
-                    <div className="text-sm">
+                    {/* Contrast badge + meter */}
+                    <div className="text-sm flex items-center gap-3">
                       <span className={`inline-flex items-center gap-2 px-2 py-1 rounded border ${passes ? 'border-[var(--color-success)] text-[var(--color-success)]' : 'border-[var(--color-error)] text-[var(--color-error)]'}`}>
                         Contrast {ratio.toFixed(2)}:1 {passes ? 'AA Pass' : 'Fail'}
                       </span>
+                      <div className="flex-1 h-2 bg-[var(--color-muted)] rounded overflow-hidden" aria-hidden="true">
+                        <div className="h-full bg-[var(--color-primary)]" style={{ width: `${Math.min(100, Math.max(0, (ratio/7)*100))}%` }} />
+                      </div>
+                      <div className="sr-only" aria-live="polite">Contrast ratio {ratio.toFixed(2)} to 1. {passes ? 'Passes AA.' : 'Fails AA.'}</div>
                     </div>
                   </div>
                 </div>
@@ -155,24 +179,24 @@ export default function BrandingSettings() {
 
             {/* Preview */}
             <ThemeProvider>
-              <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-0">
+              <div className="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] p-0" data-testid="branding-preview" style={{ ['--color-primary' as any]: previewPrimary, ['--color-primary-foreground' as any]: fg }}>
                 <div className="flex items-center gap-2 px-3 py-2 border-b border-[var(--color-border)]">
                   <button onClick={() => setPreviewTab('admin')} className={`text-sm px-2 py-1 rounded ${previewTab==='admin' ? 'bg-[var(--color-active-surface)]' : ''}`}>Admin</button>
                   <button onClick={() => setPreviewTab('customer')} className={`text-sm px-2 py-1 rounded ${previewTab==='customer' ? 'bg-[var(--color-active-surface)]' : ''}`}>Customer</button>
                   <button onClick={() => setPreviewTab('documents')} className={`text-sm px-2 py-1 rounded ${previewTab==='documents' ? 'bg-[var(--color-active-surface)]' : ''}`}>Documents</button>
                   <div className="ml-auto text-[var(--color-text-muted)] text-xs">Where it appears: navigation, buttons, status, charts</div>
                 </div>
-                <div className="p-3">
+                <div className="p-3 grid gap-3">
                   <div className="rounded-lg border border-[var(--color-border)] overflow-hidden">
-                    {/* Header using selected color (preview only) */}
-                    <div className="h-10 flex items-center px-3" style={{ background: primary, color: fg }}>Brand Header</div>
-                    <div className="p-3 grid gap-3">
-                      <div className="flex gap-2">
-                        <button className="rounded-[var(--radius-sm)] px-3 py-1" style={{ background: primary, color: fg }}>Primary Button</button>
-                        <button className="rounded-[var(--radius-sm)] border border-[var(--color-border)] px-3 py-1">Secondary</button>
-                      </div>
-                      <div className="text-sm text-[var(--color-text-secondary)]">Sample cards and KPI tiles reflect brand accents.</div>
-                    </div>
+                    <div className="h-10 flex items-center px-3" style={{ background: previewPrimary, color: fg }}>Brand Header</div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <StatCard title="Revenue (MTD)" value="£12,340" change={"+8%"} changeType="increase" />
+                    <StatCard title="Bookings" value="27" change={"-2"} changeType="decrease" />
+                    <ChartCard title="7d Trend" type="line" categories={["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]} series={[{ name: 'Revenue', data: [120,180,200,220,190,240,260] }]} height={120} />
+                  </div>
+                  <div className="rounded-lg border border-[var(--color-border)]">
+                    <DataTable columns={previewColumns} data={previewRows} />
                   </div>
                 </div>
               </div>
