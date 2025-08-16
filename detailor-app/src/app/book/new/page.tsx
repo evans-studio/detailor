@@ -34,7 +34,7 @@ export default function NewBookingPage() {
   const [step, setStep] = React.useState<Step>('vehicle');
   const [vehicle, setVehicle] = React.useState({ make: '', model: '', year: '', colour: '', size: 'M', vehicle_id: '' });
   const [service, setService] = React.useState<{ service_id: string; addons: string[] }>({ service_id: '', addons: [] });
-  const [services, setServices] = React.useState<Array<{ id: string; name: string }>>([]);
+  const [services, setServices] = React.useState<Array<{ id: string; name: string; base_price?: number }>>([]);
   const [location, setLocation] = React.useState({ address_id: '', start: '', end: '' });
   const [quote, setQuote] = React.useState<{ price_breakdown?: { total?: number; distanceSurcharge?: number } } | null>(null);
   const [customerId, setCustomerId] = React.useState<string>('');
@@ -180,9 +180,9 @@ export default function NewBookingPage() {
           setCustomerId(me.id);
           
           // Load services for authenticated users
-           const sRes = await fetch('/api/services', { cache: 'no-store' });
+           const sRes = await fetch(`/api/services?tenant_id=${encodeURIComponent(me.tenant_id || '')}`, { cache: 'no-store' });
            const sJson = await sRes.json();
-           const svc = sJson.data || sJson.services || [];
+           const svc = sJson.data?.services || sJson.services || [];
            setServices(svc);
            setEnterpriseServices(transformServicesForEnterprise(svc));
           setEnterpriseAddons(sampleAddons);
@@ -207,10 +207,10 @@ export default function NewBookingPage() {
            const tenantData = tenantJson.data || tenantJson.tenant;
             if (tenantData) {
              const tenantId = tenantData.id;
-              const sRes = await fetch(`/api/guest/services?tenant_id=${tenantId}`);
-              const s = await sRes.json();
-              const svc = s.data || s.services || [];
-             setServices(svc);
+              const sRes = await fetch(`/api/services?tenant_id=${tenantId}`);
+               const s = await sRes.json();
+               const svc = s.data?.services || s.services || [];
+              setServices(svc);
              setEnterpriseServices(transformServicesForEnterprise(svc));
             setEnterpriseAddons(sampleAddons);
             
