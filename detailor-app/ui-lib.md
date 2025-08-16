@@ -10,19 +10,19 @@ Your agent is getting lost in individual file updates instead of creating a syst
 ### FOUNDATION LAYER
 
 #### 1. THEME PROVIDER SETUP
-Location: `src/components/theme/ThemeProvider.tsx`
+Location: `src/lib/BrandProvider.tsx`
 
-This component must wrap the entire app at root layout level. It should fetch tenant branding once on mount, generate all color shades from the primary brand color, inject CSS variables into document root, provide theme context to all children, and handle theme updates without page refresh.
+This provider wraps the entire app at the root layout level (`src/app/layout.tsx`). It fetches tenant branding on mount, generates accessible light/dark shade scales, injects CSS variables into `document.documentElement`, listens for `brand-updated` to apply changes in real time, and avoids unnecessary reflows by diffing variable updates.
 
 #### 2. CSS VARIABLES SYSTEM
-Location: `src/styles/theme-variables.css`
+Location: Baseline in `src/app/layout.tsx` (inline to minimize FOUC) + dynamic tokens via `BrandProvider`
 
-Define comprehensive CSS variables for every color need: primary with shades 50-900, secondary with shades, accent colors, semantic colors for success/warning/error/info, surface colors for backgrounds and cards, text colors for primary/secondary/muted/inverse, border colors for default/light/dark, shadow colors for elevation, and focus/hover/active state colors.
+Define comprehensive CSS variables for every color need: primary with shades 50-900, secondary with shades, semantic colors for success/warning/error/info, surface colors for backgrounds and cards, text colors for primary/secondary/muted/inverse, border colors for default/light/dark, shadow colors for elevation, and focus/hover/active states. Baseline tokens are inlined in the layout for instant paint; tenant-specific tokens are applied at runtime by `BrandProvider`.
 
 #### 3. SHADE GENERATOR UTILITY
-Location: `src/lib/theme/shade-generator.ts`
+Location: `src/lib/color.ts`
 
-Create functions that take a hex color and generate 9 shades from lightest to darkest, ensure proper contrast ratios for text on backgrounds, handle both light and dark mode variants, validate WCAG AA compliance, and provide fallbacks for edge cases.
+Functions include `generatePrimaryShades`, `bestTextOn`, `ensureAAContrast`, and `buildBrandCSSVariables`. They generate shade ramps, compute WCAG AA-compliant foregrounds, handle light/dark variants, and provide safe fallbacks.
 
 ### CORE DASHBOARD COMPONENTS
 
@@ -249,3 +249,5 @@ With this library, changing a tenant's brand color will instantly update every d
   - SSR FOUC minimized: base tokens inlined in `app/layout.tsx`; per-tenant palette caching added (sessionStorage + in-memory) in `use-tenant-brand` with `brand-updated` cache busting.
 - Add tests for month-change SR announcement and focus return after drop. [Done]
 - Expand chart tests for bar/pie multi-series and legend a11y.
+ - Add Storybook with brand switcher to visually validate themes across components.
+ - Add a pre-commit hook to block hardcoded Tailwind color utilities and raw hex colors.
