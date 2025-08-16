@@ -191,8 +191,8 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
       <Card className="max-w-md mx-auto">
         <div className="p-6 space-y-4">
           <div className="text-center mb-4">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center shadow-lg">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--color-success)] flex items-center justify-center shadow-lg">
+              <svg className="w-8 h-8 text-[var(--color-success-foreground)]" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
             </div>
@@ -228,7 +228,7 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
           )}
         </Button>
           {error && (
-            <div className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="text-[var(--color-error-700)] text-sm bg-[var(--color-error-50)] border border-[var(--color-error-200)] rounded-lg p-3">
               {error}
             </div>
           )}
@@ -241,8 +241,8 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
     <Card className="max-w-md mx-auto">
       <div className="p-6 space-y-6">
         <div className="text-center mb-6">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-dark)] flex items-center justify-center shadow-lg">
-            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-lg">
+            <svg className="w-8 h-8 text-[var(--color-primary-foreground)]" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
             </svg>
           </div>
@@ -299,11 +299,11 @@ export function WelcomeHandoff({ email }: WelcomeHandoffProps) {
         </div>
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start space-x-2">
-            <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+          <div className="bg-[var(--color-error-50)] border border-[var(--color-error-200)] rounded-lg p-3 flex items-start space-x-2">
+            <svg className="w-5 h-5 text-[var(--color-error-500)] flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
-            <div className="text-red-700 text-sm">{error}</div>
+            <div className="text-[var(--color-error-700)] text-sm">{error}</div>
           </div>
         )}
 

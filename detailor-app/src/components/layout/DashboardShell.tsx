@@ -263,7 +263,7 @@ function EnterpriseSidebar({
       {/* Mobile Overlay */}
       {mobileOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-[var(--color-text)]/50 z-40 md:hidden"
           onClick={onMobileClose}
         />
       )}

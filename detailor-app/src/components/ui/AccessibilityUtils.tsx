@@ -13,7 +13,7 @@ export function SkipLink({ href = "#main-content", className, children }: {
     <a
       href={href}
       className={twMerge(
-        'absolute -top-full left-6 z-[9999] px-4 py-2 bg-[var(--color-primary)] text-white',
+        'absolute -top-full left-6 z-[9999] px-4 py-2 bg-[var(--color-primary)] text-[var(--color-primary-foreground)]',
         'rounded-[var(--radius-md)] font-[var(--font-weight-semibold)] text-[var(--font-size-sm)]',
         'focus:top-6 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2',
         'focus:ring-offset-[var(--color-primary)]',
@@ -247,7 +247,7 @@ export function AccessibleButton({
     <button
       className={twMerge(
         'inline-flex items-center justify-center gap-2 px-4 py-2',
-        'bg-[var(--color-primary)] text-white rounded-[var(--radius-md)]',
+        'bg-[var(--color-primary)] text-[var(--color-primary-foreground)] rounded-[var(--radius-md)]',
         'font-[var(--font-weight-medium)] text-[var(--font-size-sm)]',
         'hover:bg-[var(--color-primary-600)] focus:outline-none',
         'focus:ring-2 focus:ring-[var(--color-primary)] focus:ring-offset-2',

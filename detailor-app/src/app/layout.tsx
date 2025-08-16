@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   description: 'Run your detailing business end-to-end: bookings, payments, messaging, analytics, and a branded homepage.',
   applicationName: 'Detailor',
   viewport: { width: 'device-width', initialScale: 1, viewportFit: 'cover' },
-  themeColor: '#3B82F6',
+  themeColor: 'var(--color-primary)',
   icons: [{ rel: 'icon', url: '/favicon.ico' }],
   openGraph: {
     title: 'Detailor',

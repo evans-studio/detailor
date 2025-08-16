@@ -165,7 +165,7 @@ export default function AdminQuotesPage() {
                           Edit
                         </Button>
                         {quote.status === 'accepted' && (
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                          <Button size="sm" className="bg-[var(--color-success)] hover:opacity-90 text-[var(--color-success-foreground)]">
                             Convert to Booking
                           </Button>
                         )}
