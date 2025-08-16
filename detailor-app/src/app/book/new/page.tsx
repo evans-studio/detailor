@@ -27,6 +27,7 @@ export default function NewBookingPage() {
   });
   const [enterpriseServices, setEnterpriseServices] = React.useState<ServiceOption[]>([]);
   const [enterpriseAddons, setEnterpriseAddons] = React.useState<AddonOption[]>([]);
+  const [loadingAddons, setLoadingAddons] = React.useState(false);
   const [businessName, setBusinessName] = React.useState('Detailor');
   const [brandColor, setBrandColor] = React.useState('#1a365d');
   
@@ -136,6 +137,34 @@ export default function NewBookingPage() {
     })) as ServiceOption[];
   };
 
+  // Load add-ons when a service is selected (enterprise flow)
+  React.useEffect(() => {
+    const svcId = bookingData.service_id || service.service_id;
+    (async () => {
+      if (!svcId) return;
+      try {
+        setLoadingAddons(true);
+        const tenantId = localStorage.getItem('guestTenantId') || '';
+        const url = tenantId ? `/api/add-ons?tenant_id=${tenantId}&service_id=${svcId}` : `/api/add-ons?service_id=${svcId}`;
+        const res = await fetch(url, { cache: 'no-store' });
+        const json = await res.json();
+        const rows = json.data?.add_ons || json.add_ons || [];
+        const mapped: AddonOption[] = rows.map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          price: Number(r.price_delta || 0),
+          category: (r.category || 'special') as AddonOption['category'],
+        }));
+        setEnterpriseAddons(mapped);
+      } catch (e) {
+        notify({ title: 'Failed to load add-ons', description: 'Please try again.' });
+      } finally {
+        setLoadingAddons(false);
+      }
+    })();
+  }, [bookingData.service_id, service.service_id]);
+
   const sampleAddons: AddonOption[] = [
     {
       id: 'interior-protection',
@@ -185,7 +214,7 @@ export default function NewBookingPage() {
            const svc = sJson.data?.services || sJson.services || [];
            setServices(svc);
            setEnterpriseServices(transformServicesForEnterprise(svc));
-          setEnterpriseAddons(sampleAddons);
+          setEnterpriseAddons([]);
           
            const vsRes = await fetch(`/api/customers/${me.id}/vehicles`, { cache: 'no-store' });
            const vsJson = await vsRes.json();
@@ -212,7 +241,7 @@ export default function NewBookingPage() {
                const svc = s.data?.services || s.services || [];
               setServices(svc);
              setEnterpriseServices(transformServicesForEnterprise(svc));
-            setEnterpriseAddons(sampleAddons);
+            setEnterpriseAddons([]);
             
             // Try to get business name and branding
              setBusinessName(tenantData.trading_name || tenantData.legal_name || 'Detailor');
