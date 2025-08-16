@@ -30,7 +30,7 @@ describe('BrandingSettings', () => {
     renderWithProviders(<BrandingSettings />);
     await screen.findByTestId('branding-form');
     fireEvent.change(screen.getByTestId('branding-primary'), { target: { value: '#FF0000' } });
-    fireEvent.change(screen.getByTestId('branding-secondary'), { target: { value: '#00FFFF' } });
+    // secondary input removed in new UX; ensure preview still renders
     expect(await screen.findByTestId('branding-preview')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('branding-save'));
   });
