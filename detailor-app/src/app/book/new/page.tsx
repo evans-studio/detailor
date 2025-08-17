@@ -720,8 +720,10 @@ function NewBookingPageInner() {
         <>
           <h2 ref={stepHeadingRef} tabIndex={-1} className="sr-only">Schedule step</h2>
           <ScheduleStep 
-            addresses={addresses} 
-            selectedAddressId={location.address_id} 
+            addresses={(isAuthenticated === false && guestAddress.address_line1) ? [
+              { id: 'guest', label: guestAddress.label || 'Service Address', address_line1: guestAddress.address_line1, postcode: guestAddress.postcode || '' }
+            ] : addresses} 
+            selectedAddressId={isAuthenticated === false ? 'guest' : location.address_id} 
             canAddAddress={isAuthenticated === true}
             onCreateAddress={async (payload: { label?: string; address_line1: string; city?: string; postcode?: string }) => {
               const res = await fetch(`/api/customers/${customerId}/addresses`, {
