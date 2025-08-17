@@ -614,7 +614,8 @@ export default function NewBookingPage() {
                       name: customerInfo.name,
                       email: customerInfo.email,
                       phone: customerInfo.phone,
-                      tenant_id: tenantId
+                      tenant_id: tenantId,
+                      marketing_consent: Boolean(consentMarketing)
                     })
                   });
                   const customerData = await customerRes.json();

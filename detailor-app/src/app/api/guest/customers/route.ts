@@ -11,6 +11,7 @@ const createSchema = z.object({
   email: z.string().email(),
   phone: z.string().optional(),
   tenant_id: z.string().uuid(),
+  marketing_consent: z.boolean().optional(),
 });
 
 // Guest customer creation - requires tenant_id in body or header
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
       name: sanitizeText(payload.name),
       email: sanitizeEmail(payload.email),
       phone: payload.phone ? sanitizePhone(payload.phone) : undefined,
+      consents: payload.marketing_consent ? { marketing: true } : undefined,
     };
     
     // Validate sanitized inputs

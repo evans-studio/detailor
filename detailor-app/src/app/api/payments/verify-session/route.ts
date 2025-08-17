@@ -24,10 +24,11 @@ export async function POST(req: Request) {
     // Retrieve the session from Stripe (expand subscription for schedule checks)
     const session = await stripe.checkout.sessions.retrieve(session_id, { expand: ['subscription'] });
 
-    // Allow trials or no immediate payment for subscription trials
-    const allowedStatuses = new Set(['paid', 'no_payment_required']);
-    if (session.mode === 'subscription' && !allowedStatuses.has(session.payment_status || '')) {
-      return createErrorResponse(API_ERROR_CODES.PAYMENT_ERROR, 'Checkout not completed', { payment_status: session.payment_status }, 400);
+    // For one-off payments require 'paid'; for subscriptions allow 'paid' or 'no_payment_required'
+    const allowedSubStatuses = new Set(['paid', 'no_payment_required']);
+    const isPaid = (session.payment_status || '') === 'paid';
+    if ((session.mode === 'payment' && !isPaid) || (session.mode === 'subscription' && !allowedSubStatuses.has(session.payment_status || ''))) {
+      return createErrorResponse(API_ERROR_CODES.PAYMENT_ERROR, 'Checkout not completed', { payment_status: session.payment_status, mode: session.mode }, 400);
     }
 
     // Auto-create a Subscription Schedule to transition from intro -> standard for monthly intros
