@@ -73,6 +73,7 @@ interface EnterpriseBookingFlowProps {
   businessName: string;
   brandColor?: string;
   onComplete: () => void;
+  onCheckout?: (mode: 'full' | 'deposit') => void;
 }
 
 // Step Navigation Component
@@ -543,7 +544,9 @@ export function EnterpriseBookingFlow({
   businessName,
   brandColor,
   onComplete,
+  onCheckout,
 }: EnterpriseBookingFlowProps) {
+  const [payMode, setPayMode] = React.useState<'full' | 'deposit'>('full');
   const handleServiceSelect = (serviceId: string) => {
     onDataChange({ service_id: serviceId });
   };
@@ -618,6 +621,31 @@ export function EnterpriseBookingFlow({
                       {currentStep === 'details' && 'Your Details'}
                       {currentStep === 'payment' && 'Payment & Confirmation'}
                     </h3>
+                    {currentStep === 'payment' && (
+                      <div className="max-w-md mx-auto text-left mb-6">
+                        <div className="text-[var(--font-size-md)] font-[var(--font-weight-medium)] text-[var(--color-text)] mb-3">Payment Options</div>
+                        <div className="space-y-2">
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="payopt"
+                              checked={payMode === 'full'}
+                              onChange={() => setPayMode('full')}
+                            />
+                            <span className="text-[var(--color-text)]">Pay in full now</span>
+                          </label>
+                          <label className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="payopt"
+                              checked={payMode === 'deposit'}
+                              onChange={() => setPayMode('deposit')}
+                            />
+                            <span className="text-[var(--color-text)]">Pay deposit now</span>
+                          </label>
+                        </div>
+                      </div>
+                    )}
                     <p className="text-[var(--color-text-muted)] mb-4">
                       This step would contain the form for {currentStep} information.
                     </p>
@@ -633,11 +661,15 @@ export function EnterpriseBookingFlow({
                           if (currentIndex < steps.length - 1) {
                             onStepChange(steps[currentIndex + 1]);
                           } else {
-                            onComplete();
+                            if (onCheckout) {
+                              onCheckout(payMode);
+                            } else {
+                              onComplete();
+                            }
                           }
                         }}
                       >
-                        {currentStep === 'payment' ? 'Complete Booking' : 'Continue'}
+                        {currentStep === 'payment' ? (payMode === 'deposit' ? 'Pay Deposit' : 'Pay in Full') : 'Continue'}
                       </Button>
                     </div>
                   </CardContent>
@@ -674,10 +706,14 @@ export function EnterpriseBookingFlow({
             if (currentIndex < steps.length - 1) {
               onStepChange(steps[currentIndex + 1]);
             } else {
-              onComplete();
+              if (onCheckout) {
+                onCheckout(payMode);
+              } else {
+                onComplete();
+              }
             }
           }}>
-            {currentStep === 'payment' ? 'Complete Booking' : 'Continue'}
+            {currentStep === 'payment' ? (payMode === 'deposit' ? 'Pay Deposit' : 'Pay in Full') : 'Continue'}
           </Button>
         </div>
       </div>

@@ -425,6 +425,45 @@ function NewBookingPageInner() {
     } catch {}
   };
 
+  // Enterprise checkout handler
+  const handleEnterpriseCheckout = async (mode: 'full' | 'deposit') => {
+    try {
+      const total = Number(bookingData.pricing?.total || 0);
+      const totalPence = Math.round(total * 100);
+      let depositOverride: number | undefined = undefined;
+      if (mode === 'deposit') {
+        try {
+          const t = await fetch('/api/settings/tenant');
+          const tj = await t.json();
+          const prefs = tj?.data?.tenant?.business_prefs || tj?.tenant?.business_prefs || {};
+          const percent = Number(prefs.deposit_percent ?? 20);
+          const minGbp = Number(prefs.deposit_min_gbp ?? 5);
+          const calc = Math.max(minGbp * 100, Math.round(totalPence * (percent / 100)));
+          if (calc < totalPence) depositOverride = calc;
+        } catch {}
+      }
+      const checkoutRes = await fetch('/api/payments/checkout-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: totalPence,
+          deposit_amount: depositOverride,
+          currency: 'gbp',
+          booking_reference: `BK-${Date.now()}`,
+          return_url: `${window.location.origin}/bookings/confirmation`
+        })
+      });
+      const checkoutData = await checkoutRes.json();
+      if (checkoutData.url) {
+        window.location.href = checkoutData.url;
+      } else {
+        notify({ title: 'Payment setup failed. Please try again.' });
+      }
+    } catch {
+      notify({ title: 'Payment setup failed. Please try again.' });
+    }
+  };
+
   // Render enterprise flow or legacy flow based on feature flag
   if (useEnterpriseFlow && enterpriseServices.length > 0) {
     return (
@@ -438,6 +477,7 @@ function NewBookingPageInner() {
         businessName={businessName}
         brandColor={brandColor}
         onComplete={handleBookingComplete}
+        onCheckout={handleEnterpriseCheckout}
       />
     );
   }
