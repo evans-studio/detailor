@@ -1,5 +1,6 @@
 "use client";
 import * as React from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '@/ui/button';
 import { Input } from '@/ui/input';
 import { Select } from '@/ui/select';
@@ -19,6 +20,9 @@ type Step = 'vehicle' | 'service' | 'schedule' | 'customer' | 'review' | 'paymen
 type CustomerInfo = { name: string; email: string; phone: string; };
 
 export default function NewBookingPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   // Enterprise Booking Flow State
   const [currentStep, setCurrentStep] = React.useState<BookingStep>('services');
   const [bookingData, setBookingData] = React.useState<Partial<BookingData>>({
@@ -69,6 +73,10 @@ export default function NewBookingPage() {
         if (saved.step) setStep(saved.step as Step);
         if (saved.customerInfo) setCustomerInfo(saved.customerInfo);
         if (saved.guestAddress) setGuestAddress(saved.guestAddress);
+        // Pull step from URL if provided
+        const urlStep = (searchParams?.get('step') || '') as Step;
+        const validSteps: Step[] = ['vehicle','service','customer','schedule','review','payment'];
+        if (urlStep && validSteps.includes(urlStep)) setStep(urlStep);
       }
     } catch {}
   }, []);
@@ -81,7 +89,20 @@ export default function NewBookingPage() {
   React.useEffect(() => {
     try { stepHeadingRef.current?.focus(); } catch {}
     try { setSrAnnouncement(`Moved to ${step} step`); } catch {}
+    try {
+      const params = new URLSearchParams(searchParams?.toString());
+      params.set('step', step);
+      router.replace(`${pathname}?${params.toString()}`);
+    } catch {}
   }, [step]);
+
+  React.useEffect(() => {
+    try {
+      const urlStep = (searchParams?.get('step') || '') as Step;
+      const validSteps: Step[] = ['vehicle','service','customer','schedule','review','payment'];
+      if (urlStep && validSteps.includes(urlStep) && urlStep !== step) setStep(urlStep);
+    } catch {}
+  }, [searchParams]);
 
   // Unsaved changes warning
   React.useEffect(() => {
@@ -527,18 +548,9 @@ export default function NewBookingPage() {
             <Button intent="ghost" onClick={() => setStep('service')}>Back</Button>
             <Button 
               onClick={() => {
-                if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
-                  notify({ title: 'Please fill in all required fields' });
-                  return;
-                }
-                if (emailConfirm !== customerInfo.email) {
-                  notify({ title: 'Please confirm your email address' });
-                  return;
-                }
-                if (isAuthenticated === false && (!guestAddress.address_line1 || !guestAddress.postcode)) {
-                  notify({ title: 'Please enter your address and postcode' });
-                  return;
-                }
+                if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) { notify({ title: 'Please fill in all required fields' }); setSrAnnouncement('Please fill in all required fields'); return; }
+                if (emailConfirm !== customerInfo.email) { notify({ title: 'Please confirm your email address' }); setSrAnnouncement('Please confirm your email address'); return; }
+                if (isAuthenticated === false && (!guestAddress.address_line1 || !guestAddress.postcode)) { notify({ title: 'Please enter your address and postcode' }); setSrAnnouncement('Please enter your address and postcode'); return; }
                 setStep('schedule');
               }}
               disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone || (emailConfirm !== customerInfo.email) || (isAuthenticated === false && (!guestAddress.address_line1 || !guestAddress.postcode))}
@@ -590,6 +602,7 @@ export default function NewBookingPage() {
               const stillAvailable = latest.slots.some((s: { start: string; end: string }) => s.start === location.start && s.end === location.end);
               if (!stillAvailable) {
                 notify({ title: 'Selected slot is no longer available' });
+                setSrAnnouncement('Selected slot is no longer available');
                 setStep('schedule');
                 return;
               }
