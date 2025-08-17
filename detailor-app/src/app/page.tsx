@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function Home() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://admin.detailor.co.uk';
@@ -8,9 +9,11 @@ export default function Home() {
   return (
     <div>
       {/* Header */}
-      <header className="sticky top-0 bg-white border-b border-[var(--df-border)] z-40">
+      <header className="sticky top-0 bg-[var(--df-surface)] border-b border-[var(--df-border)] z-40">
         <div className="container h-16 flex items-center justify-between">
-          <div className="font-semibold text-[var(--df-fg)]">Detailor</div>
+          <div className="flex items-center gap-2">
+            <Image src="/detailor-logo.png" alt="Detailor" width={96} height={24} />
+          </div>
           <nav className="hidden md:flex items-center gap-6 text-[var(--df-body)]">
             <a href="#features">Features</a>
             <a href="#pricing">Pricing</a>
@@ -133,10 +136,10 @@ export default function Home() {
       {/* Final CTA */}
       <section className="py-10" style={{ background: 'var(--df-primary)' }}>
         <div className="container text-center grid gap-3">
-          <div className="text-white text-2xl font-bold">Start running your business on autopilot.</div>
+          <div className="text-[var(--df-primary-foreground)] text-2xl font-bold">Start running your business on autopilot.</div>
           <div className="flex gap-3 justify-center">
             <a className="btn-primary" href={`${appUrl}/api/payments/checkout?price_id=${starter}`}>Start Free Trial</a>
-            <a className="btn-ghost" href="#demo" style={{ color: 'white' }}>Book a Demo</a>
+            <a className="btn-ghost text-[var(--df-primary-foreground)]" href="#demo">Book a Demo</a>
           </div>
         </div>
       </section>
