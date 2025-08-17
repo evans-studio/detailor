@@ -49,7 +49,7 @@ function NewBookingPageInner() {
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
   const [vehicles, setVehicles] = React.useState<Array<{ id: string; make: string; model: string; size_tier?: string }>>([]);
   const [addresses, setAddresses] = React.useState<Array<{ id: string; label?: string; address_line1: string; postcode?: string }>>([]);
-  const [useEnterpriseFlow, setUseEnterpriseFlow] = React.useState(true);
+  const [useEnterpriseFlow, setUseEnterpriseFlow] = React.useState(false);
   const { notify } = useNotifications();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [loadingData, setLoadingData] = React.useState(true);
