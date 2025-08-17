@@ -41,6 +41,7 @@ export default function NewBookingPage() {
   const [quote, setQuote] = React.useState<{ price_breakdown?: { total?: number; distanceSurcharge?: number } } | null>(null);
   const [customerId, setCustomerId] = React.useState<string>('');
   const [customerInfo, setCustomerInfo] = React.useState<CustomerInfo>({ name: '', email: '', phone: '' });
+  const [guestAddress, setGuestAddress] = React.useState<{ label?: string; address_line1: string; city?: string; postcode?: string }>({ address_line1: '', city: '', postcode: '', label: '' });
   const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null);
   const [vehicles, setVehicles] = React.useState<Array<{ id: string; make: string; model: string; size_tier?: string }>>([]);
   const [addresses, setAddresses] = React.useState<Array<{ id: string; label?: string; address_line1: string; postcode?: string }>>([]);
@@ -66,13 +67,15 @@ export default function NewBookingPage() {
         if (saved.service) setService(saved.service);
         if (saved.location) setLocation(saved.location);
         if (saved.step) setStep(saved.step as Step);
+        if (saved.customerInfo) setCustomerInfo(saved.customerInfo);
+        if (saved.guestAddress) setGuestAddress(saved.guestAddress);
       }
     } catch {}
   }, []);
   React.useEffect(() => {
-    const toSave = JSON.stringify({ vehicle, service, location, step });
+    const toSave = JSON.stringify({ vehicle, service, location, step, customerInfo, guestAddress });
     localStorage.setItem('bookingFormState', toSave);
-  }, [vehicle, service, location, step]);
+  }, [vehicle, service, location, step, customerInfo, guestAddress]);
 
   // Focus management on step change
   React.useEffect(() => {
@@ -493,6 +496,32 @@ export default function NewBookingPage() {
               <input type="checkbox" checked={consentMarketing} onChange={(e) => setConsentMarketing(e.target.checked)} />
               <span className="text-[var(--color-text)] text-[var(--font-size-sm)]">I agree to receive marketing emails</span>
             </label>
+            {isAuthenticated === false && (
+              <>
+                <div className="grid gap-1">
+                  <label className="text-[var(--font-size-sm)] font-medium text-[var(--color-text)]">Service Address</label>
+                  <Input 
+                    placeholder="Address line 1" 
+                    value={guestAddress.address_line1} 
+                    onChange={(e) => setGuestAddress({ ...guestAddress, address_line1: e.target.value })}
+                    required
+                  />
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <Input 
+                      placeholder="City"
+                      value={guestAddress.city}
+                      onChange={(e) => setGuestAddress({ ...guestAddress, city: e.target.value })}
+                    />
+                    <Input 
+                      placeholder="Postcode"
+                      value={guestAddress.postcode}
+                      onChange={(e) => setGuestAddress({ ...guestAddress, postcode: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <div className="flex justify-between gap-2">
             <Button intent="ghost" onClick={() => setStep('service')}>Back</Button>
@@ -506,9 +535,13 @@ export default function NewBookingPage() {
                   notify({ title: 'Please confirm your email address' });
                   return;
                 }
+                if (isAuthenticated === false && (!guestAddress.address_line1 || !guestAddress.postcode)) {
+                  notify({ title: 'Please enter your address and postcode' });
+                  return;
+                }
                 setStep('schedule');
               }}
-              disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone || (emailConfirm !== customerInfo.email)}
+              disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone || (emailConfirm !== customerInfo.email) || (isAuthenticated === false && (!guestAddress.address_line1 || !guestAddress.postcode))}
             >
               Next
             </Button>
@@ -604,14 +637,15 @@ export default function NewBookingPage() {
                   if (!vehicleRes.ok || !vehicleData.success) throw new Error(vehicleData?.error?.message || 'Failed to create vehicle');
                   finalVehicleId = (vehicleData.data?.vehicle || vehicleData.vehicle).id;
 
-                  // Create address - for now using a default address since we don't have address input in this flow
+                  // Create address with guest-provided details
                   const addressRes = await fetch(`/api/guest/customers/${finalCustomerId}/addresses`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      address_line1: 'To be confirmed',
-                      city: 'To be confirmed',
-                      postcode: 'TBC'
+                      label: guestAddress.label,
+                      address_line1: guestAddress.address_line1,
+                      city: guestAddress.city,
+                      postcode: guestAddress.postcode
                     })
                   });
                   const addressData = await addressRes.json();
