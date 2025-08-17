@@ -547,6 +547,30 @@ export function EnterpriseBookingFlow({
   onCheckout,
 }: EnterpriseBookingFlowProps) {
   const [payMode, setPayMode] = React.useState<'full' | 'deposit'>('full');
+  const [depositPreview, setDepositPreview] = React.useState<number | null>(null);
+  const tenantPrefsRef = React.useRef<{ deposit_percent?: number; deposit_min_gbp?: number } | null>(null);
+
+  // Compute deposit preview when total changes
+  React.useEffect(() => {
+    const total = Number(bookingData.pricing?.total || 0);
+    if (!total || total <= 0) { setDepositPreview(null); return; }
+    (async () => {
+      try {
+        if (!tenantPrefsRef.current) {
+          const res = await fetch('/api/settings/tenant', { cache: 'no-store' });
+          const json = await res.json();
+          tenantPrefsRef.current = json?.data?.tenant?.business_prefs || json?.tenant?.business_prefs || {};
+        }
+        const percent = Number(tenantPrefsRef.current?.deposit_percent ?? 20);
+        const minGbp = Number(tenantPrefsRef.current?.deposit_min_gbp ?? 5);
+        const totalPence = Math.round(total * 100);
+        const calc = Math.max(minGbp * 100, Math.round(totalPence * (percent / 100)));
+        setDepositPreview(calc < totalPence ? calc / 100 : null);
+      } catch {
+        setDepositPreview(null);
+      }
+    })();
+  }, [bookingData.pricing?.total]);
   const handleServiceSelect = (serviceId: string) => {
     onDataChange({ service_id: serviceId });
   };
@@ -640,8 +664,11 @@ export function EnterpriseBookingFlow({
                               name="payopt"
                               checked={payMode === 'deposit'}
                               onChange={() => setPayMode('deposit')}
+                              disabled={!depositPreview}
                             />
-                            <span className="text-[var(--color-text)]">Pay deposit now</span>
+                            <span className="text-[var(--color-text)]">
+                              Pay deposit now{depositPreview ? ` (£${depositPreview.toFixed(2)})` : ''}
+                            </span>
                           </label>
                         </div>
                       </div>
