@@ -49,6 +49,12 @@ export default function NewBookingPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [loadingData, setLoadingData] = React.useState(true);
   const stepHeadingRef = React.useRef<HTMLHeadingElement>(null);
+  const [srAnnouncement, setSrAnnouncement] = React.useState('');
+  const [showAddVehicle, setShowAddVehicle] = React.useState(false);
+  const [newVehicle, setNewVehicle] = React.useState({ make: '', model: '', year: '', colour: '', size: 'M' as 'S' | 'M' | 'L' | 'XL' });
+  const [emailConfirm, setEmailConfirm] = React.useState('');
+  const [consentMarketing, setConsentMarketing] = React.useState(false);
+  const [paymentOption, setPaymentOption] = React.useState<'full' | 'deposit'>('full');
 
   // Load persisted form state
   React.useEffect(() => {
@@ -71,6 +77,7 @@ export default function NewBookingPage() {
   // Focus management on step change
   React.useEffect(() => {
     try { stepHeadingRef.current?.focus(); } catch {}
+    try { setSrAnnouncement(`Moved to ${step} step`); } catch {}
   }, [step]);
 
   // Unsaved changes warning
@@ -328,6 +335,7 @@ export default function NewBookingPage() {
   return (
     <div className="min-h-screen bg-[var(--color-background)]">
       <div className="mx-auto max-w-2xl px-6 py-8">
+        <div className="sr-only" aria-live="polite">{srAnnouncement}</div>
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-[var(--font-size-2xl)] font-semibold text-[var(--color-text)]">Book a Service</h1>
           <div className="text-[var(--color-text-muted)]">
@@ -366,6 +374,37 @@ export default function NewBookingPage() {
                     setVehicle({ make: found?.make || '', model: found?.model || '', year: '', colour: '', size: (found?.size_tier as string) || 'M', vehicle_id: v });
                   }}
                 />
+                <div>
+                  <Button intent="ghost" size="sm" onClick={() => setShowAddVehicle((s) => !s)}>
+                    {showAddVehicle ? 'Cancel' : 'Add new vehicle'}
+                  </Button>
+                </div>
+                {showAddVehicle && (
+                  <div className="grid gap-2 border border-[var(--color-border)] rounded-[var(--radius-md)] p-3 mt-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input placeholder="Make" value={newVehicle.make} onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })} />
+                      <Input placeholder="Model" value={newVehicle.model} onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })} />
+                      <Input placeholder="Year" value={newVehicle.year} onChange={(e) => setNewVehicle({ ...newVehicle, year: e.target.value })} />
+                      <Input placeholder="Colour" value={newVehicle.colour} onChange={(e) => setNewVehicle({ ...newVehicle, colour: e.target.value })} />
+                      <Select options={[{label:'S',value:'S'},{label:'M',value:'M'},{label:'L',value:'L'},{label:'XL',value:'XL'}]} value={newVehicle.size} onValueChange={(v) => setNewVehicle({ ...newVehicle, size: v as any })} />
+                    </div>
+                    <div className="flex justify-end">
+                      <Button size="sm" onClick={async () => {
+                        try {
+                          if (!customerId) { notify({ title: 'Missing customer' }); return; }
+                          const res = await fetch(`/api/customers/${customerId}/vehicles`, { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ make: newVehicle.make, model: newVehicle.model, year: newVehicle.year ? Number(newVehicle.year) : undefined, colour: newVehicle.colour, size_tier: newVehicle.size }) });
+                          const json = await res.json();
+                          if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed');
+                          const veh = json.data?.vehicle || json.vehicle || json;
+                          setVehicles((prev) => [...prev, veh]);
+                          setVehicle({ make: veh.make, model: veh.model, year: String(veh.year || ''), colour: veh.colour || '', size: veh.size_tier || 'M', vehicle_id: veh.id });
+                          setShowAddVehicle(false);
+                          setSrAnnouncement('Vehicle added');
+                        } catch (e) { notify({ title: 'Failed to add vehicle' }); }
+                      }}>Save vehicle</Button>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <>
@@ -422,6 +461,17 @@ export default function NewBookingPage() {
                 onChange={(e) => setCustomerInfo({ ...customerInfo, email: e.target.value })} 
                 required
               />
+              <Input 
+                className="mt-2"
+                type="email"
+                placeholder="Confirm your email address" 
+                value={emailConfirm} 
+                onChange={(e) => setEmailConfirm(e.target.value)} 
+                required
+              />
+              {emailConfirm && emailConfirm !== customerInfo.email && (
+                <div className="text-[var(--color-error)] text-[var(--font-size-sm)]">Emails do not match</div>
+              )}
             </div>
             <div className="grid gap-1">
               <label className="text-[var(--font-size-sm)] font-medium text-[var(--color-text)]">Phone Number</label>
@@ -433,6 +483,10 @@ export default function NewBookingPage() {
                 required
               />
             </div>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={consentMarketing} onChange={(e) => setConsentMarketing(e.target.checked)} />
+              <span className="text-[var(--color-text)] text-[var(--font-size-sm)]">I agree to receive marketing emails</span>
+            </label>
           </div>
           <div className="flex justify-between gap-2">
             <Button intent="ghost" onClick={() => setStep('service')}>Back</Button>
@@ -442,9 +496,13 @@ export default function NewBookingPage() {
                   notify({ title: 'Please fill in all required fields' });
                   return;
                 }
+                if (emailConfirm !== customerInfo.email) {
+                  notify({ title: 'Please confirm your email address' });
+                  return;
+                }
                 setStep('schedule');
               }}
-              disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone}
+              disabled={!customerInfo.name || !customerInfo.email || !customerInfo.phone || (emailConfirm !== customerInfo.email)}
             >
               Next
             </Button>
@@ -705,6 +763,7 @@ function ScheduleStep({ addresses, selectedAddressId, onBack, onNext, onSet }: {
   const [start, setStart] = React.useState('');
   const [end, setEnd] = React.useState('');
   const [addressId, setAddressId] = React.useState(selectedAddressId || (addresses[0]?.id || ''));
+  const [sr, setSr] = React.useState('');
   React.useEffect(() => {
     (async () => {
       try {
@@ -728,6 +787,7 @@ function ScheduleStep({ addresses, selectedAddressId, onBack, onNext, onSet }: {
   }, []);
   return (
     <div className="grid gap-3 max-w-lg">
+      <div aria-live="polite" className="sr-only">{sr}</div>
       <div className="grid gap-1">
         <div className="text-[var(--font-size-sm)]">Service Address</div>
         <Select
@@ -738,12 +798,17 @@ function ScheduleStep({ addresses, selectedAddressId, onBack, onNext, onSet }: {
       </div>
       <div className="text-[var(--font-size-sm)]">Choose a slot</div>
       <div className="grid gap-2 max-h-64 overflow-auto">
-        {slots.map((s) => (
-          <label key={s.start} className="flex items-center gap-2">
-            <input type="radio" name="slot" onChange={() => { setStart(s.start); setEnd(s.end); }} />
-            <span>{new Date(s.start).toLocaleString()} – {new Date(s.end).toLocaleTimeString()}</span>
-          </label>
-        ))}
+        {slots.map((s) => {
+          const disabled = (s.capacity ?? 0) <= 0;
+          return (
+            <label key={s.start} className="flex items-center gap-2 opacity-100">
+              <input type="radio" name="slot" disabled={disabled} onChange={() => { setStart(s.start); setEnd(s.end); setSr('Slot selected'); }} />
+              <span className={disabled ? 'text-[var(--color-text-muted)]' : 'text-[var(--color-text)]'}>
+                {new Date(s.start).toLocaleString()} – {new Date(s.end).toLocaleTimeString()} {disabled ? '(Unavailable)' : `(Cap: ${s.capacity})`}
+              </span>
+            </label>
+          );
+        })}
       </div>
       <div className="flex justify-between gap-2"><Button intent="ghost" onClick={onBack}>Back</Button><Button onClick={() => { onSet({ address_id: addressId, start, end }); onNext(); }}>Next</Button></div>
     </div>
