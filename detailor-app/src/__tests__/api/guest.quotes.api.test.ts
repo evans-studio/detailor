@@ -1,7 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// Module under test
-import { POST } from '@/app/api/guest/quotes/route';
+import { describe, it, expect, vi } from 'vitest';
 
 type TableName = 'customers' | 'services' | 'add_ons' | 'pricing_configs';
 
@@ -47,16 +44,13 @@ function createMockAdminClient() {
   } as any;
 }
 
-vi.mock('@/lib/supabaseAdmin', () => {
-  return { getSupabaseAdmin: () => createMockAdminClient() };
-});
+vi.mock('@/lib/supabaseAdmin', () => ({
+  getSupabaseAdmin: () => createMockAdminClient(),
+}));
 
 describe('POST /api/guest/quotes', () => {
-  beforeEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('computes total with vehicle multiplier, add-ons, distance surcharge and tax', async () => {
+    const { POST } = await import('@/app/api/guest/quotes/route');
     const body = {
       customer_id: '11111111-1111-1111-1111-111111111111',
       service_id: '22222222-2222-2222-2222-222222222222',
