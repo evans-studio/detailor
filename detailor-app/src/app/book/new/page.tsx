@@ -60,6 +60,56 @@ function NewBookingPageInner() {
   const [emailConfirm, setEmailConfirm] = React.useState('');
   const [consentMarketing, setConsentMarketing] = React.useState(false);
   const [paymentOption, setPaymentOption] = React.useState<'full' | 'deposit'>('full');
+  async function handleResumePayment(resumeAsDeposit: boolean) {
+    try {
+      const pendingRaw = localStorage.getItem('pendingBooking');
+      if (!pendingRaw) { notify({ title: 'No pending booking to resume' }); return; }
+      const pending = JSON.parse(pendingRaw) as { customer_id: string; service_id: string; addon_ids?: string[]; reference: string };
+      // Recalculate total
+      let total: number = 0;
+      try {
+        if (isAuthenticated === false) {
+          const res = await fetch('/api/guest/quotes', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer_id: pending.customer_id,
+              service_id: pending.service_id,
+              addon_ids: pending.addon_ids || [],
+              vehicle_size_tier: vehicle.size || 'M',
+            })
+          });
+          const json = await res.json();
+          const qb = json?.data?.quote?.price_breakdown || json?.quote?.price_breakdown;
+          total = Number(qb?.total || 0);
+        } else {
+          const q = await getQuote({ customer_id: customerId, service_id: pending.service_id, addon_ids: pending.addon_ids || [], vehicle_size_tier: vehicle.size || 'M' });
+          const qb = q?.price_breakdown || q;
+          total = Number(qb?.total || 0);
+        }
+      } catch {}
+      const totalPence = Math.round(total * 100);
+      let depositPence: number | undefined = undefined;
+      if (resumeAsDeposit) {
+        try {
+          const t = await fetch('/api/settings/tenant');
+          const tj = await t.json();
+          const prefs = tj?.data?.tenant?.business_prefs || tj?.tenant?.business_prefs || {};
+          const percent = Number(prefs.deposit_percent ?? 20);
+          const minGbp = Number(prefs.deposit_min_gbp ?? 5);
+          const calc = Math.max(minGbp * 100, Math.round(totalPence * (percent / 100)));
+          if (calc < totalPence) depositPence = calc; else depositPence = undefined;
+        } catch {}
+      }
+      const checkoutRes = await fetch('/api/payments/checkout-booking', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: totalPence, deposit_amount: depositPence, currency: 'gbp', booking_reference: pending.reference, return_url: `${window.location.origin}/bookings/confirmation?session_id={CHECKOUT_SESSION_ID}` })
+      });
+      const checkoutData = await checkoutRes.json();
+      if (checkoutData.url) window.location.href = checkoutData.url; else notify({ title: 'Payment setup failed. Please try again.' });
+    } catch (e) {
+      notify({ title: 'Payment setup failed. Please try again.' });
+    }
+  }
 
   // Load persisted form state
   React.useEffect(() => {
@@ -362,8 +412,12 @@ function NewBookingPageInner() {
         <div className="sr-only" aria-live="polite">{srAnnouncement}</div>
         {/* Payment cancellation / decline banner */}
         {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('payment') === 'cancelled' && (
-          <div className="mb-4 rounded-[var(--radius-md)] border border-[var(--color-error-200)] bg-[var(--color-error-50)] p-3 text-[var(--color-error-700)]">
-            Payment was cancelled. You can try again below.
+          <div className="mb-4 rounded-[var(--radius-md)] border border-[var(--color-error-200)] bg-[var(--color-error-50)] p-3 text-[var(--color-error-700)] flex items-center justify-between">
+            <span>Payment was cancelled. You can try again below.</span>
+            <div className="flex gap-2">
+              <Button size="sm" intent="secondary" onClick={() => handleResumePayment(false)}>Pay in Full</Button>
+              <Button size="sm" intent="primary" onClick={() => handleResumePayment(true)}>Pay Deposit</Button>
+            </div>
           </div>
         )}
         <div className="mb-6 flex items-center justify-between">
