@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/theme-provider";
@@ -23,7 +23,6 @@ export const metadata: Metadata = {
   title: 'Detailor',
   description: 'Run your detailing business end-to-end: bookings, payments, messaging, analytics, and a branded homepage.',
   applicationName: 'Detailor',
-  viewport: { width: 'device-width', initialScale: 1, viewportFit: 'cover' },
   themeColor: 'var(--color-primary)',
   icons: [{ rel: 'icon', url: '/favicon.ico' }],
   openGraph: {
@@ -31,6 +30,12 @@ export const metadata: Metadata = {
     description: 'End-to-end platform for mobile car detailing businesses.',
     type: 'website',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
