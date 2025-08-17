@@ -67,6 +67,10 @@ describe('POST /api/guest/quotes', () => {
     const res = await POST(req);
     const json = await (res as Response).json();
 
+    if (!(json.success ?? true)) {
+      // eslint-disable-next-line no-console
+      console.log('guest/quotes error', json.error);
+    }
     expect(json.success ?? true).toBe(true);
     const pb = json.data?.quote?.price_breakdown || json.quote?.price_breakdown;
     // base_price 100 * 1.5 + distance surcharge (5) = 155 base; tax 20% => 31; total 186
