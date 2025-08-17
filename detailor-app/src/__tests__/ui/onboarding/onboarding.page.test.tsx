@@ -4,10 +4,14 @@ import { screen, render, fireEvent, waitFor } from '@testing-library/react';
 import OnboardingPage from '@/app/onboarding/page';
 import { renderWithProviders } from '../../setup/render';
 
-// Mock notifications hook
-vi.mock('@/lib/notifications', () => ({
-  useNotifications: () => ({ notify: vi.fn() }),
-}));
+// Mock notifications hook only; preserve provider via partial mock
+vi.mock('@/lib/notifications', async (importOriginal) => {
+  const actual: any = await importOriginal();
+  return {
+    ...actual,
+    useNotifications: () => ({ notify: vi.fn() }),
+  };
+});
 
 // Mock fetch
 const fetchMock = vi.fn();
