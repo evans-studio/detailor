@@ -336,6 +336,12 @@ export default function NewBookingPage() {
     <div className="min-h-screen bg-[var(--color-background)]">
       <div className="mx-auto max-w-2xl px-6 py-8">
         <div className="sr-only" aria-live="polite">{srAnnouncement}</div>
+        {/* Payment cancellation / decline banner */}
+        {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('payment') === 'cancelled' && (
+          <div className="mb-4 rounded-[var(--radius-md)] border border-[var(--color-error-200)] bg-[var(--color-error-50)] p-3 text-[var(--color-error-700)]">
+            Payment was cancelled. You can try again below.
+          </div>
+        )}
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-[var(--font-size-2xl)] font-semibold text-[var(--color-text)]">Book a Service</h1>
           <div className="text-[var(--color-text-muted)]">

@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         quantity: 1,
       }],
       success_url: return_url || `${appUrl}/bookings/confirmation?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/book/new`,
+      cancel_url: `${appUrl}/book/new?payment=cancelled`,
       customer_email,
       payment_intent_data: {
         metadata: {
