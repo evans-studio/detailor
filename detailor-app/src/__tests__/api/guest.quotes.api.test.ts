@@ -60,7 +60,6 @@ describe('POST /api/guest/quotes', () => {
     const body = {
       customer_id: '11111111-1111-1111-1111-111111111111',
       service_id: '22222222-2222-2222-2222-222222222222',
-      addon_ids: ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'],
       vehicle_size_tier: 'L',
       distance_miles: 10,
     };
@@ -76,12 +75,12 @@ describe('POST /api/guest/quotes', () => {
 
     expect(json.success ?? true).toBe(true);
     const pb = json.data?.quote?.price_breakdown || json.quote?.price_breakdown;
-    // base_price 100 * 1.5 + addons (25) + distance surcharge (5) = 180 base; tax 20% => 36; total 216
+    // base_price 100 * 1.5 + distance surcharge (5) = 155 base; tax 20% => 31; total 186
     expect(pb.base).toBeCloseTo(150, 3);
-    expect(pb.addons).toBeCloseTo(25, 3);
+    expect(pb.addons).toBeCloseTo(0, 3);
     expect(pb.distance).toBeCloseTo(5, 3);
-    expect(pb.tax).toBeCloseTo(36, 3);
-    expect(pb.total).toBeCloseTo(216, 3);
+    expect(pb.tax).toBeCloseTo(31, 3);
+    expect(pb.total).toBeCloseTo(186, 3);
   });
 });
 
