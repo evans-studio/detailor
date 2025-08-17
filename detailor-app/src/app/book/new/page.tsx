@@ -607,9 +607,36 @@ export default function NewBookingPage() {
               <div className="border-t border-[var(--color-border)] pt-2 mt-3">
                 <div className="flex justify-between font-semibold">
                   <span className="text-[var(--color-text)]">Total:</span>
-                  <span className="text-[var(--color-text)]">£{quote?.price_breakdown?.total ?? 0}</span>
+                  <span className="text-[var(--color-text)]">£{(pricing?.total ?? quote?.price_breakdown?.total ?? 0).toFixed(2)}</span>
                 </div>
+                {pricing && (
+                  <div className="mt-2 space-y-1 text-[var(--font-size-sm)]">
+                    <div className="flex justify-between">
+                      <span className="text-[var(--color-text-muted)]">Subtotal</span>
+                      <span className="text-[var(--color-text)]">£{pricing.subtotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[var(--color-text-muted)]">VAT</span>
+                      <span className="text-[var(--color-text)]">£{pricing.tax.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
+            </div>
+          </div>
+
+          {/* Payment Options */}
+          <div className="border border-[var(--color-border)] rounded-[var(--radius-lg)] p-4 bg-[var(--color-surface)]">
+            <div className="text-[var(--font-size-md)] font-medium text-[var(--color-text)] mb-3">Payment Options</div>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input type="radio" name="payopt" checked={paymentOption==='full'} onChange={() => setPaymentOption('full')} />
+                <span className="text-[var(--color-text)]">Pay in full now</span>
+              </label>
+              <label className="flex items-center gap-2">
+                <input type="radio" name="payopt" checked={paymentOption==='deposit'} onChange={() => setPaymentOption('deposit')} />
+                <span className="text-[var(--color-text)]">Pay deposit now</span>
+              </label>
             </div>
           </div>
 
@@ -621,11 +648,26 @@ export default function NewBookingPage() {
                 try {
                   setIsSubmitting(true);
                   // Create Stripe checkout session for booking payment
+                  let depositOverride: number | undefined = undefined;
+                  if (paymentOption === 'deposit') {
+                    try {
+                      const t = await fetch('/api/settings/tenant');
+                      const tj = await t.json();
+                      const prefs = tj?.data?.tenant?.business_prefs || tj?.tenant?.business_prefs || {};
+                      const totalPence = Math.round((pricing?.total ?? quote?.price_breakdown?.total ?? 0) * 100);
+                      const percent = Number(prefs.deposit_percent ?? 20);
+                      const minGbp = Number(prefs.deposit_min_gbp ?? 5);
+                      const deposit = Math.max(minGbp * 100, Math.round(totalPence * (percent / 100)));
+                      depositOverride = deposit;
+                    } catch {}
+                  }
+
                   const checkoutRes = await fetch('/api/payments/checkout-booking', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                      amount: Math.round((quote?.price_breakdown?.total ?? 0) * 100), // Convert to pence
+                      amount: Math.round((pricing?.total ?? quote?.price_breakdown?.total ?? 0) * 100), // pence
+                      deposit_amount: depositOverride,
                       currency: 'gbp',
                       customer_email: isAuthenticated === false ? customerInfo.email : undefined,
                       booking_reference: `BK-${Date.now()}`,
