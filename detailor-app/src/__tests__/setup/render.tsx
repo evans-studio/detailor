@@ -2,6 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { vi } from 'vitest';
+import { NotificationsProvider } from '@/lib/notifications';
 
 // Mock the auth context by default; tests can override via vi.mock
 // Provide a no-op AuthProvider to avoid side effects
@@ -20,7 +21,11 @@ export function renderWithProviders(ui: React.ReactElement, options: RenderOptio
   const queryClient = options.queryClient || new QueryClient({ defaultOptions: { queries: { retry: false } } });
 
   const Wrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <NotificationsProvider>
+        {children}
+      </NotificationsProvider>
+    </QueryClientProvider>
   );
 
   return render(ui, { wrapper: Wrapper as React.ComponentType });
