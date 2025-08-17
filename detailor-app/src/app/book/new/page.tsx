@@ -60,6 +60,30 @@ function NewBookingPageInner() {
   const [emailConfirm, setEmailConfirm] = React.useState('');
   const [consentMarketing, setConsentMarketing] = React.useState(false);
   const [paymentOption, setPaymentOption] = React.useState<'full' | 'deposit'>('full');
+  const [depositPreview, setDepositPreview] = React.useState<number | null>(null);
+  const tenantPrefsRef = React.useRef<{ deposit_percent?: number; deposit_min_gbp?: number } | null>(null);
+
+  // Compute deposit preview when total changes (legacy flow)
+  React.useEffect(() => {
+    const total = Number(pricing?.total ?? quote?.price_breakdown?.total ?? 0);
+    if (!total || total <= 0) { setDepositPreview(null); return; }
+    (async () => {
+      try {
+        if (!tenantPrefsRef.current) {
+          const res = await fetch('/api/settings/tenant', { cache: 'no-store' });
+          const json = await res.json();
+          tenantPrefsRef.current = json?.data?.tenant?.business_prefs || json?.tenant?.business_prefs || {};
+        }
+        const percent = Number(tenantPrefsRef.current?.deposit_percent ?? 20);
+        const minGbp = Number(tenantPrefsRef.current?.deposit_min_gbp ?? 5);
+        const totalPence = Math.round(total * 100);
+        const calc = Math.max(minGbp * 100, Math.round(totalPence * (percent / 100)));
+        setDepositPreview(calc < totalPence ? calc / 100 : null);
+      } catch {
+        setDepositPreview(null);
+      }
+    })();
+  }, [pricing?.total, quote?.price_breakdown?.total]);
 
   // Persist enterprise booking flow state (save/restore)
   React.useEffect(() => {
@@ -895,8 +919,8 @@ function NewBookingPageInner() {
                 <span className="text-[var(--color-text)]">Pay in full now</span>
               </label>
               <label className="flex items-center gap-2">
-                <input type="radio" name="payopt" checked={paymentOption==='deposit'} onChange={() => setPaymentOption('deposit')} />
-                <span className="text-[var(--color-text)]">Pay deposit now</span>
+                <input type="radio" name="payopt" checked={paymentOption==='deposit'} onChange={() => setPaymentOption('deposit')} disabled={!depositPreview} />
+                <span className="text-[var(--color-text)]">Pay deposit now{depositPreview ? ` (£${depositPreview.toFixed(2)})` : ''}</span>
               </label>
             </div>
           </div>
@@ -912,14 +936,9 @@ function NewBookingPageInner() {
                   let depositOverride: number | undefined = undefined;
                   if (paymentOption === 'deposit') {
                     try {
-                      const t = await fetch('/api/settings/tenant');
-                      const tj = await t.json();
-                      const prefs = tj?.data?.tenant?.business_prefs || tj?.tenant?.business_prefs || {};
-                      const totalPence = Math.round((pricing?.total ?? quote?.price_breakdown?.total ?? 0) * 100);
-                      const percent = Number(prefs.deposit_percent ?? 20);
-                      const minGbp = Number(prefs.deposit_min_gbp ?? 5);
-                      const deposit = Math.max(minGbp * 100, Math.round(totalPence * (percent / 100)));
-                      depositOverride = deposit;
+                      if (depositPreview) {
+                        depositOverride = Math.round(depositPreview * 100);
+                      }
                     } catch {}
                   }
 
@@ -951,7 +970,11 @@ function NewBookingPageInner() {
                 }
               }}
             >
-              Pay £{quote?.price_breakdown?.total ?? 0}
+              {(() => {
+                const total = Number(pricing?.total ?? quote?.price_breakdown?.total ?? 0);
+                const label = paymentOption === 'deposit' && depositPreview ? depositPreview.toFixed(2) : total.toFixed(2);
+                return `Pay £${label}`;
+              })()}
             </Button>
           </div>
         </div>
