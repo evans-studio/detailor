@@ -60,6 +60,24 @@ function NewBookingPageInner() {
   const [emailConfirm, setEmailConfirm] = React.useState('');
   const [consentMarketing, setConsentMarketing] = React.useState(false);
   const [paymentOption, setPaymentOption] = React.useState<'full' | 'deposit'>('full');
+
+  // Persist enterprise booking flow state (save/restore)
+  React.useEffect(() => {
+    try {
+      const raw = localStorage.getItem('bookingEnterpriseState');
+      if (raw) {
+        const saved = JSON.parse(raw);
+        if (saved?.bookingData) setBookingData(saved.bookingData);
+        if (saved?.currentStep) setCurrentStep(saved.currentStep as BookingStep);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem('bookingEnterpriseState', JSON.stringify({ bookingData, currentStep }));
+    } catch {}
+  }, [bookingData, currentStep]);
   async function handleResumePayment(resumeAsDeposit: boolean) {
     try {
       const pendingRaw = localStorage.getItem('pendingBooking');
@@ -166,6 +184,20 @@ function NewBookingPageInner() {
     window.addEventListener('beforeunload', handler);
     return () => window.removeEventListener('beforeunload', handler);
   }, [step, isSubmitting]);
+
+  // Unsaved changes warning for enterprise flow
+  React.useEffect(() => {
+    if (!useEnterpriseFlow) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      const mid = ['services','vehicle','datetime','details','payment'].includes(currentStep);
+      if (mid && !isSubmitting) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [useEnterpriseFlow, currentStep, isSubmitting]);
 
   async function refreshQuote() {
     if (!service.service_id || !customerId) return;
@@ -386,6 +418,11 @@ function NewBookingPageInner() {
   const handleBookingComplete = () => {
     // Handle booking completion
     notify({ title: 'Booking completed successfully!' });
+    try {
+      localStorage.removeItem('bookingEnterpriseState');
+      localStorage.removeItem('bookingFormState');
+      localStorage.removeItem('pendingBooking');
+    } catch {}
   };
 
   // Render enterprise flow or legacy flow based on feature flag

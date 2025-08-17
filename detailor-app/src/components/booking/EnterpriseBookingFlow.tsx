@@ -658,6 +658,29 @@ export function EnterpriseBookingFlow({
           </div>
         </div>
       </div>
+
+      {/* Mobile bottom sheet summary */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-sm)] lg:hidden">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[var(--font-size-sm)] text-[var(--color-text-muted)] truncate">Estimated total</div>
+            <div className="text-[var(--font-size-lg)] font-[var(--font-weight-semibold)] text-[var(--color-text)]">
+              £{(bookingData.pricing?.total ?? 0).toFixed(2)}
+            </div>
+          </div>
+          <Button intent="primary" onClick={() => {
+            const steps: BookingStep[] = ['services', 'vehicle', 'datetime', 'details', 'payment'];
+            const currentIndex = steps.indexOf(currentStep);
+            if (currentIndex < steps.length - 1) {
+              onStepChange(steps[currentIndex + 1]);
+            } else {
+              onComplete();
+            }
+          }}>
+            {currentStep === 'payment' ? 'Complete Booking' : 'Continue'}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
