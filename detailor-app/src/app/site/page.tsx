@@ -236,7 +236,7 @@ function ServiceFocused({ name, brand, content }: { name: string; brand: BrandSe
         <div className="relative max-w-5xl mx-auto px-6 py-20">
           <div className="inline-flex items-center gap-3 bg-[var(--color-surface)]/80 backdrop-blur px-4 py-2 rounded-full">
             <div className="w-8 h-8 rounded-full bg-[var(--color-muted)] overflow-hidden">
-              {brand.logo_url ? <Image src={brand.logo_url} alt="Logo" width={32} height={32} /> : null}
+              <Image src={brand.logo_url || '/detailor-logo.png'} alt="Logo" width={32} height={32} />
             </div>
             <span className="text-[var(--color-text)] font-medium">{name}</span>
           </div>
@@ -268,7 +268,7 @@ function LocalExpert({ name, brand, content }: { name: string; brand: BrandSetti
     <main className="min-h-screen bg-[var(--color-surface)] text-[var(--color-text)]">
       <header className="max-w-6xl mx-auto px-6 py-6">
         <div className="flex items-center gap-3">
-          {brand.logo_url ? <Image src={brand.logo_url} alt="Logo" width={32} height={32} /> : null}
+          <Image src={brand.logo_url || '/detailor-logo.png'} alt="Logo" width={32} height={32} />
           <div className="font-semibold text-lg" style={{ color: primary }}>{name}</div>
         </div>
       </header>
@@ -280,7 +280,7 @@ function LocalExpert({ name, brand, content }: { name: string; brand: BrandSetti
           <span className="px-3 py-1 rounded-full bg-[var(--color-primary-50)] text-[var(--color-primary-700)] text-sm">5+ years experience</span>
           <span className="px-3 py-1 rounded-full bg-[var(--color-warning-50)] text-[var(--color-warning-700)] text-sm">Satisfaction guaranteed</span>
         </div>
-        <a href="/book" className="mt-6 inline-block px-5 py-3 rounded-lg text-white" style={{ background: primary }}>{content?.hero?.cta_text || 'Book Now'}</a>
+        <a href="/book" className="mt-6 inline-block px-5 py-3 rounded-lg text-[var(--color-primary-foreground)]" style={{ background: primary }}>{content?.hero?.cta_text || 'Book Now'}</a>
       </section>
     </main>
   );

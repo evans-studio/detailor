@@ -104,22 +104,13 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
           <div className="flex items-center justify-between h-20">
             {/* Logo */}
             <div className="flex items-center gap-3">
-              {brand.logo_url ? (
-                <Image 
-                  src={brand.logo_url} 
-                  alt={`${businessInfo.name} Logo`} 
-                  width={48} 
-                  height={48}
-                  className="rounded-lg"
-                />
-              ) : (
-                <div 
-                  className="w-12 h-12 rounded-lg flex items-center justify-center text-[var(--color-primary-foreground)] font-bold text-lg"
-                  style={{ backgroundColor: primaryColor }}
-                >
-                  {businessInfo.name.charAt(0)}
-                </div>
-              )}
+              <Image 
+                src={brand.logo_url || '/detailor-logo.png'} 
+                alt={`${businessInfo.name} Logo`} 
+                width={48} 
+                height={48}
+                className="rounded-lg"
+              />
               <div className="font-bold text-xl" style={{ color: primaryColor }}>
                 {businessInfo.name}
               </div>
