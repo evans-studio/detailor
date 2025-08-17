@@ -34,6 +34,8 @@ vi.mock('@/lib/supabaseAdmin', () => ({
   })
 }));
 
+vi.mock('@/lib/rate-limit', () => ({ shouldRateLimit: () => ({ limited: false, remaining: 1, resetAt: Date.now() + 1000 }) }));
+
 describe('POST /api/guest/bookings', () => {
   it('returns 409 on overlapping booking', async () => {
     const { POST } = await import('@/app/api/guest/bookings/route');

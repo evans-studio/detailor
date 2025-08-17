@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { shouldRateLimit } from '@/lib/rate-limit';
 import { sendBookingConfirmation, sendBookingNotificationToAdmin } from '@/lib/email';
 
 const createSchema = z.object({
@@ -21,6 +22,10 @@ const createSchema = z.object({
 // Guest booking creation endpoint
 export async function POST(req: Request) {
   try {
+    const rl = shouldRateLimit(req, 'guest:bookings', 20, 60_000);
+    if (rl.limited) {
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Too many requests', { retry_at: rl.resetAt }, 429);
+    }
     const admin = getSupabaseAdmin();
     const body = await req.json();
     const payload = createSchema.parse(body);

@@ -38,6 +38,7 @@ function createMockAdminClient() {
 }
 
 vi.mock('@/lib/supabaseAdmin', () => ({ getSupabaseAdmin: () => createMockAdminClient() }));
+vi.mock('@/lib/rate-limit', () => ({ shouldRateLimit: () => ({ limited: false, remaining: 1, resetAt: Date.now() + 1000 }) }));
 
 describe('GET /api/guest/availability/slots', () => {
   beforeEach(() => vi.restoreAllMocks());

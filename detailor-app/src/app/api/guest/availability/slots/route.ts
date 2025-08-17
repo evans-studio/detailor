@@ -3,10 +3,15 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { shouldRateLimit } from '@/lib/rate-limit';
 
 // Guest availability slots endpoint
 export async function GET(req: Request) {
   try {
+    const rl = shouldRateLimit(req, 'guest:slots', 120, 60_000);
+    if (rl.limited) {
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Too many requests', { retry_at: rl.resetAt }, 429);
+    }
     const admin = getSupabaseAdmin();
     const url = new URL(req.url);
     

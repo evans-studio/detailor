@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { createSuccessResponse, createErrorResponse, API_ERROR_CODES } from '@/lib/api-response';
 import { z } from 'zod';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { shouldRateLimit } from '@/lib/rate-limit';
 
 const quoteSchema = z.object({
   customer_id: z.string().uuid(),
@@ -16,6 +17,10 @@ const quoteSchema = z.object({
 // Guest quote endpoint
 export async function POST(req: Request) {
   try {
+    const rl = shouldRateLimit(req, 'guest:quotes', 60, 60_000);
+    if (rl.limited) {
+      return createErrorResponse(API_ERROR_CODES.RATE_LIMITED, 'Too many requests', { retry_at: rl.resetAt }, 429);
+    }
     const admin = getSupabaseAdmin();
     const body = await req.json();
     const payload = quoteSchema.parse(body);

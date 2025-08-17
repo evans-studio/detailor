@@ -47,6 +47,7 @@ function createMockAdminClient() {
 vi.mock('@/lib/supabaseAdmin', () => ({
   getSupabaseAdmin: () => createMockAdminClient(),
 }));
+vi.mock('@/lib/rate-limit', () => ({ shouldRateLimit: () => ({ limited: false, remaining: 1, resetAt: Date.now() + 1000 }) }));
 
 describe('POST /api/guest/quotes', () => {
   it('computes total with vehicle multiplier, add-ons, distance surcharge and tax', async () => {
