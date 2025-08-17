@@ -23,7 +23,6 @@ export const metadata: Metadata = {
   title: 'Detailor',
   description: 'Run your detailing business end-to-end: bookings, payments, messaging, analytics, and a branded homepage.',
   applicationName: 'Detailor',
-  themeColor: 'var(--color-primary)',
   icons: [{ rel: 'icon', url: '/favicon.ico' }],
   openGraph: {
     title: 'Detailor',
@@ -36,6 +35,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: 'var(--color-primary)'
 };
 
 export default function RootLayout({
