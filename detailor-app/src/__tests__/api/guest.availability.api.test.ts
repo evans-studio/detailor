@@ -24,9 +24,12 @@ function createMockAdminClient() {
         return { select: () => ({ eq: () => ({ lte: () => ({ gte: () => Promise.resolve({ data: [] }) }) }) }) } as any;
       }
       if (table === 'bookings') {
+        // Create a booking that overlaps the first slot (09:00-09:30 UTC)
+        const now = new Date();
+        const startOverlap = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 9, 5, 0));
+        const endOverlap = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 9, 20, 0));
         return { select: () => ({ eq: () => ({ lt: () => ({ gt: () => Promise.resolve({ data: [
-          // One overlapping booking consumes 1 capacity
-          { start_at: new Date().toISOString(), end_at: new Date(Date.now() + 30*60*1000).toISOString(), status: 'confirmed' }
+          { start_at: startOverlap.toISOString(), end_at: endOverlap.toISOString(), status: 'confirmed' }
         ] }) }) }) }) } as any;
       }
       return builder;

@@ -30,7 +30,10 @@ function createMockAdminClient() {
       };
       if (table === 'add_ons') {
         (builder as any).then = undefined;
-        (builder as any).returns = [{ id: 'a1', price_delta: 20 }, { id: 'a2', price_delta: 5 }];
+        (builder as any).returns = [
+          { id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', price_delta: 20 },
+          { id: 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', price_delta: 5 }
+        ];
         (builder as any).then = undefined;
         (builder as any).eq = () => builder;
         (builder as any).in = () => builder;
@@ -57,7 +60,7 @@ describe('POST /api/guest/quotes', () => {
     const body = {
       customer_id: '11111111-1111-1111-1111-111111111111',
       service_id: '22222222-2222-2222-2222-222222222222',
-      addon_ids: ['a1', 'a2'],
+      addon_ids: ['aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'],
       vehicle_size_tier: 'L',
       distance_miles: 10,
     };
