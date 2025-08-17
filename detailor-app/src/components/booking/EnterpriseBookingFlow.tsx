@@ -396,9 +396,10 @@ function BookingSummary({
   const selectedService = services.find(s => s.id === bookingData.service_id);
   const selectedAddons = addons.filter(a => bookingData.addons?.includes(a.id));
   
-  const subtotal = (selectedService?.base_price || 0) + selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
-  const tax = subtotal * 0.2; // 20% VAT
-  const total = subtotal + tax;
+  // Prefer server-computed pricing if present in bookingData.pricing
+  const computedSubtotal = (selectedService?.base_price || 0) + selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
+  const fallbackTax = computedSubtotal * 0.2;
+  const pricing = bookingData.pricing || { subtotal: computedSubtotal, tax: fallbackTax, total: computedSubtotal + fallbackTax };
 
   return (
     <Card className="sticky top-6">
@@ -491,15 +492,15 @@ function BookingSummary({
             <div className="space-y-2">
               <div className="flex justify-between text-[var(--font-size-sm)]">
                 <span className="text-[var(--color-text)]">Subtotal</span>
-                <span className="text-[var(--color-text)]">£{subtotal.toFixed(2)}</span>
+                <span className="text-[var(--color-text)]">£{pricing.subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[var(--font-size-sm)]">
-                <span className="text-[var(--color-text)]">VAT (20%)</span>
-                <span className="text-[var(--color-text)]">£{tax.toFixed(2)}</span>
+                <span className="text-[var(--color-text)]">VAT</span>
+                <span className="text-[var(--color-text)]">£{pricing.tax.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-[var(--font-size-lg)] font-[var(--font-weight-bold)] border-t border-[var(--color-border)] pt-2">
                 <span className="text-[var(--color-text)]">Total</span>
-                <span className="text-[var(--color-primary)]">£{total.toFixed(2)}</span>
+                <span className="text-[var(--color-primary)]">£{pricing.total.toFixed(2)}</span>
               </div>
             </div>
           </div>

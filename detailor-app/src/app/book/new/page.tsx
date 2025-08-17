@@ -28,6 +28,7 @@ export default function NewBookingPage() {
   const [enterpriseServices, setEnterpriseServices] = React.useState<ServiceOption[]>([]);
   const [enterpriseAddons, setEnterpriseAddons] = React.useState<AddonOption[]>([]);
   const [loadingAddons, setLoadingAddons] = React.useState(false);
+  const [pricing, setPricing] = React.useState<{ subtotal: number; tax: number; total: number } | null>(null);
   const [businessName, setBusinessName] = React.useState('Detailor');
   const [brandColor, setBrandColor] = React.useState('#1a365d');
   
@@ -157,6 +158,20 @@ export default function NewBookingPage() {
           category: (r.category || 'special') as AddonOption['category'],
         }));
         setEnterpriseAddons(mapped);
+        // Recalculate pricing when addons list changes if we have selections
+        const selectedAddons = (bookingData.addons || service.addons || []) as string[];
+        if (selectedAddons.length || svcId) {
+          try {
+            const quote = await getQuote({
+              customer_id: customerId || '00000000-0000-0000-0000-000000000000',
+              service_id: svcId,
+              addon_ids: selectedAddons,
+              vehicle_size_tier: vehicle.size,
+            });
+            setPricing(quote.price_breakdown || quote);
+            setBookingData(prev => ({ ...prev, pricing: quote.price_breakdown || quote }));
+          } catch {}
+        }
       } catch (e) {
         notify({ title: 'Failed to load add-ons', description: 'Please try again.' });
       } finally {
@@ -268,6 +283,23 @@ export default function NewBookingPage() {
 
   const handleDataChange = (data: Partial<BookingData>) => {
     setBookingData(prev => ({ ...prev, ...data }));
+    // When service or addons change, request updated quote
+    const nextServiceId = (data as any).service_id ?? bookingData.service_id;
+    const nextAddons = (data as any).addons ?? bookingData.addons ?? [];
+    if (nextServiceId) {
+      (async () => {
+        try {
+          const quote = await getQuote({
+            customer_id: customerId || '00000000-0000-0000-0000-000000000000',
+            service_id: nextServiceId as string,
+            addon_ids: nextAddons as string[],
+            vehicle_size_tier: vehicle.size,
+          });
+          setPricing(quote.price_breakdown || quote);
+          setBookingData(prev => ({ ...prev, pricing: quote.price_breakdown || quote }));
+        } catch {}
+      })();
+    }
   };
 
   const handleBookingComplete = () => {
