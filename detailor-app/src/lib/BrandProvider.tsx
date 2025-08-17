@@ -39,6 +39,10 @@ export function BrandProvider({ children }: { children: React.ReactNode }) {
         prefersDark ? 'dark' : 'light'
       );
       Object.entries(dynamicVars).forEach(([k, v]) => set(k, v));
+      // Brand assets
+      if (palette.brand?.logo_url) {
+        set('--brand-logo-url', palette.brand.logo_url);
+      }
       set('--color-secondary', palette.brand?.secondary);
       set('--color-background', palette.neutrals?.bg);
       set('--color-surface', palette.neutrals?.surface);

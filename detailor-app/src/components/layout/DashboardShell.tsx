@@ -172,13 +172,13 @@ function EnterpriseHeader({
         
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="
-            w-10 h-10 rounded-xl bg-[var(--color-primary)]
-            flex items-center justify-center text-[var(--color-primary-foreground)] font-bold text-sm
-            shadow-md hover:shadow-lg transition-shadow duration-200
-          ">
-            {tenantName.charAt(0)}
-          </div>
+          {/* Prefer tenant logo if available via CSS var --brand-logo-url; fallback to platform logo */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={typeof window !== 'undefined' && (getComputedStyle(document.documentElement).getPropertyValue('--brand-logo-url')?.trim()) ? getComputedStyle(document.documentElement).getPropertyValue('--brand-logo-url').trim() : '/detailor-logo.png'}
+            alt="Brand"
+            className="h-8 w-auto"
+          />
           <h1 className="
             text-lg font-semibold
             text-[var(--color-text)] tracking-tight
