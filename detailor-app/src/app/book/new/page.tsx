@@ -19,7 +19,7 @@ import {
 type Step = 'vehicle' | 'service' | 'schedule' | 'customer' | 'review' | 'payment';
 type CustomerInfo = { name: string; email: string; phone: string; };
 
-export default function NewBookingPage() {
+function NewBookingPageInner() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -917,6 +917,22 @@ function ScheduleStep({ addresses, selectedAddressId, onBack, onNext, onSet, can
       </div>
       <div className="flex justify-between gap-2"><Button intent="ghost" onClick={onBack}>Back</Button><Button disabled={!start || !end || !addressId} onClick={() => { onSet({ address_id: addressId, start, end }); onNext(); }}>Next</Button></div>
     </div>
+  );
+}
+
+export default function NewBookingPage() {
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen bg-[var(--color-background)] flex items-center justify-center">
+        <div className="max-w-md mx-auto text-center p-6">
+          <div className="text-[var(--font-size-lg)] font-semibold text-[var(--color-text)] mb-4">
+            Loading booking flow...
+          </div>
+        </div>
+      </div>
+    }>
+      <NewBookingPageInner />
+    </React.Suspense>
   );
 }
 
