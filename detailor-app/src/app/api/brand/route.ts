@@ -55,13 +55,13 @@ export async function GET(req: Request) {
     const admin = getSupabaseAdmin();
     const { data: tenant, error } = await admin
       .from('tenants')
-      .select('brand_theme')
+      .select('brand_theme, brand_settings')
       .eq('id', tenantId)
       .single();
     if (error || !tenant) return createSuccessResponse({ palette: base });
 
     // Merge brand_theme over base palette (shallow)
-    const merged: Record<string, unknown> = { ...base };
+    const merged: Record<string, any> = { ...base };
     if (tenant.brand_theme && typeof tenant.brand_theme === 'object') {
       for (const [k, v] of Object.entries(tenant.brand_theme as Record<string, unknown>)) {
         if (v && typeof v === 'object' && k in merged) {
@@ -72,6 +72,10 @@ export async function GET(req: Request) {
         }
       }
     }
+    // Attach logo_url from brand_settings if present
+    const logoUrl = (tenant as any)?.brand_settings?.logo_url as string | undefined;
+    if (!merged.brand) merged.brand = {};
+    if (logoUrl) merged.brand.logo_url = logoUrl;
     return createSuccessResponse({ palette: merged });
   } catch (e: unknown) {
     return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (e as Error).message, { endpoint: 'GET /api/brand' }, 400);

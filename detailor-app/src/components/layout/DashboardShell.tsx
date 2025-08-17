@@ -175,7 +175,7 @@ function EnterpriseHeader({
           {/* Prefer tenant logo if available via CSS var --brand-logo-url; fallback to platform logo */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={typeof window !== 'undefined' && (getComputedStyle(document.documentElement).getPropertyValue('--brand-logo-url')?.trim()) ? getComputedStyle(document.documentElement).getPropertyValue('--brand-logo-url').trim() : '/detailor-logo.png'}
+            src={typeof window !== 'undefined' ? (getComputedStyle(document.documentElement).getPropertyValue('--brand-logo-url') || '').trim() || '/detailor-logo.png' : '/detailor-logo.png'}
             alt="Brand"
             className="h-8 w-auto"
           />
