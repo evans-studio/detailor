@@ -14,9 +14,8 @@
 
 ### What Works Now
 - Customer booking page at `src/app/book/new/page.tsx`:
-  - Multi-step legacy flow with guest support, quote fetching, availability slots, and Stripe checkout via `/api/payments/checkout-booking`.
-  - Persists partial state to `localStorage` (`bookingFormState`, `pendingBooking`) and redirects to confirmation.
-  - Enterprise flow (`EnterpriseBookingFlow`) scaffolded with handlers and preview state.
+  - Legacy flow (default): guest support, real services/add-ons via `/api/services` and `/api/add-ons`, real availability (capacity-aware), robust persistence (`bookingFormState`, `pendingBooking`), unsaved changes warning, Stripe checkout (full/deposit), and cancellation banner handling.
+  - Enterprise flow (`src/components/booking/EnterpriseBookingFlow.tsx`): service/add-on selection UI, live pricing update via `getQuote`, persisted enterprise state, mobile bottom-sheet summary, payment mode (full/deposit) with checkout, and deposit preview computed from tenant prefs; disabled when not applicable.
 - Confirmation page `src/app/bookings/confirmation/page.tsx`:
   - Verifies Stripe session, creates booking (guest vs authenticated paths), cleans up local storage, shows confirmation.
 - Admin bookings:
@@ -66,19 +65,14 @@
 - [ ] Clear confirmations of success
 
 ### Proposed Completion Plan (Pending Approval)
-- Add loading/empty/error states to `EnterpriseBookingFlow`; ensure legacy steps have consistent skeletons.
-- Implement unsaved changes warning for multi-step flow.
-- Strengthen `localStorage` restoration across every step (refresh continuity).
-- Add reschedule flow in admin (date/time picker + PATCH) with optimistic UI and rollback.
-- Hook email notifications on create/confirm/cancel (server-side events).
-- A11y: SR announcements on step changes; focus placement and error announcements; ensure keyboard navigation.
-- Mobile pass: ensure 44px controls; validate at 375/768/1024.
-- Error boundaries: 404 for missing booking; clear permission denied copy.
-- Testing matrix:
-  - Guest flow: service → payment → confirmation → admin visibility
-  - Authenticated flow variant
-  - Slow-network and failure simulations
-  - Large list handling for services/vehicles/addresses
+- Add loading/empty/error states to all enterprise steps; skeletons for fetches.
+- Extend unsaved changes and refresh continuity to all enterprise steps.
+- Admin reschedule flow with optimistic updates and rollback.
+- Email notifications: create/confirm/cancel hooks.
+- A11y: SR announcements for step changes/errors, focus management, keyboard coverage.
+- Mobile pass across steps at 375/768/1024, touch targets ≥ 44px.
+- Error boundaries: 404/permission denied.
+- E2E matrix (10 scenarios): guest E2E, refresh persistence, network failure recovery, double-booking prevention, mobile interaction, keyboard-only a11y, large dataset performance, slow network, payment decline/retry, browser back/forward.
 
 ### Notes
 This file tracks the feature completion against the platform-wide protocol. After approval, PHASE 2 edits will begin and a final Completion Report will replace the pending items with verified checks and links to PRs/tests.
