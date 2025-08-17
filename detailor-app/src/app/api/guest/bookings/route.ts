@@ -39,6 +39,20 @@ export async function POST(req: Request) {
     
     const tenantId = customer.tenant_id;
 
+    // Guard: prevent double-booking (overlapping time ranges)
+    {
+      const { data: overlapping } = await admin
+        .from('bookings')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .lt('start_at', payload.end_at)
+        .gt('end_at', payload.start_at)
+        .in('status', ['pending','confirmed','in_progress']);
+      if ((overlapping?.length || 0) > 0) {
+        return createErrorResponse(API_ERROR_CODES.OPERATION_NOT_ALLOWED, 'Selected time overlaps with an existing booking', { count: overlapping?.length }, 409);
+      }
+    }
+
     // Check booking limits for starter plans
     const { data: tenant } = await admin
       .from('tenants')
