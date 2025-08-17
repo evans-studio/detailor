@@ -52,8 +52,8 @@ describe('POST /api/guest/quotes', () => {
   it('computes total with vehicle multiplier, add-ons, distance surcharge and tax', async () => {
     const { POST } = await import('@/app/api/guest/quotes/route');
     const body = {
-      customer_id: '11111111-1111-1111-1111-111111111111',
-      service_id: '22222222-2222-2222-2222-222222222222',
+      customer_id: '00000000-0000-0000-0000-000000000000',
+      service_id: '00000000-0000-0000-0000-000000000000',
       vehicle_size_tier: 'L',
       distance_miles: 10,
     };
