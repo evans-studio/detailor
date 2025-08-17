@@ -519,7 +519,25 @@ export default function NewBookingPage() {
       {step === 'schedule' && (
         <>
           <h2 ref={stepHeadingRef} tabIndex={-1} className="sr-only">Schedule step</h2>
-          <ScheduleStep addresses={addresses} selectedAddressId={location.address_id} onBack={() => setStep(isAuthenticated === false ? 'customer' : 'service')} onNext={() => setStep('review')} onSet={(s) => setLocation(s)} />
+          <ScheduleStep 
+            addresses={addresses} 
+            selectedAddressId={location.address_id} 
+            canAddAddress={isAuthenticated === true}
+            onCreateAddress={async (payload: { label?: string; address_line1: string; city?: string; postcode?: string }) => {
+              const res = await fetch(`/api/customers/${customerId}/addresses`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              const json = await res.json();
+              if (!res.ok || json?.success === false) throw new Error(json?.error?.message || 'Failed to add address');
+              return json.data?.address || json.address || json;
+            }}
+            onAddressAdded={(addr) => setAddresses((prev) => [...prev, addr])}
+            onBack={() => setStep(isAuthenticated === false ? 'customer' : 'service')} 
+            onNext={() => setStep('review')} 
+            onSet={(s) => setLocation(s)} 
+          />
         </>
       )}
 
@@ -764,12 +782,14 @@ export default function NewBookingPage() {
   );
 }
 
-function ScheduleStep({ addresses, selectedAddressId, onBack, onNext, onSet }: { addresses: Array<{ id: string; label?: string; address_line1: string; postcode?: string }>; selectedAddressId?: string; onBack: () => void; onNext: () => void; onSet: (s: { address_id: string; start: string; end: string }) => void }) {
+function ScheduleStep({ addresses, selectedAddressId, onBack, onNext, onSet, canAddAddress, onCreateAddress, onAddressAdded }: { addresses: Array<{ id: string; label?: string; address_line1: string; postcode?: string }>; selectedAddressId?: string; onBack: () => void; onNext: () => void; onSet: (s: { address_id: string; start: string; end: string }) => void; canAddAddress?: boolean; onCreateAddress?: (p: { label?: string; address_line1: string; city?: string; postcode?: string }) => Promise<any>; onAddressAdded?: (addr: any) => void }) {
   const [slots, setSlots] = React.useState<Array<{ start: string; end: string; capacity: number }>>([]);
   const [start, setStart] = React.useState('');
   const [end, setEnd] = React.useState('');
   const [addressId, setAddressId] = React.useState(selectedAddressId || (addresses[0]?.id || ''));
   const [sr, setSr] = React.useState('');
+  const [showAddAddress, setShowAddAddress] = React.useState(false);
+  const [newAddress, setNewAddress] = React.useState({ label: '', address_line1: '', city: '', postcode: '' });
   React.useEffect(() => {
     (async () => {
       try {
@@ -801,6 +821,37 @@ function ScheduleStep({ addresses, selectedAddressId, onBack, onNext, onSet }: {
           value={addressId}
           onValueChange={(v) => setAddressId(v)}
         />
+        {canAddAddress && (
+          <div className="mt-2">
+            <Button size="sm" intent="ghost" onClick={() => setShowAddAddress((s) => !s)}>
+              {showAddAddress ? 'Cancel' : 'Add new address'}
+            </Button>
+          </div>
+        )}
+        {canAddAddress && showAddAddress && (
+          <div className="mt-2 grid gap-2 border border-[var(--color-border)] rounded-[var(--radius-md)] p-3">
+            <Input placeholder="Label (optional)" value={newAddress.label} onChange={(e) => setNewAddress({ ...newAddress, label: e.target.value })} />
+            <Input placeholder="Address line 1" value={newAddress.address_line1} onChange={(e) => setNewAddress({ ...newAddress, address_line1: e.target.value })} />
+            <div className="grid grid-cols-2 gap-2">
+              <Input placeholder="City" value={newAddress.city} onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })} />
+              <Input placeholder="Postcode" value={newAddress.postcode} onChange={(e) => setNewAddress({ ...newAddress, postcode: e.target.value })} />
+            </div>
+            <div className="flex justify-end">
+              <Button size="sm" onClick={async () => {
+                if (!onCreateAddress) return;
+                try {
+                  const addr = await onCreateAddress(newAddress);
+                  setShowAddAddress(false);
+                  onAddressAdded && onAddressAdded(addr);
+                  setAddressId(addr.id);
+                  setSr('Address added');
+                } catch (e) {
+                  // best-effort UI notification done in caller
+                }
+              }}>Save address</Button>
+            </div>
+          </div>
+        )}
       </div>
       <div className="text-[var(--font-size-sm)]">Choose a slot</div>
       <div className="grid gap-2 max-h-64 overflow-auto">
@@ -816,7 +867,7 @@ function ScheduleStep({ addresses, selectedAddressId, onBack, onNext, onSet }: {
           );
         })}
       </div>
-      <div className="flex justify-between gap-2"><Button intent="ghost" onClick={onBack}>Back</Button><Button onClick={() => { onSet({ address_id: addressId, start, end }); onNext(); }}>Next</Button></div>
+      <div className="flex justify-between gap-2"><Button intent="ghost" onClick={onBack}>Back</Button><Button disabled={!start || !end || !addressId} onClick={() => { onSet({ address_id: addressId, start, end }); onNext(); }}>Next</Button></div>
     </div>
   );
 }
