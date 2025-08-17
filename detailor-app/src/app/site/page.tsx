@@ -242,7 +242,7 @@ function ServiceFocused({ name, brand, content }: { name: string; brand: BrandSe
           </div>
           <h1 className="mt-4 text-4xl md:text-5xl font-bold text-[var(--color-text)] drop-shadow">{content?.hero?.tagline || 'Premium Detailing, On‑Site'}</h1>
           <p className="mt-3 text-[var(--color-text-secondary)] max-w-2xl">{content?.hero?.description || 'We come to you for showroom results.'}</p>
-          <a href="/book" className="mt-6 inline-block px-5 py-3 rounded-lg text-white" style={{ background: primary }}>{content?.hero?.cta_text || 'Book Now'}</a>
+          <a href="/book" className="mt-6 inline-block px-5 py-3 rounded-lg text-[var(--color-primary-foreground)]" style={{ background: primary }}>{content?.hero?.cta_text || 'Book Now'}</a>
         </div>
       </section>
       {Array.isArray(content?.testimonials) && content!.testimonials!.length > 0 && (

@@ -114,7 +114,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                 />
               ) : (
                 <div 
-                  className="w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-lg"
+                  className="w-12 h-12 rounded-lg flex items-center justify-center text-[var(--color-primary-foreground)] font-bold text-lg"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {businessInfo.name.charAt(0)}
@@ -143,7 +143,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                 Contact
               </a>
               <Button 
-                className="text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+                className="text-[var(--color-primary-foreground)] font-semibold shadow-lg hover:shadow-xl transition-all"
                 style={{ backgroundColor: primaryColor }}
               >
                 Book Now
@@ -171,7 +171,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                 <a href="#testimonials" className="block text-[var(--color-text)] font-medium">Reviews</a>
                 <a href="#contact" className="block text-[var(--color-text)] font-medium">Contact</a>
                 <Button 
-                  className="w-full text-white font-semibold"
+                  className="w-full text-[var(--color-primary-foreground)] font-semibold"
                   style={{ backgroundColor: primaryColor }}
                 >
                   Book Now
@@ -201,7 +201,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
             <div className="space-y-8 animate-slide-in-left">
               <div className="space-y-4">
                 <Badge 
-                  className="text-white font-medium shadow-sm"
+                  className="text-[var(--color-primary-foreground)] font-medium shadow-sm"
                   style={{ backgroundColor: primaryColor }}
                 >
                   ⭐ Premium Mobile Detailing Service
@@ -219,7 +219,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
                   size="lg"
-                  className="text-white font-semibold text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-all"
+                  className="text-[var(--color-primary-foreground)] font-semibold text-lg px-8 py-4 shadow-lg hover:shadow-xl transition-all"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {content.hero?.cta_text || 'Book Your Detail'}
@@ -321,7 +321,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-300"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-text)]/20 to-transparent" />
                   </div>
                 )}
                 
@@ -335,7 +335,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                     <div className="space-y-2">
                       {service.features.slice(0, 3).map((feature, idx) => (
                         <div key={idx} className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
-                          <svg className="w-4 h-4 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <svg className="w-4 h-4 text-[var(--color-success)] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                           <span>{feature}</span>
@@ -358,7 +358,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                       )}
                     </div>
                     <Button 
-                      className="text-white font-medium"
+                      className="text-[var(--color-primary-foreground)] font-medium"
                       style={{ backgroundColor: primaryColor }}
                     >
                       Book Now
@@ -391,7 +391,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                     {/* Stars */}
                     <div className="flex gap-1">
                       {[...Array(testimonial.rating || 5)].map((_, i) => (
-                        <svg key={i} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                        <svg key={i} className="w-5 h-5 text-[var(--color-warning)]" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                         </svg>
                       ))}
@@ -414,7 +414,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                         />
                       ) : (
                         <div 
-                          className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold"
+                          className="w-12 h-12 rounded-full flex items-center justify-center text-[var(--color-primary-foreground)] font-semibold"
                           style={{ backgroundColor: primaryColor }}
                         >
                           {testimonial.name.charAt(0)}
@@ -457,10 +457,10 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
+                  <div className="absolute inset-0 bg-[var(--color-text)]/0 group-hover:bg-[var(--color-text)]/20 transition-all duration-300" />
                   {image.caption && (
-                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent">
-                      <p className="text-white text-sm font-medium">{image.caption}</p>
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-[var(--color-text)]/70 to-transparent">
+                      <p className="text-[var(--color-primary-foreground)] text-sm font-medium">{image.caption}</p>
                     </div>
                   )}
                 </div>
@@ -490,7 +490,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                       className="w-12 h-12 rounded-lg flex items-center justify-center"
                       style={{ backgroundColor: primaryColor }}
                     >
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-6 h-6 text-[var(--color-primary-foreground)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                       </svg>
                     </div>
@@ -507,7 +507,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                       className="w-12 h-12 rounded-lg flex items-center justify-center"
                       style={{ backgroundColor: primaryColor }}
                     >
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-6 h-6 text-[var(--color-primary-foreground)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     </div>
@@ -524,7 +524,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
                       className="w-12 h-12 rounded-lg flex items-center justify-center"
                       style={{ backgroundColor: primaryColor }}
                     >
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-6 h-6 text-[var(--color-primary-foreground)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
@@ -542,7 +542,7 @@ export function PremiumProfessionalTemplate({ businessInfo, brand, content }: Te
             <div className="text-center lg:text-right">
               <Button 
                 size="lg"
-                className="text-white font-bold text-xl px-12 py-6 shadow-xl hover:shadow-2xl transition-all"
+                className="text-[var(--color-primary-foreground)] font-bold text-xl px-12 py-6 shadow-xl hover:shadow-2xl transition-all"
                 style={{ backgroundColor: primaryColor }}
               >
                 Book Your Detail Now
