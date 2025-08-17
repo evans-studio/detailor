@@ -29,43 +29,66 @@ export async function GET(req: Request) {
       return createErrorResponse(API_ERROR_CODES.RECORD_NOT_FOUND, 'Invalid or inactive tenant', { tenant_id: tenantId }, 404);
     }
 
-    // Get available slots - simplified version for now
-    // This would normally check work patterns, existing bookings, etc.
-    const slots = [];
-    const startDate = new Date();
-    
-    for (let i = 1; i <= days; i++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      
-      // Skip weekends for now (simplified)
-      if (date.getDay() === 0 || date.getDay() === 6) continue;
-      
-      // Generate morning and afternoon slots
-      const morningStart = new Date(date);
-      morningStart.setHours(9, 0, 0, 0);
-      const morningEnd = new Date(date);
-      morningEnd.setHours(11, 0, 0, 0);
-      
-      const afternoonStart = new Date(date);
-      afternoonStart.setHours(14, 0, 0, 0);
-      const afternoonEnd = new Date(date);
-      afternoonEnd.setHours(16, 0, 0, 0);
-      
-      slots.push(
-        {
-          start: morningStart.toISOString(),
-          end: morningEnd.toISOString(),
-          capacity: 1
-        },
-        {
-          start: afternoonStart.toISOString(),
-          end: afternoonEnd.toISOString(),
-          capacity: 1
-        }
-      );
+    // Real availability calculation using work patterns, blackouts, and bookings
+    const { data: patterns } = await admin
+      .from('work_patterns')
+      .select('*')
+      .eq('tenant_id', tenantId);
+
+    const now = new Date();
+    const rangeStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    const rangeEnd = new Date(rangeStart);
+    rangeEnd.setUTCDate(rangeStart.getUTCDate() + Math.max(1, Math.min(days, 60)));
+
+    const { data: blackouts } = await admin
+      .from('blackouts')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .lte('starts_at', rangeEnd.toISOString())
+      .gte('ends_at', rangeStart.toISOString());
+
+    const blackoutRanges = (blackouts || []).map((b) => ({ start: new Date(b.starts_at), end: new Date(b.ends_at) }));
+
+    const { data: bookings } = await admin
+      .from('bookings')
+      .select('start_at,end_at,status')
+      .eq('tenant_id', tenantId)
+      .lt('start_at', rangeEnd.toISOString())
+      .gt('end_at', rangeStart.toISOString());
+    const blockingStatuses = ['pending', 'confirmed', 'in_progress'];
+
+    const slots: Array<{ start: string; end: string; capacity: number }> = [];
+    function combine(dateUtc: Date, hhmm: string) {
+      const [hh, mm] = hhmm.split(':').map((v) => parseInt(v, 10));
+      const d = new Date(dateUtc);
+      d.setUTCHours(hh, mm, 0, 0);
+      return d;
     }
-    
+    for (let i = 0; i < Math.max(1, Math.min(days, 60)); i++) {
+      const day = new Date(rangeStart);
+      day.setUTCDate(rangeStart.getUTCDate() + i);
+      const weekday = day.getUTCDay();
+      const pattern = (patterns || []).find((p: any) => p.weekday === weekday);
+      if (!pattern || pattern.capacity <= 0) continue;
+      let cursor = combine(day, pattern.start_time);
+      const dayEnd = combine(day, pattern.end_time);
+      const incrementMs = pattern.slot_duration_min * 60 * 1000;
+      while (cursor < dayEnd) {
+        const slotEnd = new Date(cursor.getTime() + incrementMs);
+        const overlapsBlackout = blackoutRanges.some((r) => slotEnd > r.start && cursor < r.end);
+        if (!overlapsBlackout) {
+          const overlappingCount = (bookings || []).filter((bk: any) =>
+            blockingStatuses.includes(String(bk.status)) && (new Date(bk.end_at) > cursor) && (new Date(bk.start_at) < slotEnd)
+          ).length;
+          const remainingCapacity = Math.max(0, pattern.capacity - overlappingCount);
+          if (remainingCapacity > 0) {
+            slots.push({ start: cursor.toISOString(), end: slotEnd.toISOString(), capacity: remainingCapacity });
+          }
+        }
+        cursor = slotEnd;
+      }
+    }
+
     return createSuccessResponse({ slots });
   } catch (error: unknown) {
     return createErrorResponse(API_ERROR_CODES.INTERNAL_ERROR, (error as Error).message, { endpoint: 'GET /api/guest/availability/slots' }, 400);

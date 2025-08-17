@@ -55,6 +55,16 @@ export async function GET(req: Request) {
       end: new Date(b.ends_at),
     }));
 
+    // Load bookings within the time range to enforce conflicts/capacity
+    const blockingStatuses = ['pending', 'confirmed', 'in_progress'];
+    const { data: bookings, error: bookErr } = await admin
+      .from('bookings')
+      .select('start_at,end_at,status')
+      .eq('tenant_id', profile.tenant_id)
+      .lt('start_at', rangeEnd.toISOString())
+      .gt('end_at', rangeStart.toISOString());
+    if (bookErr) throw bookErr;
+
     const slots: Array<{ start: string; end: string; capacity: number }> = [];
 
     for (const day of iterateDays(rangeStart, days)) {
@@ -70,7 +80,13 @@ export async function GET(req: Request) {
         const slotEnd = new Date(cursor.getTime() + incrementMs);
         const overlapsBlackout = blackoutRanges.some((r) => slotEnd > r.start && cursor < r.end);
         if (!overlapsBlackout) {
-          slots.push({ start: cursor.toISOString(), end: slotEnd.toISOString(), capacity: pattern.capacity });
+          const overlappingCount = (bookings || []).filter((bk) =>
+            blockingStatuses.includes(String(bk.status)) && (new Date(bk.end_at) > cursor) && (new Date(bk.start_at) < slotEnd)
+          ).length;
+          const remainingCapacity = Math.max(0, pattern.capacity - overlappingCount);
+          if (remainingCapacity > 0) {
+            slots.push({ start: cursor.toISOString(), end: slotEnd.toISOString(), capacity: remainingCapacity });
+          }
         }
         cursor = slotEnd;
       }

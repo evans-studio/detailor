@@ -9,7 +9,8 @@ const quoteSchema = z.object({
   customer_id: z.string().uuid(),
   service_id: z.string().uuid(),
   addon_ids: z.array(z.string().uuid()).optional(),
-  vehicle_size_tier: z.string().optional(),
+  vehicle_size_tier: z.string().min(1),
+  distance_miles: z.number().optional(),
 });
 
 // Guest quote endpoint
@@ -64,13 +65,21 @@ export async function POST(req: Request) {
       .single();
     
     const taxRate = Number(pricing?.tax?.rate ?? 0);
-    const basePrice = Number(svc.base_price) + addonsTotal;
+    const vehicleMultiplier = Number(pricing?.vehicle_tiers?.[payload.vehicle_size_tier] ?? 1);
+    const distance = Number(payload.distance_miles ?? 0);
+    const distancePolicy = {
+      free_radius: Number(pricing?.distance_policy?.free_radius ?? 0),
+      surcharge_per_mile: Number(pricing?.distance_policy?.surcharge_per_mile ?? 0),
+    };
+    const surcharge = Math.max(0, distance - distancePolicy.free_radius) * distancePolicy.surcharge_per_mile;
+    const basePrice = Math.round(((Number(svc.base_price) * vehicleMultiplier) + addonsTotal + surcharge) * 100) / 100;
     const tax = Math.round(basePrice * taxRate * 100) / 100;
     const total = Math.round((basePrice + tax) * 100) / 100;
     
     const price_breakdown = {
-      base: Number(svc.base_price),
+      base: Number(svc.base_price) * vehicleMultiplier,
       addons: addonsTotal,
+      distance: surcharge,
       taxRate,
       tax,
       total
