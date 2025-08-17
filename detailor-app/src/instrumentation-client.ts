@@ -1,6 +1,4 @@
-import * as Sentry from '@sentry/nextjs';
-
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+export { captureRouterTransitionStart as onRouterTransitionStart } from '@sentry/nextjs';
 
 import * as Sentry from '@sentry/nextjs';
 
